@@ -1,0 +1,180 @@
+/* ─── 主題色彩字典 (Theme & Status Colors) ─── */
+/* 預設淺色模式 (Light Mode) */
+:root {
+  color-scheme: light;
+
+  /* Brand Primary (海軍藍主色系) */
+  --color-brand-50: #f0f6fa;
+  --color-brand-100: #ddecf6;
+  --color-brand-500: #1b6ca8;
+  --color-brand-600: #0f4c81; // 品牌核心主色
+  --color-brand-700: #0a3356;
+  --color-brand-800: #07223b;
+  --color-brand-dim: color-mix(in srgb, var(--color-brand-600) 12%, transparent);
+  --color-brand-border: color-mix(in srgb, var(--color-brand-600) 25%, transparent);
+  --color-brand-text: var(--color-brand-600); // 品牌文字色 (海軍藍)
+
+  /* Background / Surface (表面與背景層級) */
+  --color-base: #ffffff; // 輸入框、程式區塊底色
+  --color-bg: #f8fafc; // 全站頁面背景 (Slate-50)
+  --color-surface: #f1f5f9; // 側欄、分段控制器軌道、次要容器 (Slate-100)
+  --color-surface-plus: #ffffff; // 工具卡片背景 (浮凸一階)
+  --color-border: #e2e8f0; // 分隔線、一般邊框 (Slate-200)
+  --color-ghost-border: #cbd5e1; // Ghost 按鈕邊框 (Slate-300，確保清晰度)
+  --color-output-bg: #f0fdf4; // 成功輸出框淺綠底色 (Emerald-50)
+  --color-output-placeholder: var(--color-text-muted);
+  --color-error-bg: #fef2f2; // 錯誤輸出框淺紅底色 (Red-50)
+
+  /* Text (文字階層) */
+  --color-text-primary: #0f172a; // 主標題、內文、輸入文字 (Slate-900)
+  --color-text-secondary: #475569; // 卡片描述、輔助說明 (Slate-600)
+  --color-text-muted: #64748b; // Placeholder、中繼標籤 (Slate-500)
+
+  /* ─── 語意與狀態色完整系統 (Semantic Status & Actions) ─── */
+
+  /* 1. Danger (Red): 錯誤、刪除、危險操作 */
+  --color-danger: #ef4444; // Red 500: 主狀態色
+  --color-danger-hover: #dc2626; // Red 600: 懸停態 (加深)
+  --color-danger-light: #f87171; // Red 400: 次級裝飾、淺態
+  --color-danger-text: #b91c1c; // Red 700: 淺底高對比文字 (WCAG AA > 4.5:1)
+  --color-danger-dim: color-mix(in srgb, var(--color-danger) 10%, transparent);
+  --color-danger-border: color-mix(in srgb, var(--color-danger) 25%, transparent);
+
+  /* 2. Warning (Amber): 效能警告、提示、星號收藏、HOT 徽章 (統一整併 Accent) */
+  --color-warning: #f59e0b; // Amber 500: 主狀態色
+  --color-warning-hover: #d97706; // Amber 600: 懸停態 (加深)
+  --color-warning-light: #fbbf24; // Amber 400: 次級裝飾、淺態
+  --color-warning-text: #b45309; // Amber 700: 淺底高對比文字 (WCAG AA > 4.5:1)
+  --color-warning-dim: color-mix(in srgb, var(--color-warning) 14%, transparent);
+  --color-warning-border: color-mix(in srgb, var(--color-warning) 30%, transparent);
+
+  /* 3. Success (Emerald): 成功輸出、就緒狀態、複製成功 */
+  --color-success: #10b981; // Emerald 500: 主狀態色
+  --color-success-hover: #059669; // Emerald 600: 懸停態 (加深)
+  --color-success-light: #34d399; // Emerald 400: 次級裝飾、淺態
+  --color-success-text: #047857; // Emerald 700: 淺底深綠輸出文字 (WCAG AA > 4.5:1)
+  --color-success-dim: color-mix(in srgb, var(--color-success) 10%, transparent);
+  --color-success-border: color-mix(in srgb, var(--color-success) 28%, transparent);
+
+  /* 4. Info (Sky Blue): 資訊提示、Tooltip、系統導覽 */
+  --color-info: #0284c7; // Sky 600: 主狀態色
+  --color-info-hover: #0369a1; // Sky 700: 懸停態 (加深)
+  --color-info-light: #38bdf8; // Sky 400: 次級裝飾、淺態
+  --color-info-text: #0369a1; // Sky 700: 淺底高對比文字 (WCAG AA > 4.5:1)
+  --color-info-dim: color-mix(in srgb, var(--color-info) 12%, transparent);
+  --color-info-border: color-mix(in srgb, var(--color-info) 25%, transparent);
+
+  /* 5. Purple (Violet): WASM、進階演算法、特化工具標示 */
+  --color-purple: #8b5cf6; // Violet 500: 主狀態色
+  --color-purple-hover: #7c3aed; // Violet 600: 懸停態 (加深)
+  --color-purple-light: #a78bfa; // Violet 400: 次級裝飾、淺態
+  --color-purple-text: #6d28d9; // Violet 700: 淺底高對比文字 (WCAG AA > 4.5:1)
+  --color-purple-dim: color-mix(in srgb, var(--color-purple) 12%, transparent);
+  --color-purple-border: color-mix(in srgb, var(--color-purple) 25%, transparent);
+
+  /* 6. Neutral (Slate): 次要中性分類、一般停用/草稿狀態 */
+  --color-neutral: #64748b; // Slate 500: 主狀態色
+  --color-neutral-hover: #475569; // Slate 600: 懸停態 (加深)
+  --color-neutral-light: #94a3b8; // Slate 400: 次級裝飾、淺態
+  --color-neutral-text: #334155; // Slate 700: 淺底次要中性文字 (WCAG AA > 4.5:1)
+  --color-neutral-dim: color-mix(in srgb, var(--color-neutral) 10%, transparent);
+  --color-neutral-border: color-mix(in srgb, var(--color-neutral) 22%, transparent);
+
+  /* 向下相容別名 (Alias: accent 統一映射至 warning) */
+  --color-accent: var(--color-warning);
+  --color-accent-hover: var(--color-warning-hover);
+  --color-accent-light: var(--color-warning-light);
+  --color-accent-text: var(--color-warning-text);
+  --color-accent-dim: var(--color-warning-dim);
+  --color-accent-border: var(--color-warning-border);
+}
+
+/* 深色模式 (Dark Mode: [data-theme="dark"]) */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  /* Brand Primary (加亮的海軍藍) */
+  --color-brand-50: #0b1f33;
+  --color-brand-100: #102f4c;
+  --color-brand-500: #38bdf8;
+  --color-brand-600: #0284c7;
+  --color-brand-700: #0369a1;
+  --color-brand-800: #0c4a6e;
+  --color-brand-dim: color-mix(in srgb, var(--color-brand-500) 15%, transparent);
+  --color-brand-border: color-mix(in srgb, var(--color-brand-500) 30%, transparent);
+  --color-brand-text: var(--color-brand-500); // 品牌文字色 (加亮淺天藍)
+
+  /* Background / Surface */
+  --color-base: #1e293b; // Slate-800
+  --color-bg: #0f172a; // Slate-900 (深邃黑底)
+  --color-surface: #1e293b; // Slate-800
+  --color-surface-plus: #334155; // Slate-700 (卡片背景)
+  --color-border: #334155;
+  --color-ghost-border: #475569;
+  --color-output-bg: #064e3b; // 深翠綠底色
+  --color-output-placeholder: #6ee7b7; // Emerald-300: 清晰翠綠提示 (WCAG AA 6.38:1)
+  --color-error-bg: #450a0a; // 深紅底色
+
+  /* Text */
+  --color-text-primary: #f8fafc; // Slate-50
+  --color-text-secondary: #94a3b8; // Slate-400
+  --color-text-muted: #64748b; // Slate-500
+
+  /* ─── 語意與狀態色 (Dark Mode: 提升亮度確保清晰度與對比度) ─── */
+
+  /* 1. Danger (Red) */
+  --color-danger: #f87171; // Red 400
+  --color-danger-hover: #fca5a5; // Red 300 (暗色 hover 調亮)
+  --color-danger-light: #fecaca; // Red 200
+  --color-danger-text: #fecaca; // Red 200 (WCAG AAA)
+  --color-danger-dim: color-mix(in srgb, var(--color-danger) 15%, transparent);
+  --color-danger-border: color-mix(in srgb, var(--color-danger) 30%, transparent);
+
+  /* 2. Warning (Amber) */
+  --color-warning: #fbbf24; // Amber 400
+  --color-warning-hover: #fcd34d; // Amber 300 (暗色 hover 調亮)
+  --color-warning-light: #fde68a; // Amber 200
+  --color-warning-text: #fde68a; // Amber 200 (WCAG AAA)
+  --color-warning-dim: color-mix(in srgb, var(--color-warning) 18%, transparent);
+  --color-warning-border: color-mix(in srgb, var(--color-warning) 35%, transparent);
+
+  /* 3. Success (Emerald) */
+  --color-success: #34d399; // Emerald 400
+  --color-success-hover: #6ee7b7; // Emerald 300 (暗色 hover 調亮)
+  --color-success-light: #a7f3d0; // Emerald 200
+  --color-success-text: #a7f3d0; // Emerald 200 (WCAG AAA 7.58:1)
+  --color-success-dim: color-mix(in srgb, var(--color-success) 15%, transparent);
+  --color-success-border: color-mix(in srgb, var(--color-success) 30%, transparent);
+
+  /* 4. Info (Sky Blue) */
+  --color-info: #38bdf8; // Sky 400
+  --color-info-hover: #7dd3fc; // Sky 300 (暗色 hover 調亮)
+  --color-info-light: #bae6fd; // Sky 200
+  --color-info-text: #bae6fd; // Sky 200 (WCAG AAA)
+  --color-info-dim: color-mix(in srgb, var(--color-info) 15%, transparent);
+  --color-info-border: color-mix(in srgb, var(--color-info) 30%, transparent);
+
+  /* 5. Purple (Violet) */
+  --color-purple: #a78bfa; // Violet 400
+  --color-purple-hover: #c4b5fd; // Violet 300 (暗色 hover 調亮)
+  --color-purple-light: #ddd6fe; // Violet 200
+  --color-purple-text: #ddd6fe; // Violet 200 (WCAG AAA)
+  --color-purple-dim: color-mix(in srgb, var(--color-purple) 15%, transparent);
+  --color-purple-border: color-mix(in srgb, var(--color-purple) 30%, transparent);
+
+  /* 6. Neutral (Slate) */
+  --color-neutral: #94a3b8; // Slate 400
+  --color-neutral-hover: #cbd5e1; // Slate 300 (暗色 hover 調亮)
+  --color-neutral-light: #e2e8f0; // Slate 200
+  --color-neutral-text: #e2e8f0; // Slate 200 (WCAG AAA)
+  --color-neutral-dim: color-mix(in srgb, var(--color-neutral) 12%, transparent);
+  --color-neutral-border: color-mix(in srgb, var(--color-neutral) 25%, transparent);
+
+  /* 向下相容別名 (Alias: accent 統一映射至 warning) */
+  --color-accent: var(--color-warning);
+  --color-accent-hover: var(--color-warning-hover);
+  --color-accent-light: var(--color-warning-light);
+  --color-accent-text: var(--color-warning-text);
+  --color-accent-dim: var(--color-warning-dim);
+  --color-accent-border: var(--color-warning-border);
+}

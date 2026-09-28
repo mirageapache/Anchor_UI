@@ -1,0 +1,45 @@
+/* ─── 3.1 Minimal Reset ─── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+body {
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  line-height: var(--leading-normal);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition:
+    background-color var(--transition-theme),
+    color var(--transition-theme);
+}
+
+// 避免超長 Hash、Base64 或 URL 撐爆元件排版
+input,
+button,
+textarea,
+select,
+p,
+pre,
+code {
+  overflow-wrap: break-word;
+}
+
+// 表單元件字型繼承
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}

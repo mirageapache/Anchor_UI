@@ -1,0 +1,25 @@
+{
+  "extends": ["stylelint-config-standard-scss"],
+  "rules": {
+    "selector-class-pattern": null,
+    "custom-property-pattern": null,
+    "no-descending-specificity": null,
+    "scss/comment-no-empty": null,
+    "color-hex-length": null,
+    "comment-empty-line-before": null,
+    "media-feature-range-notation": null,
+    "value-keyword-case": [
+      "lower",
+      {
+        "ignoreProperties": ["font-family", "/^--font/"],
+        "ignoreKeywords": ["optimizeLegibility"]
+      }
+    ],
+    "property-no-deprecated": [
+      true,
+      {
+        "ignoreProperties": ["clip"]
+      }
+    ]
+  }
+}

@@ -1,0 +1,73 @@
+{
+  "name": "@anchor-ui/core",
+  "version": "0.0.1",
+  "description": "Anchor UI - framework-agnostic Web Component library with modern Slate-Navy aesthetic",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "style": "./dist/styles.css",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css",
+    "./tokens": "./src/tokens/index.scss",
+    "./reset": "./src/base/_reset.scss"
+  },
+  "files": [
+    "dist",
+    "src/tokens",
+    "src/base"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "stylelint": "stylelint \"src/**/*.{css,scss}\"",
+    "stylelint:fix": "stylelint \"src/**/*.{css,scss}\" --fix",
+    "format:check": "prettier --check \"src/**/*.{ts,js,scss,css,json,md}\"",
+    "format": "prettier --write \"src/**/*.{ts,js,scss,css,json,md}\"",
+    "prepare": "husky",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "keywords": [
+    "anchor-ui",
+    "web-components",
+    "lit",
+    "design-system",
+    "design-tokens"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "lit": "^3.3.3"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.3",
+    "@commitlint/config-conventional": "^21.2.3",
+    "@storybook/addon-essentials": "^8.6.14",
+    "@storybook/addon-links": "^8.6.18",
+    "@storybook/web-components": "^8.6.18",
+    "@storybook/web-components-vite": "^8.6.18",
+    "@types/node": "^26.6.3",
+    "eslint": "^10.11.0",
+    "eslint-plugin-lit": "^2.3.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.9",
+    "sass": "^1.105.0",
+    "storybook": "^8.6.18",
+    "stylelint": "^17.15.0",
+    "stylelint-config-standard-scss": "^17.0.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.70.1",
+    "vite": "^8.3.1",
+    "vite-plugin-dts": "^5.1.1"
+  }
+}

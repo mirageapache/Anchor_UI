@@ -1,0 +1,12 @@
+/* ─── 版面與動態 Tokens (Layout & Motion) ─── */
+:root {
+  /* Layout */
+  --layout-max-width: 1600px;
+  --layout-gutter: 24px;
+  --nav-height: 64px;
+
+  /* Motion */
+  --transition-fast: 100ms ease; // 按鈕 active、圖示 hover
+  --transition-base: 150ms ease; // 邊框顏色切換、懸浮微抬升
+  --transition-theme: 200ms ease; // 深淺模式切換背景與文字過渡
+}

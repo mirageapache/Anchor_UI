@@ -1,0 +1,33 @@
+/* ─── 字型與文字階層 Tokens (Typography Tokens) ─── */
+:root {
+  /* 字型家族 (Font Families) */
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Menlo', monospace;
+
+  /* Tailwind CSS 標準字體階層 (Font Sizes) */
+  --text-2xs: 0.6875rem; // 11px: 微型標籤、區塊微標籤、次要徽章
+  --text-xs: 0.75rem; // 12px: 輔助說明、次要標註、Tooltip、卡片描述
+  --text-sm: 0.875rem; // 14px: 主要內文、控制項、表單輸入/輸出、代碼區、按鈕
+  --text-base: 1rem; // 16px: 標準內文、彈窗/面板輸入框、卡片標題
+  --text-lg: 1.125rem; // 18px: 強調段落、副標題
+  --text-xl: 1.25rem; // 20px: 區塊與分組標題 (H3)
+  --text-2xl: 1.5rem; // 24px: 彈窗標題、小頁首 (H2)
+  --text-3xl: 1.875rem; // 30px: 頁面主標題 (H1)
+  --text-4xl: 2.25rem; // 36px: 大型展示標題、Hero Text
+  --text-5xl: 3rem; // 48px: 超大數字/重點數據展示
+
+  /* 字重 (Font Weights) */
+  --weight-regular: 400; // font-normal
+  --weight-medium: 500; // font-medium
+  --weight-semibold: 600; // font-semibold
+  --weight-bold: 700; // font-bold
+  --weight-black: 900; // font-black
+
+  /* 行高 (Line Heights) */
+  --leading-none: 1; // leading-none: 徽章、圖標
+  --leading-tight: 1.25; // leading-tight: 大標題 (H1, H2)
+  --leading-snug: 1.375; // leading-snug: 卡片標題、Modal 大標
+  --leading-normal: 1.5; // leading-normal: 標準文字段落
+  --leading-relaxed: 1.625; // leading-relaxed: 長篇閱讀文章、說明文件
+  --leading-loose: 2; // leading-loose: 鬆散代碼與清單
+}

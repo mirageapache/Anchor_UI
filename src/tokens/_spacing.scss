@@ -1,0 +1,10 @@
+/* ─── 間距系統 (Spacing Scale: 4px / 8px 格線) ─── */
+:root {
+  --space-xs: 4px; // 元素內部細微間隙、標籤內行距、圖示微調
+  --space-sm: 8px; // 相鄰按鈕間距、欄位與標題間隔
+  --space-ms: 12px; // 卡片垂直內距、控制項內左右間距
+  --space-md: 16px; // 標準卡片內距、表單欄位下外距
+  --space-lg: 24px; // 區塊間距、頁面邊界 gutter
+  --space-xl: 40px; // 主要段落區隔、頁面大模組間隔
+  --space-xxl: 64px; // 頁首與頁底留白、Empty State 內距
+}

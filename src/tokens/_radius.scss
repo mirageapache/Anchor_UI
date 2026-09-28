@@ -1,0 +1,8 @@
+/* ─── 圓角系統 (Border Radius) ─── */
+:root {
+  --radius-sm: 6px; // 標籤 Tag、圖示小按鈕、模式切換選項、Tooltip
+  --radius-md: 8px; // 標準按鈕 (.btn)、輸入框 (.input)、Toast
+  --radius-lg: 12px; // 工具卡片 (.card)、分段控制器外框 (.segmented)
+  --radius-xl: 16px; // 彈窗對話框 (.alert)、指令面板
+  --radius-pill: 9999px; // 圓形圖標、頭像、Logo、全角按鈕
+}
