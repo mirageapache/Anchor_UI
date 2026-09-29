@@ -96,10 +96,10 @@
 
 #### 驗收條件 (Acceptance Criteria)
 
-- [ ] 外部專案單純引入編譯後 CSS 即可直接使用所有 Design Tokens 變數。
-- [ ] 切換 `html[data-theme="dark"]` 時，所有語意色、文字色、背景色自動且無閃爍切換。
-- [ ] 提交代碼時，若有 Lint 錯誤、格式不合、型別不通過或 Commit 訊息未符合規範，Git commit 應被正確中斷阻擋。
-- [ ] 發起 PR 時，GitHub Actions CI 能在 2 分鐘內完成靜態檢查與 Build 檢核。
+- [✅] 外部專案單純引入編譯後 CSS 即可直接使用所有 Design Tokens 變數。
+- [✅] 切換 `html[data-theme="dark"]` 時，所有語意色、文字色、背景色自動且無閃爍切換。
+- [✅] 提交代碼時，若有 Lint 錯誤、格式不合、型別不通過或 Commit 訊息未符合規範，Git commit 應被正確中斷阻擋。
+- [✅] 發起 PR 時，GitHub Actions CI 能在 2 分鐘內完成靜態檢查與 Build 檢核。
 
 ---
 
