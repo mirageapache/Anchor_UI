@@ -111,7 +111,7 @@
   --color-brand-800: #0c4a6e;
   --color-brand-dim: color-mix(in srgb, var(--color-brand-500) 15%, transparent);
   --color-brand-border: color-mix(in srgb, var(--color-brand-500) 30%, transparent);
-  --color-brand-text: var(--color-brand-500); // 品牌文字色 (加亮淺天藍)
+  --color-brand-text: #bae6fd; // Sky 200 (WCAG AAA)
 
   /* Background / Surface */
   --color-base: #1e293b; // Slate-800
@@ -159,7 +159,7 @@
   --color-info: #38bdf8; // Sky 400
   --color-info-hover: #7dd3fc; // Sky 300 (暗色 hover 調亮)
   --color-info-light: #bae6fd; // Sky 200
-  --color-info-text: #bae6fd; // Sky 200 (WCAG AAA)
+  --color-info-text: var(--color-info); // Sky 400 (#38bdf8: 明亮天藍文字)
   --color-info-dim: color-mix(in srgb, var(--color-info) 15%, transparent);
   --color-info-border: color-mix(in srgb, var(--color-info) 30%, transparent);
 
