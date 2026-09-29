@@ -25,10 +25,7 @@ body {
 }
 
 // 避免超長 Hash、Base64 或 URL 撐爆元件排版
-input,
-button,
-textarea,
-select,
+// Note: 不包含 input/button，其內容由 value 控制，overflow-wrap 無效
 p,
 pre,
 code {
@@ -42,4 +39,19 @@ textarea,
 select {
   font: inherit;
   color: inherit;
+}
+
+// ─── 主題切換過渡輔助 (H-03) ─────────────────────────────────────────────
+// 在 JavaScript setTheme() 切換時，會暫時為 <html> 添加此 class（約 250ms），
+// 讓所有可視屬性在主題切換時產生平滑過渡，而非只有 body 元素有動態。
+// Phase 1+ 的元件層級過渡由各元件的 :host / Shadow DOM 樣式各自處理。
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+  transition:
+    background-color var(--transition-theme),
+    color var(--transition-theme),
+    border-color var(--transition-theme),
+    box-shadow var(--transition-theme) !important;
 }

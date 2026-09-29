@@ -3,8 +3,6 @@
   "version": "0.0.1",
   "description": "Anchor UI - framework-agnostic Web Component library with modern Slate-Navy aesthetic",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "style": "./dist/styles.css",
   "exports": {
@@ -13,6 +11,7 @@
       "import": "./dist/index.js"
     },
     "./styles.css": "./dist/styles.css",
+    "./tokens.css": "./dist/tokens.css",
     "./tokens": "./src/tokens/index.scss",
     "./reset": "./src/base/_reset.scss"
   },
@@ -23,7 +22,8 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && pnpm build:tokens",
+    "build:tokens": "sass src/tokens/index.scss dist/tokens.css --style=compressed --no-source-map",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",

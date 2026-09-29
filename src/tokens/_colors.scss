@@ -87,6 +87,15 @@
   --color-accent-text: var(--color-warning-text);
   --color-accent-dim: var(--color-warning-dim);
   --color-accent-border: var(--color-warning-border);
+
+  /* 7. Brand (Blue/Navy): 品牌主色作為第 7 種語意色 (H-02) */
+  /* 供 Tag/Badge 等元件以統一 API 存取，與其他 6 種語意色結構相同。 */
+  --color-brand-main: var(--color-brand-600);
+  --color-brand-hover: var(--color-brand-700);
+  --color-brand-light: var(--color-brand-500);
+  --color-brand-main-text: var(--color-brand-text);
+  --color-brand-main-dim: var(--color-brand-dim);
+  --color-brand-main-border: var(--color-brand-border);
 }
 
 /* 深色模式 (Dark Mode: [data-theme="dark"]) */
@@ -177,4 +186,12 @@
   --color-accent-text: var(--color-warning-text);
   --color-accent-dim: var(--color-warning-dim);
   --color-accent-border: var(--color-warning-border);
+
+  /* 7. Brand (Blue/Navy): 深色模式對應 (H-02) */
+  --color-brand-main: var(--color-brand-600);
+  --color-brand-hover: var(--color-brand-700);
+  --color-brand-light: var(--color-brand-500);
+  --color-brand-main-text: var(--color-brand-text);
+  --color-brand-main-dim: var(--color-brand-dim);
+  --color-brand-main-border: var(--color-brand-border);
 }

@@ -116,6 +116,46 @@ pnpm build-storybook
 
 ---
 
+## 字體載入 (Font Loading)
+
+> **重要**：本套件僅定義字型 Tokens（CSS Custom Properties），**不自動載入字體檔案**。消費端需自行引入以下字型，否則將降級至系統預設字體。
+
+### 方式 A — Google Fonts CDN（HTML `<head>`）
+
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;500&display=swap"
+  rel="stylesheet"
+/>
+```
+
+### 方式 B — npm 套件（推薦用於 Vue / React 等 Bundler 專案）
+
+```bash
+pnpm add @fontsource/inter @fontsource/jetbrains-mono
+```
+
+```ts
+// main.ts / main.js
+import '@fontsource/inter/400.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/600.css';
+import '@fontsource/inter/700.css';
+import '@fontsource/jetbrains-mono/400.css';
+```
+
+---
+
+## ESM-Only 說明
+
+本套件以**純 ESM 格式**發佈（`"type": "module"`）。Lit / Web Components 本身即 ESM-native，不提供 CommonJS 輸出。
+
+若消費端使用 CommonJS 環境（如部分 Jest / Angular SSR 設定），請在 bundler 設定中將 `@anchor-ui/core` 加入 `esmExternals` 或轉換清單（例如 Vite 的 `ssr.noExternal`）。
+
+---
+
 ## 相關規劃文件
 
 詳細架構、樣式字典與排程請參考 `doc/` 目錄：

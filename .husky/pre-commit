@@ -1,2 +1,8 @@
 pnpm exec lint-staged
-pnpm typecheck
+
+# C-01/C-02: tsc 不支援「僅對暫存檔案」進行型別檢查，因此以全專案 typecheck 為防線。
+# 僅在有 .ts / .js 暫存時執行，避免只改 SCSS / 圖片時觸發不必要的完整編譯。
+STAGED_TS=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|js)$' || true)
+if [ -n "$STAGED_TS" ]; then
+  pnpm typecheck
+fi

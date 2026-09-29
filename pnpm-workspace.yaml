@@ -1,3 +1,13 @@
+# H-06: packages: 欄位為 Monorepo 預備設定。
+# 目前僅包含根套件（單 package 架構）。
+# 未來若需拆分子套件（如 @anchor-ui/tokens、@anchor-ui/icons），
+# 請新增子目錄並改為：
+#   packages:
+#     - '.'
+#     - 'packages/*'
+packages:
+  - '.'
+
 allowBuilds:
   '@parcel/watcher': true
   'esbuild': true

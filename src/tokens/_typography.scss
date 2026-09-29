@@ -1,4 +1,14 @@
-/* ─── 字型與文字階層 Tokens (Typography Tokens) ─── */
+/* ─── 字型與文字階層 Tokens (Typography Tokens) ─────────────── */
+/* L-03: 本檔仅定義字型家族變數（font-family tokens），不內包字型檔案。             */
+/* 消費端需自行載入以下字型，否則將降級至系統預設字型：               */
+/* • Inter （UI 主字型）：                                                          */
+/*   <link rel="preconnect" href="https://fonts.googleapis.com">              */
+/*   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap" rel="stylesheet"> */
+/* • JetBrains Mono （等寬代碼字型）：                                               */
+/*   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"> */
+/* 或安裝 npm 套件： @fontsource/inter @fontsource/jetbrains-mono                  */
+/*   import '@fontsource/inter/400.css'; import '@fontsource/inter/600.css';  */
+/* ────────────────────────────────────────────────────────────────────── */
 :root {
   /* 字型家族 (Font Families) */
   --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;

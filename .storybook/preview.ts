@@ -9,15 +9,10 @@ const preview: Preview = {
         date: /Date$/i,
       },
     },
-    backgrounds: {
-      default: 'theme-adaptive',
-      values: [
-        {
-          name: 'theme-adaptive',
-          value: 'var(--color-bg)',
-        },
-      ],
-    },
+    // Fix M-02: Storybook's backgrounds addon cannot resolve CSS custom properties.
+    // Theme background is driven by the decorator below via data-theme attribute,
+    // so we disable the built-in backgrounds panel to avoid confusion.
+    backgrounds: { disable: true },
   },
   globalTypes: {
     theme: {
@@ -38,11 +33,15 @@ const preview: Preview = {
     (story, context) => {
       const theme = context.globals.theme || 'light';
       if (typeof document !== 'undefined') {
+        const html = document.documentElement;
+        // Apply theme-transitioning class for smooth switch (H-03)
+        html.classList.add('theme-transitioning');
         if (theme === 'dark') {
-          document.documentElement.setAttribute('data-theme', 'dark');
+          html.setAttribute('data-theme', 'dark');
         } else {
-          document.documentElement.removeAttribute('data-theme');
+          html.removeAttribute('data-theme');
         }
+        setTimeout(() => html.classList.remove('theme-transitioning'), 250);
       }
       return story();
     },

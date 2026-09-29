@@ -20,6 +20,23 @@
       {
         "ignoreProperties": ["clip"]
       }
-    ]
-  }
+    ],
+    "color-named": "never",
+    "color-no-invalid-hex": true,
+    "color-no-hex": true
+  },
+  "overrides": [
+    {
+      "files": ["src/tokens/**/*.scss"],
+      "rules": {
+        "color-no-hex": null
+      }
+    },
+    {
+      "files": ["src/components/**/*.scss"],
+      "rules": {
+        "declaration-property-value-no-unknown": true
+      }
+    }
+  ]
 }

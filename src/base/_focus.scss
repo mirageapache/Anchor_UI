@@ -1,9 +1,13 @@
 /* ─── 3.2 無障礙焦點環 (Accessible Focus Ring) ─── */
+/* 雙層焦點環設計：外層 outline（品牌藍）+ 內層 box-shadow（半透明光暈） */
+/* 確保焦點標記在任何背景色（含白色、深黑、彩色）下皆清晰可辨。        */
 :focus-visible {
   outline: 2px solid var(--color-brand-500);
   outline-offset: 2px;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand-500) 25%, transparent);
 }
 
 :focus:not(:focus-visible) {
   outline: none;
+  box-shadow: none;
 }

@@ -3,7 +3,10 @@ import litPlugin from 'eslint-plugin-lit';
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'node_modules/**', 'storybook-static/**', '**/*.d.ts', '*.config.*'],
+    // Ignore build output, generated files, and Storybook static output.
+    // Config files (vite.config.ts, eslint.config.js, etc.) are intentionally NOT excluded
+    // so their TypeScript errors are surfaced during linting.
+    ignores: ['dist/**', 'node_modules/**', 'storybook-static/**', '**/*.d.ts'],
   },
   ...tseslint.configs.recommended,
   {
@@ -15,6 +18,11 @@ export default tseslint.config(
       ...litPlugin.configs.recommended.rules,
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/explicit-function-return-type': 'off',
+      // L-05: Align with tsconfig's noUnusedLocals / noUnusedParameters for consistent IDE feedback.
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
   },
 );

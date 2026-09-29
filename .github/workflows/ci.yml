@@ -22,7 +22,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Install dependencies
@@ -42,6 +42,8 @@ jobs:
 
   build:
     name: Build & Package Verification
+    # Fix C-03: build must not run when lint-and-typecheck fails.
+    needs: lint-and-typecheck
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -55,13 +57,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: '.nvmrc'
           cache: 'pnpm'
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Anchor UI library
+      - name: Build Anchor UI library (JS + Tokens CSS)
         run: pnpm build
 
       - name: Build Storybook documentation
