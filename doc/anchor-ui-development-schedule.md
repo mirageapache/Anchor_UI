@@ -137,7 +137,7 @@
 
 #### 驗收條件 (Acceptance Criteria)
 
-- [ ] `<aui-button>`、`<aui-tag>`、`<aui-tooltip>` 在 Vue 3 與 Angular 中皆無需特殊 wrapper 即可原生使用。
+- [ ] `<aui-button>`、`<aui-tag>`、`<aui-tooltip>`、`<aui-icon-button>` 在 Vue 3 與 Angular 中皆無需特殊 wrapper 即可原生使用。
 - [ ] 元件內部樣式受 Shadow DOM 保護，同時能正常讀取外部全域 CSS Custom Properties（主題變數切換正常）。
 - [ ] 所有元件通過 `axe-core` 檢驗，無任何 WCAG 2.1 AA/AAA 違規。
 - [ ] GitHub Actions CI 自動跑完所有測試案例，PR 綠燈才允許 Merge。
