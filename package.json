@@ -29,6 +29,7 @@
     "test": "wtr",
     "test:watch": "wtr --watch",
     "test:coverage": "wtr --coverage",
+    "test:a11y": "wtr \"src/components/**/*.a11y.test.ts\"",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "stylelint": "stylelint \"src/**/*.{css,scss}\"",

@@ -120,7 +120,7 @@ export const buttonStyles = css`
   /* ─── 2. Accent: 琥珀金高反差 (核心轉檔、加值功能) ─── */
   .btn--accent {
     background-color: var(--color-accent);
-    color: #ffffff;
+    color: #0f172a;
     font-weight: var(--weight-bold, 700);
     box-shadow: 0 1px 2px rgba(245, 158, 11, 0.25);
   }
@@ -145,24 +145,24 @@ export const buttonStyles = css`
 
   /* ─── 4. Danger: 刪除或破壞性按鈕 ─── */
   .btn--danger {
-    background-color: var(--color-danger);
+    background-color: var(--color-danger-solid, #dc2626);
     color: #ffffff;
-    box-shadow: 0 1px 2px rgba(239, 68, 68, 0.2);
+    box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2);
   }
 
   .btn--danger:hover:not(:disabled):not(.btn--loading) {
-    background-color: var(--color-danger-hover);
+    background-color: var(--color-danger-hover, #b91c1c);
   }
 
   /* ─── 5. Success: 成功、確認或完成操作 ─── */
   .btn--success {
-    background-color: var(--color-success);
+    background-color: var(--color-success-solid, #047857);
     color: #ffffff;
-    box-shadow: 0 1px 2px rgba(16, 185, 129, 0.2);
+    box-shadow: 0 1px 2px rgba(4, 120, 87, 0.2);
   }
 
   .btn--success:hover:not(:disabled):not(.btn--loading) {
-    background-color: var(--color-success-hover);
+    background-color: var(--color-success-hover, #065f46);
   }
 
   /* ─── 內容與插槽元素 ─── */

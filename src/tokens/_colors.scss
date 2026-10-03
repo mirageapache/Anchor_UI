@@ -44,7 +44,7 @@
   --color-warning: #f59e0b; // Amber 500: 主狀態色
   --color-warning-hover: #d97706; // Amber 600: 懸停態 (加深)
   --color-warning-light: #fbbf24; // Amber 400: 次級裝飾、淺態
-  --color-warning-text: #b45309; // Amber 700: 淺底高對比文字 (WCAG AA > 4.5:1)
+  --color-warning-text: #92400e; // Amber 800: 淺底高對比文字 (WCAG AA > 4.5:1 在有色底上)
   --color-warning-dim: color-mix(in srgb, var(--color-warning) 14%, transparent);
   --color-warning-border: color-mix(in srgb, var(--color-warning) 30%, transparent);
 
@@ -102,12 +102,12 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  /* Brand Primary (加亮的海軍藍) */
+  /* Brand Primary (加亮的海軍藍，確保高對比度) */
   --color-brand-50: #0b1f33;
   --color-brand-100: #102f4c;
   --color-brand-500: #38bdf8;
-  --color-brand-600: #0284c7;
-  --color-brand-700: #0369a1;
+  --color-brand-600: #0369a1; // Sky-700 (WCAG AA > 4.5:1 對比度)
+  --color-brand-700: #025584;
   --color-brand-800: #0c4a6e;
   --color-brand-dim: color-mix(in srgb, var(--color-brand-500) 15%, transparent);
   --color-brand-border: color-mix(in srgb, var(--color-brand-500) 30%, transparent);

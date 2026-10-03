@@ -26,7 +26,7 @@ export default {
       timeout: 6000,
     },
   },
-  coverage: true,
+  coverage: process.argv.includes('--coverage'),
   coverageConfig: {
     report: true,
     reportDir: 'coverage',
