@@ -1,0 +1,107 @@
+import { expect, fixture, html, oneEvent } from '@open-wc/testing';
+import './index.js';
+import type { AuiTag } from './tag.js';
+
+describe('AuiTag (<aui-tag>)', () => {
+  it('renders with default attributes and base structure', async () => {
+    const el = await fixture<AuiTag>(html`<aui-tag>typescript</aui-tag>`);
+    expect(el).to.exist;
+    expect(el.variant).to.equal('neutral');
+    expect(el.size).to.equal('sm');
+    expect(el.pill).to.be.false;
+    expect(el.preserveCase).to.be.false;
+    expect(el.removable).to.be.false;
+    expect(el.interactive).to.be.false;
+
+    const base = el.shadowRoot?.querySelector('.tag');
+    expect(base).to.exist;
+    expect(base?.classList.contains('tag--neutral')).to.be.true;
+    expect(base?.classList.contains('tag--sm')).to.be.true;
+  });
+
+  it('reflects variant, size, pill and preserve-case attributes', async () => {
+    const el = await fixture<AuiTag>(
+      html`<aui-tag variant="brand" size="lg" pill preserve-case>v1.0.0</aui-tag>`,
+    );
+    expect(el.getAttribute('variant')).to.equal('brand');
+    expect(el.getAttribute('size')).to.equal('lg');
+    expect(el.hasAttribute('pill')).to.be.true;
+    expect(el.hasAttribute('preserve-case')).to.be.true;
+
+    const base = el.shadowRoot?.querySelector('.tag');
+    expect(base?.classList.contains('tag--brand')).to.be.true;
+    expect(base?.classList.contains('tag--lg')).to.be.true;
+    expect(base?.classList.contains('tag--pill')).to.be.true;
+    expect(base?.classList.contains('tag--preserve-case')).to.be.true;
+  });
+
+  it('supports prefix and suffix slots', async () => {
+    const el = await fixture<AuiTag>(html`
+      <aui-tag>
+        <span slot="prefix">●</span>
+        active
+        <span slot="suffix">↗</span>
+      </aui-tag>
+    `);
+
+    const prefixSlot = el.shadowRoot?.querySelector('slot[name="prefix"]');
+    const suffixSlot = el.shadowRoot?.querySelector('slot[name="suffix"]');
+    expect(prefixSlot).to.exist;
+    expect(suffixSlot).to.exist;
+  });
+
+  it('manages interactive accessibility attributes and keyboard activation', async () => {
+    const el = await fixture<AuiTag>(html`<aui-tag interactive>Filter Tag</aui-tag>`);
+    expect(el.getAttribute('role')).to.equal('button');
+    expect(el.getAttribute('tabindex')).to.equal('0');
+
+    const base = el.shadowRoot?.querySelector('.tag');
+    expect(base?.classList.contains('tag--interactive')).to.be.true;
+
+    let clicked = false;
+    el.addEventListener('click', () => {
+      clicked = true;
+    });
+
+    // Enter key triggers click
+    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    expect(clicked).to.be.true;
+
+    clicked = false;
+    // Space key triggers click
+    el.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+    expect(clicked).to.be.true;
+
+    // Disabling interactive removes role and tabindex
+    el.interactive = false;
+    await el.updateComplete;
+    expect(el.hasAttribute('role')).to.be.false;
+    expect(el.hasAttribute('tabindex')).to.be.false;
+    expect(base?.classList.contains('tag--interactive')).to.be.false;
+  });
+
+  it('renders remove button with default label and fires aui-remove event when clicked', async () => {
+    const el = await fixture<AuiTag>(html`<aui-tag removable>Removable</aui-tag>`);
+    const removeBtn = el.shadowRoot?.querySelector<HTMLButtonElement>('.tag__remove');
+    expect(removeBtn).to.exist;
+    expect(removeBtn?.getAttribute('aria-label')).to.equal('Remove tag');
+    expect(removeBtn?.getAttribute('title')).to.equal('Remove tag');
+
+    const base = el.shadowRoot?.querySelector('.tag');
+    expect(base?.classList.contains('tag--removable')).to.be.true;
+
+    setTimeout(() => removeBtn?.click());
+    const ev = (await oneEvent(el, 'aui-remove')) as CustomEvent<{ tag: AuiTag }>;
+    expect(ev).to.exist;
+    expect(ev.detail.tag).to.equal(el);
+  });
+
+  it('supports custom remove-label attribute', async () => {
+    const el = await fixture<AuiTag>(
+      html`<aui-tag removable remove-label="Delete item">Removable</aui-tag>`,
+    );
+    const removeBtn = el.shadowRoot?.querySelector<HTMLButtonElement>('.tag__remove');
+    expect(removeBtn?.getAttribute('aria-label')).to.equal('Delete item');
+    expect(removeBtn?.getAttribute('title')).to.equal('Delete item');
+  });
+});

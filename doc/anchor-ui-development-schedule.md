@@ -115,18 +115,18 @@
 
 #### 任務拆解 (Task Breakdown)
 
-| 任務代號     | 類別 | 工作項目                                     | 說明與具體內容                                                                                                                            |
-| ------------ | :--: | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
-| **TASK-101** | 元件 | `Button` 元件實作 (`<aui-button>`)           | 支援 Primary、Accent、Ghost、Danger 四種變體；支援 disabled、loading、active 點擊縮放、40px 最低觸控高度。                                |
-| **TASK-102** | 元件 | `Tag / Badge` 元件實作 (`<aui-tag>`)         | 採用 JetBrains Mono 等寬字體；支援 7 種語意色彩變體；全小寫標籤規範。                                                                     |
-| **TASK-103** | 元件 | `Tooltip` 元件實作 (`<aui-tooltip>`)         | Shadcn 風格冷黑浮層；微縮放動態（0.95 -> 1.0）；浮動定位（Popper/Floating UI 或原生 Popover API 封裝）。                                  |
-| **TASK-104** | 元件 | `Icon Button` 元件實作 (`<aui-icon-button>`) | 32×32px 觸控盒；內建 Copy/Download 狀態切換動態；結合 Tooltip 與無障礙標籤。                                                              |
-| **TASK-105** | 工程 | **元件單元測試框架建置**                     | 配置 **Web Test Runner**（或 **Vitest**）+ **`@open-wc/testing`**，支援在真實/無頭瀏覽器中測試 Custom Elements 渲染、屬性反射與事件分派。 |
-| **TASK-106** | 工程 | **無障礙自動化檢測 (a11y)**                  | 於測試管線中整合 **`axe-core`**，為每個原子元件撰寫色彩對比度、ARIA 角色與鍵盤可聚焦性自動化測試。                                        |
-| **TASK-107** | 整合 | Vue 3 整合測試專案建立                       | 設定 `vite.config` 之 `compilerOptions.isCustomElement`；驗證 `@click`、props 綁定與響應式更新。                                          |
-| **TASK-108** | 整合 | Angular 整合測試專案建立                     | 引入 `CUSTOM_ELEMENTS_SCHEMA`；驗證屬性 `[variant]` 與自訂事件 `(auiChange)` 雙向連通性。                                                 |
-| **TASK-109** | 流程 | yalc 本地開發工作流定型                      | 驗證 `yalc publish` ➜ `yalc add @anchor-ui` ➜ 元件熱更新流程。                                                                            |
-| **TASK-110** | 工程 | **CI 自動化測試管線整合**                    | 擴充 GitHub Actions CI：新增自動執行元件單元測試、無障礙檢測與程式碼覆蓋率（Codecov / LCOV）產出。                                        |
+| 任務代號     | 類別 | 工作項目                                     | 說明與具體內容                                                                                                                    |
+| ------------ | :--: | -------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| **TASK-101** | 元件 | `Button` 元件實作 (`<aui-button>`)           | 支援 Primary、Accent、Ghost、Danger 四種變體；支援 disabled、loading、active 點擊縮放、40px 最低觸控高度。                        |
+| **TASK-102** | 元件 | `Tag / Badge` 元件實作 (`<aui-tag>`)         | 採用 JetBrains Mono 等寬字體；支援 7 種語意色彩變體；全小寫標籤規範。                                                             |
+| **TASK-103** | 元件 | `Tooltip` 元件實作 (`<aui-tooltip>`)         | Shadcn 風格冷黑浮層；微縮放動態（0.95 -> 1.0）；浮動定位（Popper/Floating UI 或原生 Popover API 封裝）。                          |
+| **TASK-104** | 元件 | `Icon Button` 元件實作 (`<aui-icon-button>`) | 32×32px 觸控盒；內建 Copy/Download 狀態切換動態；結合 Tooltip 與無障礙標籤。                                                      |
+| **TASK-105** | 工程 | **元件單元測試框架建置** [✅]                | 配置 **Web Test Runner** + **`@open-wc/testing`** + **Playwright Chromium**，完成 4 大原子元件 38 項單元測試，總覆蓋率達 92.13%。 |
+| **TASK-106** | 工程 | **無障礙自動化檢測 (a11y)**                  | 於測試管線中整合 **`axe-core`**，為每個原子元件撰寫色彩對比度、ARIA 角色與鍵盤可聚焦性自動化測試。                                |
+| **TASK-107** | 整合 | Vue 3 整合測試專案建立                       | 設定 `vite.config` 之 `compilerOptions.isCustomElement`；驗證 `@click`、props 綁定與響應式更新。                                  |
+| **TASK-108** | 整合 | Angular 整合測試專案建立                     | 引入 `CUSTOM_ELEMENTS_SCHEMA`；驗證屬性 `[variant]` 與自訂事件 `(auiChange)` 雙向連通性。                                         |
+| **TASK-109** | 流程 | yalc 本地開發工作流定型                      | 驗證 `yalc publish` ➜ `yalc add @anchor-ui` ➜ 元件熱更新流程。                                                                    |
+| **TASK-110** | 工程 | **CI 自動化測試管線整合**                    | 擴充 GitHub Actions CI：新增自動執行元件單元測試、無障礙檢測與程式碼覆蓋率（Codecov / LCOV）產出。                                |
 
 #### 交付成果 (Deliverables)
 
