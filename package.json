@@ -30,6 +30,7 @@
     "test:watch": "wtr --watch",
     "test:coverage": "wtr --coverage",
     "test:a11y": "wtr \"src/components/**/*.a11y.test.ts\"",
+    "test:vue": "pnpm --filter example-vue3 test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "stylelint": "stylelint \"src/**/*.{css,scss}\"",

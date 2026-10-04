@@ -6,7 +6,7 @@ export default tseslint.config(
     // Ignore build output, generated files, and Storybook static output.
     // Config files (vite.config.ts, eslint.config.js, etc.) are intentionally NOT excluded
     // so their TypeScript errors are surfaced during linting.
-    ignores: ['dist/**', 'node_modules/**', 'storybook-static/**', 'coverage/**', '**/*.d.ts'],
+    ignores: ['**/dist/**', 'node_modules/**', 'storybook-static/**', 'coverage/**', '**/*.d.ts'],
   },
   ...tseslint.configs.recommended,
   {
