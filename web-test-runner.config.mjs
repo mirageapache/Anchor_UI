@@ -30,6 +30,8 @@ export default {
   coverageConfig: {
     report: true,
     reportDir: 'coverage',
+    // TASK-110: lcov 供 Codecov 上傳，text-summary 顯示於 CI 日誌
+    reporters: ['lcov', 'text-summary'],
     include: ['src/components/**/*.ts'],
     exclude: ['src/components/**/*.test.ts', 'src/components/**/*.types.ts', 'src/components/**/index.ts'],
     threshold: {
