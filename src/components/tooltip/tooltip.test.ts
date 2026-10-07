@@ -206,4 +206,24 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
     await el.updateComplete;
     expect(el.placement).to.equal('bottom-start');
   });
+
+  it('reads --color-tooltip-* tokens from ancestors through Shadow DOM', async () => {
+    const wrapper = await fixture<HTMLDivElement>(html`
+      <div
+        style="--color-tooltip-bg: rgb(1, 2, 3); --color-tooltip-text: rgb(4, 5, 6); --color-tooltip-border: rgb(7, 8, 9);"
+      >
+        <aui-tooltip content="Themed tooltip" open>
+          <button>Target</button>
+        </aui-tooltip>
+      </div>
+    `);
+    const el = wrapper.querySelector<AuiTooltip>('aui-tooltip')!;
+    await el.updateComplete;
+
+    const popup = el.shadowRoot!.querySelector<HTMLElement>('.tooltip__popup')!;
+    const style = getComputedStyle(popup);
+    expect(style.backgroundColor).to.equal('rgb(1, 2, 3)');
+    expect(style.color).to.equal('rgb(4, 5, 6)');
+    expect(style.borderTopColor).to.equal('rgb(7, 8, 9)');
+  });
 });

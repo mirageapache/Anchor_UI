@@ -30,6 +30,11 @@
   --color-text-secondary: #475569; // 卡片描述、輔助說明 (Slate-600)
   --color-text-muted: #64748b; // Placeholder、中繼標籤 (Slate-500)
 
+  /* Tooltip (反白浮層：淺色底上的冷黑氣泡) */
+  --color-tooltip-bg: #0f172a; // Slate-900
+  --color-tooltip-text: #f8fafc; // Slate-50 (WCAG AAA)
+  --color-tooltip-border: rgb(255 255 255 / 14%);
+
   /* ─── 語意與狀態色完整系統 (Semantic Status & Actions) ─── */
 
   /* 1. Danger (Red): 錯誤、刪除、危險操作 */
@@ -128,6 +133,11 @@
   --color-text-primary: #f8fafc; // Slate-50
   --color-text-secondary: #94a3b8; // Slate-400
   --color-text-muted: #64748b; // Slate-500
+
+  /* Tooltip (深色底上提亮一階，與頁面背景區隔) */
+  --color-tooltip-bg: #1e293b; // Slate-800
+  --color-tooltip-text: #f8fafc; // Slate-50 (WCAG AAA)
+  --color-tooltip-border: rgb(255 255 255 / 18%);
 
   /* ─── 語意與狀態色 (Dark Mode: 提升亮度確保清晰度與對比度) ─── */
 

@@ -51,9 +51,9 @@ export const tooltipStyles = css`
     font-weight: var(--weight-medium, 500);
     line-height: 1.35;
     letter-spacing: 0.01em;
-    color: #f8fafc;
-    background-color: #0f172a;
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: var(--color-tooltip-text, #f8fafc);
+    background-color: var(--color-tooltip-bg, #0f172a);
+    border: 1px solid var(--color-tooltip-border, rgba(255, 255, 255, 0.14));
     border-radius: var(--radius-sm, 6px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
     pointer-events: none;
@@ -68,12 +68,10 @@ export const tooltipStyles = css`
     user-select: none;
   }
 
-  /* 深色模式外觀 */
-  :host-context([data-theme='dark']) .tooltip__popup,
-  :root[data-theme='dark'] .tooltip__popup {
-    background-color: #1e293b;
-    border-color: rgba(255, 255, 255, 0.18);
-  }
+  /*
+   * 深色模式：不在此使用 :host-context()（Firefox / Safari 不支援），
+   * 改由 [data-theme='dark'] 覆寫 --color-tooltip-* token，經 CSS 繼承穿透 Shadow DOM。
+   */
 
   /* 顯示狀態：淡入並縮放至 1.0，允許滑鼠懸停於氣泡上 (WCAG 1.4.13) */
   .tooltip__popup--visible {
@@ -86,15 +84,9 @@ export const tooltipStyles = css`
   .tooltip__popup[popover] {
     inset: unset;
     overflow: visible;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    background-color: #0f172a;
-    color: #f8fafc;
-  }
-
-  :host-context([data-theme='dark']) .tooltip__popup[popover],
-  :root[data-theme='dark'] .tooltip__popup[popover] {
-    background-color: #1e293b;
-    border-color: rgba(255, 255, 255, 0.18);
+    border: 1px solid var(--color-tooltip-border, rgba(255, 255, 255, 0.14));
+    background-color: var(--color-tooltip-bg, #0f172a);
+    color: var(--color-tooltip-text, #f8fafc);
   }
 
   /* ─── 箭頭指標 (Arrow Indicator) ─── */
