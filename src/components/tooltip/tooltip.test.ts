@@ -226,4 +226,99 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
     expect(style.color).to.equal('rgb(4, 5, 6)');
     expect(style.borderTopColor).to.equal('rgb(7, 8, 9)');
   });
+
+  describe('when moved within the DOM (disconnect → reconnect)', () => {
+    it('re-binds trigger listeners after being re-inserted', async () => {
+      const wrapper = await fixture<HTMLDivElement>(html`
+        <div>
+          <section id="from">
+            <aui-tooltip content="Movable tip" .delay=${0} .hideDelay=${0}>
+              <button>Target</button>
+            </aui-tooltip>
+          </section>
+          <section id="to"></section>
+        </div>
+      `);
+      const el = wrapper.querySelector('aui-tooltip') as AuiTooltip;
+      const btn = el.querySelector('button') as HTMLButtonElement;
+
+      // 模擬框架重排節點（Vue keyed list 重排、拖曳排序等）
+      wrapper.querySelector('#to')!.appendChild(el);
+      await el.updateComplete;
+
+      btn.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      await oneEvent(el, 'aui-after-show');
+      expect(el.open).to.be.true;
+
+      btn.dispatchEvent(new MouseEvent('mouseleave'));
+      await oneEvent(el, 'aui-hide');
+      expect(el.open).to.be.false;
+    });
+
+    it('re-binds listeners on a for-referenced target after being re-inserted', async () => {
+      const wrapper = await fixture<HTMLDivElement>(html`
+        <div>
+          <button id="moved-for-target">Target</button>
+          <aui-tooltip for="moved-for-target" content="Tip" trigger="click"></aui-tooltip>
+        </div>
+      `);
+      const el = wrapper.querySelector('aui-tooltip') as AuiTooltip;
+      const btn = wrapper.querySelector('button') as HTMLButtonElement;
+
+      el.remove();
+      wrapper.appendChild(el);
+      await el.updateComplete;
+
+      setTimeout(() => btn.click());
+      await oneEvent(el, 'aui-after-show');
+      expect(el.open).to.be.true;
+    });
+
+    it('keeps an open tooltip visible and positioned after being re-inserted', async () => {
+      const wrapper = await fixture<HTMLDivElement>(html`
+        <div>
+          <aui-tooltip content="Open tip">
+            <button>Target</button>
+          </aui-tooltip>
+        </div>
+      `);
+      const el = wrapper.querySelector('aui-tooltip') as AuiTooltip;
+      const popup = el.shadowRoot!.querySelector<HTMLElement>('.tooltip__popup')!;
+      const btn = el.querySelector('button') as HTMLButtonElement;
+
+      setTimeout(() => el.show());
+      await oneEvent(el, 'aui-after-show');
+
+      el.remove();
+      setTimeout(() => wrapper.appendChild(el));
+      await oneEvent(el, 'aui-after-show');
+
+      expect(el.open).to.be.true;
+      expect(popup.matches(':popover-open')).to.be.true;
+      expect(popup.classList.contains('tooltip__popup--visible')).to.be.true;
+      expect(btn.getAttribute('aria-describedby')).to.exist;
+
+      // 重新插入後仍可正常關閉
+      setTimeout(() => el.hide());
+      await oneEvent(el, 'aui-after-hide');
+      expect(popup.matches(':popover-open')).to.be.false;
+    });
+
+    it('does not leave a stale aria-describedby on the target after removal', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Tip">
+          <button aria-describedby="hint">Target</button>
+        </aui-tooltip>
+      `);
+      const btn = el.querySelector('button') as HTMLButtonElement;
+
+      setTimeout(() => el.show());
+      await oneEvent(el, 'aui-after-show');
+      // 開啟期間使用者另外加入的描述，關閉時不應被舊快照覆蓋
+      btn.setAttribute('aria-describedby', `${btn.getAttribute('aria-describedby')} late-hint`);
+
+      el.remove();
+      expect(btn.getAttribute('aria-describedby')).to.equal('hint late-hint');
+    });
+  });
 });

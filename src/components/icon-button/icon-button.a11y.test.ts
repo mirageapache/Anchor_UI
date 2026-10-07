@@ -1,6 +1,8 @@
 import { expect, fixture, html, oneEvent } from '@open-wc/testing';
+import { getAxNode } from '../../test-utils/ax.js';
 import './icon-button.js';
 import type { AuiIconButton } from './icon-button.js';
+import type { AuiTooltip } from '../tooltip/tooltip.js';
 
 describe('AuiIconButton Accessibility (<aui-icon-button>)', () => {
   before(async () => {
@@ -95,6 +97,25 @@ describe('AuiIconButton Accessibility (<aui-icon-button>)', () => {
       );
       const customInnerBtn = customEl.shadowRoot?.querySelector('button');
       expect(customInnerBtn?.getAttribute('aria-label')).to.equal('自訂搜尋');
+    });
+
+    it('exposes the built-in tooltip text as the accessible description of the button', async () => {
+      const el = await fixture<AuiIconButton>(
+        html`<aui-icon-button
+          preset="copy"
+          label="複製程式碼"
+          tooltip="複製至剪貼簿"
+        ></aui-icon-button>`,
+      );
+      const tooltip = el.shadowRoot!.querySelector<AuiTooltip>('aui-tooltip')!;
+      const innerBtn = el.shadowRoot!.querySelector('button')!;
+
+      setTimeout(() => tooltip.show());
+      await oneEvent(tooltip, 'aui-after-show');
+
+      const node = await getAxNode(innerBtn);
+      expect(node.name).to.equal('複製程式碼');
+      expect(node.description).to.equal('複製至剪貼簿');
     });
 
     it('manages aria-busy, aria-disabled and aria-pressed attributes', async () => {

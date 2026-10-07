@@ -112,6 +112,8 @@
   --color-danger-text: #b91c1c; // Red 700: 淺底高對比文字 (WCAG AA > 4.5:1)
   --color-danger-dim: color-mix(in srgb, var(--color-danger) 10%, transparent);
   --color-danger-border: color-mix(in srgb, var(--color-danger) 25%, transparent);
+  --color-danger-solid: #dc2626; // Red 600: 實心按鈕底色 (白字 4.83:1 AA)
+  --color-danger-solid-hover: #b91c1c; // Red 700: 實心按鈕懸停 (白字 6.47:1)
 
   /* 2. Warning (Amber): 效能警告、提示、星號收藏、HOT 徽章 (統一整併 Accent) */
   --color-warning: #f59e0b; // Amber 500: 主狀態色
@@ -128,6 +130,8 @@
   --color-success-text: #047857; // Emerald 700: 淺底深綠輸出文字 (WCAG AA > 4.5:1)
   --color-success-dim: color-mix(in srgb, var(--color-success) 10%, transparent);
   --color-success-border: color-mix(in srgb, var(--color-success) 28%, transparent);
+  --color-success-solid: #047857; // Emerald 700: 實心按鈕底色 (白字 5.48:1 AA)
+  --color-success-solid-hover: #065f46; // Emerald 800: 實心按鈕懸停 (白字 7.68:1)
 
   /* 4. Info (Sky Blue): 資訊提示、Tooltip、系統導覽 */
   --color-info: #0284c7; // Sky 600: 主狀態色
@@ -207,6 +211,9 @@
   --color-danger-text: #fecaca; // Red 200 (WCAG AAA)
   --color-danger-dim: color-mix(in srgb, var(--color-danger) 15%, transparent);
   --color-danger-border: color-mix(in srgb, var(--color-danger) 30%, transparent);
+  // 實心按鈕為白字，暗色模式不套用「hover 調亮」原則，維持與淺色相同以確保 AA 對比
+  --color-danger-solid: #dc2626; // Red 600 (白字 4.83:1)
+  --color-danger-solid-hover: #b91c1c; // Red 700 (白字 6.47:1)
 
   /* 2. Warning (Amber) */
   --color-warning: #fbbf24; // Amber 400
@@ -223,6 +230,9 @@
   --color-success-text: #a7f3d0; // Emerald 200 (WCAG AAA 7.58:1)
   --color-success-dim: color-mix(in srgb, var(--color-success) 15%, transparent);
   --color-success-border: color-mix(in srgb, var(--color-success) 30%, transparent);
+  // 實心按鈕為白字，暗色模式維持與淺色相同以確保 AA 對比
+  --color-success-solid: #047857; // Emerald 700 (白字 5.48:1)
+  --color-success-solid-hover: #065f46; // Emerald 800 (白字 7.68:1)
 
   /* 4. Info (Sky Blue) */
   --color-info: #38bdf8; // Sky 400
@@ -575,14 +585,15 @@ select {
 // 4. Danger: 刪除或破壞性按鈕
 .btn-danger {
   color: #ffffff;
-  background-color: var(--color-danger);
+  // 白字實心底使用 -solid token：--color-danger (#ef4444) 配白字僅 3.76:1，未達 AA
+  background-color: var(--color-danger-solid);
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background-color var(--transition-base);
 
   &:hover {
-    background-color: color-mix(in srgb, var(--color-danger) 85%, black);
+    background-color: var(--color-danger-solid-hover);
   }
 }
 ```

@@ -1,4 +1,5 @@
 import { expect, fixture, html, oneEvent } from '@open-wc/testing';
+import { getAxNode } from '../../test-utils/ax.js';
 import './index.js';
 import type { AuiTooltip } from './tooltip.js';
 
@@ -97,7 +98,7 @@ describe('AuiTooltip Accessibility (<aui-tooltip>)', () => {
       expect(popup?.getAttribute('aria-hidden')).to.equal('true');
     });
 
-    it('associates trigger element with popup via aria-describedby when visible', async () => {
+    it('associates trigger element with a description in the same tree when visible', async () => {
       const el = await fixture<AuiTooltip>(html`
         <aui-tooltip content="Detailed action description">
           <button id="action-btn">Action</button>
@@ -105,23 +106,27 @@ describe('AuiTooltip Accessibility (<aui-tooltip>)', () => {
       `);
 
       const triggerBtn = el.querySelector('#action-btn') as HTMLButtonElement;
-      const popup = el.shadowRoot?.querySelector('.tooltip__popup') as HTMLElement;
-      const tooltipId = popup.id;
-      expect(tooltipId).to.exist;
 
       // Closed initially: no aria-describedby
       expect(triggerBtn.hasAttribute('aria-describedby')).to.be.false;
 
-      // Show tooltip: aria-describedby links to popup id
+      // Show tooltip: aria-describedby 的 IDREF 必須能在觸發元素所在的 tree 內解析
+      // （IDREF 無法跨 Shadow DOM 邊界，指向 shadow root 內的 popup 會失效）
       setTimeout(() => el.show());
       await oneEvent(el, 'aui-after-show');
-      expect(triggerBtn.getAttribute('aria-describedby')).to.equal(tooltipId);
+      const describedById = triggerBtn.getAttribute('aria-describedby') as string;
+      expect(describedById).to.exist;
+      const root = triggerBtn.getRootNode() as Document | ShadowRoot;
+      const description = root.getElementById(describedById);
+      expect(description, 'aria-describedby must resolve in the trigger tree').to.exist;
+      expect(description?.textContent?.trim()).to.equal('Detailed action description');
 
       // Hide tooltip: aria-describedby is cleaned up
       setTimeout(() => el.hide());
       await oneEvent(el, 'aui-hide');
       await el.updateComplete;
       expect(triggerBtn.hasAttribute('aria-describedby')).to.be.false;
+      expect(root.getElementById(describedById)).to.be.null;
     });
 
     it('preserves existing aria-describedby on target element when closing', async () => {
@@ -140,6 +145,77 @@ describe('AuiTooltip Accessibility (<aui-tooltip>)', () => {
       await oneEvent(el, 'aui-hide');
       await el.updateComplete;
       expect(triggerBtn.getAttribute('aria-describedby')).to.equal('external-hint');
+    });
+  });
+
+  describe('Accessible description computed by the browser', () => {
+    it('exposes text content as the accessible description of a slotted trigger', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Copy snippet to clipboard">
+          <button>Copy</button>
+        </aui-tooltip>
+      `);
+      const triggerBtn = el.querySelector('button') as HTMLButtonElement;
+
+      expect((await getAxNode(triggerBtn)).description).to.equal('');
+
+      setTimeout(() => el.show());
+      await oneEvent(el, 'aui-after-show');
+      const node = await getAxNode(triggerBtn);
+      expect(node.name).to.equal('Copy');
+      expect(node.description).to.equal('Copy snippet to clipboard');
+
+      setTimeout(() => el.hide());
+      await oneEvent(el, 'aui-hide');
+      await el.updateComplete;
+      expect((await getAxNode(triggerBtn)).description).to.equal('');
+    });
+
+    it('exposes the description on a target referenced via the for attribute', async () => {
+      const wrapper = await fixture<HTMLDivElement>(html`
+        <div>
+          <button id="external-target">External</button>
+          <aui-tooltip for="external-target" content="Opens in a new window"></aui-tooltip>
+        </div>
+      `);
+      const el = wrapper.querySelector('aui-tooltip') as AuiTooltip;
+      const target = wrapper.querySelector('#external-target') as HTMLButtonElement;
+
+      setTimeout(() => el.show());
+      await oneEvent(el, 'aui-after-show');
+      expect((await getAxNode(target)).description).to.equal('Opens in a new window');
+    });
+
+    it('uses rich slotted content as the description and keeps existing descriptions', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip>
+          <button aria-describedby="hint">Info</button>
+          <span id="hint" hidden>Existing hint</span>
+          <div slot="content"><strong>System Status</strong> All services operational.</div>
+        </aui-tooltip>
+      `);
+      const triggerBtn = el.querySelector('button') as HTMLButtonElement;
+
+      setTimeout(() => el.show());
+      await oneEvent(el, 'aui-after-show');
+      expect((await getAxNode(triggerBtn)).description).to.equal(
+        'Existing hint System Status All services operational.',
+      );
+    });
+
+    it('keeps the description in sync when content changes while open', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Copy">
+          <button>Copy</button>
+        </aui-tooltip>
+      `);
+      const triggerBtn = el.querySelector('button') as HTMLButtonElement;
+
+      setTimeout(() => el.show());
+      await oneEvent(el, 'aui-after-show');
+      el.content = 'Copied!';
+      await el.updateComplete;
+      expect((await getAxNode(triggerBtn)).description).to.equal('Copied!');
     });
   });
 

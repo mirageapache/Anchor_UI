@@ -15,6 +15,9 @@ import type { TooltipPlacement, TooltipTrigger } from './tooltip.types.js';
 
 let tooltipIdCounter = 0;
 
+/** 隱藏描述節點使用的內部 slot 名稱 */
+const DESCRIPTION_SLOT = 'aui-tooltip-description';
+
 /**
  * Anchor UI — Tooltip 元件 (`<aui-tooltip>`)
  *
@@ -44,7 +47,15 @@ export class AuiTooltip extends LitElement {
   private showTimeoutId: number | null = null;
   private hideTimeoutId: number | null = null;
   private targetElement: HTMLElement | null = null;
-  private originalAriaDescribedBy: string | null = null;
+  /** 目前被寫入 aria-describedby 的目標與所寫入的 id（用於精準移除，不覆蓋使用者後續變更） */
+  private describedTarget: HTMLElement | null = null;
+  private describedById = '';
+  /**
+   * 置於 host light DOM 的隱藏描述節點。
+   * aria-describedby 為 IDREF，無法跨 Shadow DOM 邊界解析，
+   * 因此必須在觸發目標所在的同一棵 tree 內提供描述文字。
+   */
+  private descriptionElement: HTMLElement | null = null;
 
   @query('.tooltip__popup')
   private popupElement!: HTMLElement;
@@ -133,6 +144,15 @@ export class AuiTooltip extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     document.addEventListener('keydown', this.handleDocumentKeyDown);
+
+    // 重新插入 DOM（框架重排節點、拖曳排序等）時，disconnectedCallback 已解除目標監聽，
+    // 而 firstUpdated 只會執行一次，因此須在此重新綁定並還原開啟狀態
+    if (this.hasUpdated) {
+      this.setupTarget();
+      if (this.open && !this.disabled) {
+        this.internalShow();
+      }
+    }
   }
 
   override disconnectedCallback(): void {
@@ -142,6 +162,8 @@ export class AuiTooltip extends LitElement {
     this.stopAutoUpdate();
     this.detachTargetListeners();
     this.removeAriaDescribedBy();
+    // 離開 document 時瀏覽器會自動關閉 popover，同步內部可視狀態
+    this.isVisible = false;
   }
 
   override firstUpdated(): void {
@@ -158,6 +180,10 @@ export class AuiTooltip extends LitElement {
 
     if (changedProperties.has('for')) {
       this.setupTarget();
+    }
+
+    if (changedProperties.has('content') && this.descriptionElement?.isConnected) {
+      this.descriptionElement.textContent = this.descriptionText;
     }
 
     if (changedProperties.has('open')) {
@@ -181,6 +207,9 @@ export class AuiTooltip extends LitElement {
    * 設定觸發目標節點（自訂 for 屬性指定或預設 slot 目標）
    */
   private setupTarget(): void {
+    // 目標切換時，描述關聯須跟著從舊目標移到新目標
+    const wasDescribed = this.describedTarget !== null;
+    this.removeAriaDescribedBy();
     this.detachTargetListeners();
 
     if (this.for) {
@@ -194,6 +223,10 @@ export class AuiTooltip extends LitElement {
     }
 
     this.attachTargetListeners();
+
+    if (wasDescribed) {
+      this.addAriaDescribedBy();
+    }
   }
 
   private attachTargetListeners(): void {
@@ -477,20 +510,71 @@ export class AuiTooltip extends LitElement {
     }
   }
 
+  /**
+   * 提示內容的純文字（rich content slot 優先，否則使用 content 屬性）
+   */
+  private get descriptionText(): string {
+    const slot = this.shadowRoot?.querySelector<HTMLSlotElement>('slot[name="content"]');
+    const slotted = (slot?.assignedNodes({ flatten: true }) ?? [])
+      .map((node) => node.textContent ?? '')
+      .join(' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return slotted || this.content;
+  }
+
   private addAriaDescribedBy(): void {
-    if (!this.targetElement) return;
-    this.originalAriaDescribedBy = this.targetElement.getAttribute('aria-describedby');
-    const existing = this.originalAriaDescribedBy ? `${this.originalAriaDescribedBy} ` : '';
-    this.targetElement.setAttribute('aria-describedby', `${existing}${this.tooltipId}`);
+    const target = this.targetElement;
+    if (!target) return;
+    this.removeAriaDescribedBy();
+
+    // 目標位於本元件 shadow root 內（slot 無元素時退回 wrapper）可直接指向 popup；
+    // 否則（slotted 元素或 for 指定的外部元素）必須指向同一棵 tree 內的描述節點
+    const id = target.getRootNode() === this.shadowRoot ? this.tooltipId : this.mountDescription();
+
+    const ids = (target.getAttribute('aria-describedby') ?? '').split(/\s+/).filter(Boolean);
+    if (!ids.includes(id)) ids.push(id);
+    target.setAttribute('aria-describedby', ids.join(' '));
+
+    this.describedTarget = target;
+    this.describedById = id;
   }
 
   private removeAriaDescribedBy(): void {
-    if (!this.targetElement) return;
-    if (this.originalAriaDescribedBy !== null) {
-      this.targetElement.setAttribute('aria-describedby', this.originalAriaDescribedBy);
-    } else {
-      this.targetElement.removeAttribute('aria-describedby');
+    const target = this.describedTarget;
+    if (target) {
+      // 只移除本元件寫入的 id，保留使用者原有或期間新增的描述
+      const ids = (target.getAttribute('aria-describedby') ?? '')
+        .split(/\s+/)
+        .filter((id) => id && id !== this.describedById);
+      if (ids.length > 0) {
+        target.setAttribute('aria-describedby', ids.join(' '));
+      } else {
+        target.removeAttribute('aria-describedby');
+      }
     }
+    this.describedTarget = null;
+    this.describedById = '';
+    this.descriptionElement?.remove();
+  }
+
+  /**
+   * 將隱藏描述節點掛到 host 的 light DOM（與 slotted / for 目標位於同一棵 tree），回傳其 id
+   */
+  private mountDescription(): string {
+    if (!this.descriptionElement) {
+      const description = document.createElement('span');
+      description.id = `${this.tooltipId}-description`;
+      // 指派到專用的隱藏 slot，避免被預設 slot 當成觸發目標，也不會被渲染出來
+      description.slot = DESCRIPTION_SLOT;
+      description.hidden = true;
+      this.descriptionElement = description;
+    }
+    this.descriptionElement.textContent = this.descriptionText;
+    if (this.descriptionElement.parentNode !== this) {
+      this.appendChild(this.descriptionElement);
+    }
+    return this.descriptionElement.id;
   }
 
   private handleSlotChange = (): void => {
@@ -524,6 +608,8 @@ export class AuiTooltip extends LitElement {
 
         ${this.arrow ? html`<div part="arrow" class="tooltip__arrow"></div>` : nothing}
       </div>
+
+      <div hidden><slot name=${DESCRIPTION_SLOT}></slot></div>
     `;
   }
 }

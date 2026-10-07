@@ -151,7 +151,7 @@ export const buttonStyles = css`
   }
 
   .btn--danger:hover:not(:disabled):not(.btn--loading) {
-    background-color: var(--color-danger-hover, #b91c1c);
+    background-color: var(--color-danger-solid-hover, #b91c1c);
   }
 
   /* ─── 5. Success: 成功、確認或完成操作 ─── */
@@ -162,7 +162,7 @@ export const buttonStyles = css`
   }
 
   .btn--success:hover:not(:disabled):not(.btn--loading) {
-    background-color: var(--color-success-hover, #065f46);
+    background-color: var(--color-success-solid-hover, #065f46);
   }
 
   /* ─── 內容與插槽元素 ─── */
