@@ -40,7 +40,10 @@
     "format": "prettier --write \"src/**/*.{ts,js,scss,css,json,md}\"",
     "prepare": "husky",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "yalc:publish": "pnpm build && yalc publish --no-scripts",
+    "yalc:push": "pnpm build && yalc push --no-scripts",
+    "dev:yalc": "node scripts/yalc-watch.mjs"
   },
   "keywords": [
     "anchor-ui",
@@ -81,6 +84,7 @@
     "typescript": "~5.8.2",
     "typescript-eslint": "^8.70.1",
     "vite": "^8.3.1",
-    "vite-plugin-dts": "^5.1.1"
+    "vite-plugin-dts": "^5.1.1",
+    "yalc": "1.0.0-pre.53"
   }
 }

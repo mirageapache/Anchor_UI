@@ -125,7 +125,7 @@
 | **TASK-106** | 工程 | **無障礙自動化檢測 (a11y)** [✅]             | 於測試管線中整合 **`axe-core`**，為每個原子元件撰寫色彩對比度、ARIA 角色與鍵盤可聚焦性自動化測試（共 38 項 a11y 檢驗案例全數通過）。 |
 | **TASK-107** | 整合 | **Vue 3 整合測試專案建立** [✅]              | 設定 `vite.config` 之 `compilerOptions.isCustomElement`；驗證 `@click`、props 綁定與響應式更新。                                     |
 | **TASK-108** | 整合 | **Angular 整合測試專案建立** [✅]            | 引入 `CUSTOM_ELEMENTS_SCHEMA`；驗證屬性 `[variant]` 與自訂事件雙向連通性（12 項整合測試全數通過）。                                  |
-| **TASK-109** | 流程 | yalc 本地開發工作流定型                      | 驗證 `yalc publish` ➜ `yalc add @anchor-ui` ➜ 元件熱更新流程。                                                                       |
+| **TASK-109** | 流程 | **yalc 本地開發工作流定型** [✅]             | 驗證 `yalc publish` ➜ `yalc add @anchor-ui/core` ➜ `yalc push` 元件熱更新流程；新增 `yalc:publish` / `yalc:push` / `dev:yalc` 腳本。 |
 | **TASK-110** | 工程 | **CI 自動化測試管線整合**                    | 擴充 GitHub Actions CI：新增自動執行元件單元測試、無障礙檢測與程式碼覆蓋率（Codecov / LCOV）產出。                                   |
 
 #### 交付成果 (Deliverables)

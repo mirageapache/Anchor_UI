@@ -26,3 +26,7 @@ pnpm-debug.log*
 #env
 .env
 .env.local
+
+# yalc
+.yalc/
+yalc.lock
