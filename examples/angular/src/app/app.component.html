@@ -1,0 +1,233 @@
+<div class="demo-container">
+  <!-- 頂部標頭列 -->
+  <header class="demo-header">
+    <div class="header-titles">
+      <h1>Anchor UI — Angular 整合測試驗證</h1>
+      <p class="subtitle">
+        驗證 Web Components 於 Angular 中透過 <code>CUSTOM_ELEMENTS_SCHEMA</code> 之
+        <code>(click)</code> 事件、<code>[variant]</code> 屬性綁定、雙向連通性與主題切換。
+      </p>
+    </div>
+
+    <div class="header-actions">
+      <aui-button id="theme-toggle-btn" variant="ghost" size="sm" (click)="toggleTheme()">
+        <span slot="prefix">{{ isDark ? '☀️' : '🌙' }}</span>
+        {{ isDark ? '切換淺色模式' : '切換深色模式' }}
+      </aui-button>
+    </div>
+  </header>
+
+  <main class="demo-grid">
+    <!-- 測試卡片 1：Button 元件 -->
+    <section class="card" id="card-button">
+      <div class="card-header">
+        <h2>1. Button 元件 (&lt;aui-button&gt;)</h2>
+        <span class="badge">TASK-101 / 108</span>
+      </div>
+
+      <div class="control-panel">
+        <label>
+          變體 ([variant])：
+          <select [(ngModel)]="buttonVariant" id="select-button-variant">
+            <option value="primary">primary</option>
+            <option value="accent">accent</option>
+            <option value="ghost">ghost</option>
+            <option value="danger">danger</option>
+            <option value="success">success</option>
+          </select>
+        </label>
+
+        <label>
+          尺寸 ([size])：
+          <select [(ngModel)]="buttonSize" id="select-button-size">
+            <option value="sm">sm (32px)</option>
+            <option value="md">md (40px)</option>
+            <option value="lg">lg (48px)</option>
+          </select>
+        </label>
+
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="buttonLoading" id="chk-button-loading" />
+          載入中 ([loading])
+        </label>
+
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="buttonDisabled" id="chk-button-disabled" />
+          停用 ([disabled])
+        </label>
+      </div>
+
+      <div class="preview-stage">
+        <aui-button
+          id="target-button"
+          [variant]="buttonVariant"
+          [size]="buttonSize"
+          [loading]="buttonLoading"
+          [disabled]="buttonDisabled"
+          (click)="handleButtonClick()"
+        >
+          <span slot="prefix">⚡</span>
+          點擊觸發 Angular 狀態
+          <span slot="suffix">→</span>
+        </aui-button>
+      </div>
+
+      <div class="result-box">
+        <p id="click-counter-text">
+          累計點擊次數：<strong>{{ buttonClickCount }}</strong> 次
+        </p>
+      </div>
+
+      <!-- 表單原生提交測試 -->
+      <div class="sub-section">
+        <h3>原生 Form 提交連動</h3>
+        <form (submit)="handleFormSubmit(); $event.preventDefault()" class="demo-form">
+          <input [(ngModel)]="inputValue" name="inputValue" id="form-input" class="text-input" />
+          <aui-button type="submit" variant="accent" size="sm" id="form-submit-btn">
+            提交表單
+          </aui-button>
+        </form>
+        <p *ngIf="lastSubmittedValue" id="form-result-text" class="sub-result">
+          已提交數值：<code>{{ lastSubmittedValue }}</code>
+        </p>
+      </div>
+    </section>
+
+    <!-- 測試卡片 2：Tag 元件 -->
+    <section class="card" id="card-tag">
+      <div class="card-header">
+        <h2>2. Tag 元件 (&lt;aui-tag&gt;)</h2>
+        <span class="badge">TASK-102 / 108</span>
+      </div>
+
+      <div class="control-panel">
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="isPill" id="chk-tag-pill" />
+          膠囊造型 ([pill])
+        </label>
+        <aui-button variant="ghost" size="sm" (click)="resetTags()" id="btn-reset-tags">
+          重設標籤清單
+        </aui-button>
+      </div>
+
+      <div class="preview-stage tag-list">
+        <aui-tag
+          *ngFor="let tag of tags"
+          [id]="'tag-' + tag.id"
+          [variant]="tag.variant"
+          [pill]="isPill"
+          interactive
+          removable
+          (click)="handleTagClick(tag)"
+          (aui-remove)="handleTagRemove(tag.id)"
+        >
+          <span slot="prefix" *ngIf="tag.active">●</span>
+          {{ tag.label }}
+        </aui-tag>
+      </div>
+
+      <div class="result-box">
+        <p id="tag-selection-text">
+          最後選取項目：<strong>{{ selectedTagName }}</strong>
+        </p>
+        <p id="tag-count-text">
+          目前標籤總數：<strong>{{ tags.length }}</strong> 個
+        </p>
+      </div>
+    </section>
+
+    <!-- 測試卡片 3：Tooltip 元件 -->
+    <section class="card" id="card-tooltip">
+      <div class="card-header">
+        <h2>3. Tooltip 元件 (&lt;aui-tooltip&gt;)</h2>
+        <span class="badge">TASK-103 / 108</span>
+      </div>
+
+      <div class="control-panel">
+        <label>
+          方位 ([placement])：
+          <select [(ngModel)]="tooltipPlacement" id="select-tooltip-placement">
+            <option value="top">top</option>
+            <option value="bottom">bottom</option>
+            <option value="left">left</option>
+            <option value="right">right</option>
+          </select>
+        </label>
+
+        <label>
+          提示文字 ([content])：
+          <input [(ngModel)]="tooltipContent" id="input-tooltip-content" class="text-input" />
+        </label>
+
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="hasArrow" id="chk-tooltip-arrow" />
+          顯示指標箭頭 ([arrow])
+        </label>
+      </div>
+
+      <div class="preview-stage center-stage">
+        <aui-tooltip
+          id="test-tooltip"
+          [content]="tooltipContent"
+          [placement]="tooltipPlacement"
+          [arrow]="hasArrow"
+        >
+          <aui-button variant="ghost" id="tooltip-target-btn">懸停或聚焦查看提示</aui-button>
+        </aui-tooltip>
+      </div>
+    </section>
+
+    <!-- 測試卡片 4：IconButton 元件 -->
+    <section class="card" id="card-icon-button">
+      <div class="card-header">
+        <h2>4. Icon Button 元件 (&lt;aui-icon-button&gt;)</h2>
+        <span class="badge">TASK-104 / 108</span>
+      </div>
+
+      <div class="control-panel">
+        <label>
+          預設圖示行為 ([preset])：
+          <select [(ngModel)]="iconPreset" id="select-icon-preset">
+            <option value="copy">copy (點擊複製)</option>
+            <option value="download">download (點擊下載)</option>
+            <option value="refresh">refresh</option>
+            <option value="external">external</option>
+          </select>
+        </label>
+
+        <label>
+          複製文字內容：
+          <input [(ngModel)]="copySnippet" id="input-copy-snippet" class="text-input" />
+        </label>
+      </div>
+
+      <div class="preview-stage icon-stage">
+        <aui-icon-button
+          id="target-icon-btn"
+          [preset]="iconPreset"
+          [copyValue]="copySnippet"
+          download-filename="anchor-ui.json"
+          (aui-copy)="handleCopySuccess($event)"
+          (aui-download)="handleDownload($event)"
+        ></aui-icon-button>
+
+        <!-- 自訂 Slot 圖示按鈕 -->
+        <aui-icon-button tooltip="自訂愛心收藏" id="custom-slot-icon-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path
+              d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"
+            ></path>
+          </svg>
+        </aui-icon-button>
+      </div>
+
+      <div class="result-box">
+        <p id="icon-feedback-text">
+          事件即時反饋：<span class="feedback-highlight">{{
+            copyFeedbackText || '尚未觸發事件'
+          }}</span>
+        </p>
+      </div>
+    </section>
+  </main>
+</div>

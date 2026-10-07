@@ -31,6 +31,7 @@
     "test:coverage": "wtr --coverage",
     "test:a11y": "wtr \"src/components/**/*.a11y.test.ts\"",
     "test:vue": "pnpm --filter example-vue3 test",
+    "test:angular": "pnpm --filter example-angular test",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "stylelint": "stylelint \"src/**/*.{css,scss}\"",
@@ -77,7 +78,7 @@
     "storybook": "^8.6.18",
     "stylelint": "^17.15.0",
     "stylelint-config-standard-scss": "^17.0.0",
-    "typescript": "^5.9.3",
+    "typescript": "~5.8.2",
     "typescript-eslint": "^8.70.1",
     "vite": "^8.3.1",
     "vite-plugin-dts": "^5.1.1"
