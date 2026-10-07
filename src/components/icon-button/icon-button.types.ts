@@ -53,6 +53,14 @@ export interface DownloadDetail {
 }
 
 /**
+ * 下載失敗事件資料（例如 download-url 使用了不允許的協定）
+ */
+export interface DownloadErrorDetail {
+  url: string;
+  error: Error;
+}
+
+/**
  * 狀態變更事件資料
  */
 export interface StatusChangeDetail {

@@ -149,13 +149,20 @@ export const tagStyles = css`
     transform: scale(0.97);
   }
 
-  :host([interactive]:focus-visible) .tag,
-  .tag--interactive:focus-visible {
+  /* 焦點位於 shadow 內的 action 元素，焦點環畫在整顆標籤外框上 */
+  .tag:has(.tag__action:focus-visible) {
     outline: 2px solid var(--color-brand-500, #38bdf8);
     outline-offset: 2px;
   }
 
   /* ─── 內容與插槽佈局 ─── */
+  .tag__action {
+    display: inline-flex;
+    align-items: center;
+    gap: inherit;
+    outline: none;
+  }
+
   .tag__prefix,
   .tag__suffix {
     display: inline-flex;

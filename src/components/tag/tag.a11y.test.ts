@@ -1,4 +1,6 @@
 import { expect, fixture, html, oneEvent } from '@open-wc/testing';
+import { sendKeys } from '@web/test-runner-commands';
+import { getAxNode } from '../../test-utils/ax.js';
 import './index.js';
 import type { AuiTag } from './tag.js';
 
@@ -62,6 +64,13 @@ describe('AuiTag Accessibility (<aui-tag>)', () => {
       await expect(removableEl).to.be.accessible();
     });
 
+    it('passes axe audit when both interactive and removable (no nested interactive)', async () => {
+      const el = await fixture<AuiTag>(
+        html`<aui-tag interactive removable remove-label="Remove Filter">Filter</aui-tag>`,
+      );
+      await expect(el).to.be.accessible();
+    });
+
     it('passes axe audit in dark theme mode', async () => {
       document.documentElement.setAttribute('data-theme', 'dark');
       try {
@@ -80,6 +89,11 @@ describe('AuiTag Accessibility (<aui-tag>)', () => {
           );
           await expect(el).to.be.accessible();
         }
+
+        const interactiveRemovable = await fixture<AuiTag>(
+          html`<aui-tag interactive removable variant="brand">Dark filter</aui-tag>`,
+        );
+        await expect(interactiveRemovable).to.be.accessible();
       } finally {
         document.documentElement.removeAttribute('data-theme');
       }
@@ -87,14 +101,26 @@ describe('AuiTag Accessibility (<aui-tag>)', () => {
   });
 
   describe('ARIA roles and attributes', () => {
-    it('sets role="button" and tabindex="0" only when interactive', async () => {
+    it('sets role="button" and tabindex="0" on the inner action only when interactive', async () => {
       const staticEl = await fixture<AuiTag>(html`<aui-tag>Static</aui-tag>`);
-      expect(staticEl.hasAttribute('role')).to.be.false;
-      expect(staticEl.hasAttribute('tabindex')).to.be.false;
+      const staticAction = staticEl.shadowRoot!.querySelector('.tag__action')!;
+      expect(staticAction.hasAttribute('role')).to.be.false;
+      expect(staticAction.hasAttribute('tabindex')).to.be.false;
 
       const interactiveEl = await fixture<AuiTag>(html`<aui-tag interactive>Interactive</aui-tag>`);
-      expect(interactiveEl.getAttribute('role')).to.equal('button');
-      expect(interactiveEl.getAttribute('tabindex')).to.equal('0');
+      const action = interactiveEl.shadowRoot!.querySelector('.tag__action')!;
+      expect(action.getAttribute('role')).to.equal('button');
+      expect(action.getAttribute('tabindex')).to.equal('0');
+      // 移除鈕不可位於 role="button" 之內（nested-interactive）
+      expect(action.querySelector('.tag__remove')).to.be.null;
+    });
+
+    it('exposes the tag text as the accessible name of the interactive action', async () => {
+      const el = await fixture<AuiTag>(html`<aui-tag interactive removable>frontend</aui-tag>`);
+      const action = el.shadowRoot!.querySelector('.tag__action')!;
+      const node = await getAxNode(action);
+      expect(node.role).to.equal('button');
+      expect(node.name).to.equal('frontend');
     });
 
     it('provides accessible name and title for removal button', async () => {
@@ -113,13 +139,14 @@ describe('AuiTag Accessibility (<aui-tag>)', () => {
 
     it('removes accessibility attributes when interactive is turned off dynamically', async () => {
       const el = await fixture<AuiTag>(html`<aui-tag interactive>Toggleable</aui-tag>`);
-      expect(el.getAttribute('role')).to.equal('button');
-      expect(el.getAttribute('tabindex')).to.equal('0');
+      const action = el.shadowRoot!.querySelector('.tag__action')!;
+      expect(action.getAttribute('role')).to.equal('button');
+      expect(action.getAttribute('tabindex')).to.equal('0');
 
       el.interactive = false;
       await el.updateComplete;
-      expect(el.hasAttribute('role')).to.be.false;
-      expect(el.hasAttribute('tabindex')).to.be.false;
+      expect(action.hasAttribute('role')).to.be.false;
+      expect(action.hasAttribute('tabindex')).to.be.false;
     });
   });
 
@@ -137,11 +164,49 @@ describe('AuiTag Accessibility (<aui-tag>)', () => {
         clickCount++;
       });
 
-      el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+      el.focus();
+      await sendKeys({ press: 'Enter' });
       expect(clickCount).to.equal(1);
 
-      el.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+      await sendKeys({ press: 'Space' });
       expect(clickCount).to.equal(2);
+    });
+
+    describe('interactive + removable', () => {
+      const keys = ['Enter', 'Space'] as const;
+
+      for (const key of keys) {
+        it(`activates the remove button (not the tag) with ${key}`, async () => {
+          const el = await fixture<AuiTag>(html`<aui-tag interactive removable>Filter</aui-tag>`);
+          let hostClicks = 0;
+          let removeCount = 0;
+          el.addEventListener('click', () => hostClicks++);
+          el.addEventListener('aui-remove', () => removeCount++);
+
+          el.shadowRoot!.querySelector<HTMLButtonElement>('.tag__remove')!.focus();
+          await sendKeys({ press: key });
+
+          expect(removeCount).to.equal(1);
+          expect(hostClicks).to.equal(0);
+        });
+      }
+
+      it('reaches the tag action and then the remove button with Tab', async () => {
+        const wrapper = await fixture<HTMLDivElement>(html`
+          <div>
+            <button id="before">Before</button>
+            <aui-tag interactive removable>Filter</aui-tag>
+          </div>
+        `);
+        const el = wrapper.querySelector('aui-tag') as AuiTag;
+        wrapper.querySelector<HTMLButtonElement>('#before')!.focus();
+
+        await sendKeys({ press: 'Tab' });
+        expect(el.shadowRoot!.activeElement?.classList.contains('tag__action')).to.be.true;
+
+        await sendKeys({ press: 'Tab' });
+        expect(el.shadowRoot!.activeElement?.classList.contains('tag__remove')).to.be.true;
+      });
     });
 
     it('dispatches aui-remove event when remove button is clicked or activated', async () => {

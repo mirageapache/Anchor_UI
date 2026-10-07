@@ -227,6 +227,70 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
     expect(style.borderTopColor).to.equal('rgb(7, 8, 9)');
   });
 
+  describe('rapid open/close before the enter animation frame', () => {
+    const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+    const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+    it('does not get stuck visible when closed before the show frame runs', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Race tip" .delay=${0} .hideDelay=${0}>
+          <button>Target</button>
+        </aui-tooltip>
+      `);
+      const popup = el.shadowRoot!.querySelector<HTMLElement>('.tooltip__popup')!;
+      const btn = el.querySelector('button') as HTMLButtonElement;
+      let afterShowCount = 0;
+      el.addEventListener('aui-after-show', () => afterShowCount++);
+
+      // 兩次獨立的更新週期都落在同一個 animation frame 之前
+      el.show();
+      await el.updateComplete;
+      el.hide();
+      await el.updateComplete;
+
+      await nextFrame();
+      await nextFrame();
+      await wait(200);
+
+      expect(el.open).to.be.false;
+      expect(afterShowCount).to.equal(0);
+      expect(popup.classList.contains('tooltip__popup--visible')).to.be.false;
+      expect(popup.matches(':popover-open')).to.be.false;
+      expect(btn.hasAttribute('aria-describedby')).to.be.false;
+
+      // 之後仍可正常開關
+      btn.dispatchEvent(new MouseEvent('mouseenter'));
+      await oneEvent(el, 'aui-after-show');
+      expect(popup.classList.contains('tooltip__popup--visible')).to.be.true;
+      btn.dispatchEvent(new MouseEvent('mouseleave'));
+      await oneEvent(el, 'aui-after-hide');
+      expect(popup.matches(':popover-open')).to.be.false;
+    });
+
+    it('stays open when re-opened during the exit animation', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Reopen tip">
+          <button>Target</button>
+        </aui-tooltip>
+      `);
+      const popup = el.shadowRoot!.querySelector<HTMLElement>('.tooltip__popup')!;
+
+      setTimeout(() => el.show());
+      await oneEvent(el, 'aui-after-show');
+
+      el.hide();
+      await el.updateComplete;
+      // 退場動畫（約 160ms）結束前重新開啟，舊的收合計時器不得關閉新的 popover
+      setTimeout(() => el.show(), 50);
+      await oneEvent(el, 'aui-after-show');
+      await wait(250);
+
+      expect(el.open).to.be.true;
+      expect(popup.matches(':popover-open')).to.be.true;
+      expect(popup.classList.contains('tooltip__popup--visible')).to.be.true;
+    });
+  });
+
   describe('when moved within the DOM (disconnect → reconnect)', () => {
     it('re-binds trigger listeners after being re-inserted', async () => {
       const wrapper = await fixture<HTMLDivElement>(html`

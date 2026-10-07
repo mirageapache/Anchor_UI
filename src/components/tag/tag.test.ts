@@ -52,8 +52,12 @@ describe('AuiTag (<aui-tag>)', () => {
 
   it('manages interactive accessibility attributes and keyboard activation', async () => {
     const el = await fixture<AuiTag>(html`<aui-tag interactive>Filter Tag</aui-tag>`);
-    expect(el.getAttribute('role')).to.equal('button');
-    expect(el.getAttribute('tabindex')).to.equal('0');
+    const action = el.shadowRoot!.querySelector<HTMLElement>('.tag__action')!;
+    // 互動語意位於 shadow 內的 action 元素，host 本身不帶 role / tabindex
+    expect(action.getAttribute('role')).to.equal('button');
+    expect(action.getAttribute('tabindex')).to.equal('0');
+    expect(el.hasAttribute('role')).to.be.false;
+    expect(el.hasAttribute('tabindex')).to.be.false;
 
     const base = el.shadowRoot?.querySelector('.tag');
     expect(base?.classList.contains('tag--interactive')).to.be.true;
@@ -64,19 +68,21 @@ describe('AuiTag (<aui-tag>)', () => {
     });
 
     // Enter key triggers click
-    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
+    action.dispatchEvent(
+      new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, composed: true }),
+    );
     expect(clicked).to.be.true;
 
     clicked = false;
     // Space key triggers click
-    el.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true }));
+    action.dispatchEvent(new KeyboardEvent('keydown', { key: ' ', bubbles: true, composed: true }));
     expect(clicked).to.be.true;
 
     // Disabling interactive removes role and tabindex
     el.interactive = false;
     await el.updateComplete;
-    expect(el.hasAttribute('role')).to.be.false;
-    expect(el.hasAttribute('tabindex')).to.be.false;
+    expect(action.hasAttribute('role')).to.be.false;
+    expect(action.hasAttribute('tabindex')).to.be.false;
     expect(base?.classList.contains('tag--interactive')).to.be.false;
   });
 

@@ -47,6 +47,13 @@ export class AuiTooltip extends LitElement {
   private showTimeoutId: number | null = null;
   private hideTimeoutId: number | null = null;
   private targetElement: HTMLElement | null = null;
+  /** popover 是否已開啟（進場動畫的 rAF 前即為 true，與視覺狀態 isVisible 分開追蹤） */
+  private isShowing = false;
+  /**
+   * 開/關轉場序號：每次開始開啟或關閉都會遞增，
+   * 延遲執行的 rAF / setTimeout 回呼若序號已過期即放棄，避免快速開關時互相覆蓋狀態
+   */
+  private transitionId = 0;
   /** 目前被寫入 aria-describedby 的目標與所寫入的 id（用於精準移除，不覆蓋使用者後續變更） */
   private describedTarget: HTMLElement | null = null;
   private describedById = '';
@@ -162,7 +169,9 @@ export class AuiTooltip extends LitElement {
     this.stopAutoUpdate();
     this.detachTargetListeners();
     this.removeAriaDescribedBy();
-    // 離開 document 時瀏覽器會自動關閉 popover，同步內部可視狀態
+    // 離開 document 時瀏覽器會自動關閉 popover，同步內部狀態並作廢尚未執行的轉場回呼
+    this.transitionId++;
+    this.isShowing = false;
     this.isVisible = false;
   }
 
@@ -187,9 +196,11 @@ export class AuiTooltip extends LitElement {
     }
 
     if (changedProperties.has('open')) {
-      if (this.open && !this.isVisible) {
+      // 以 isShowing（而非 isVisible）判斷：isVisible 要等到 rAF 才變 true，
+      // 若在那之前就關閉，用 isVisible 判斷會略過 internalHide 而讓氣泡卡在顯示狀態
+      if (this.open && !this.isShowing) {
         this.internalShow();
-      } else if (!this.open && this.isVisible) {
+      } else if (!this.open && this.isShowing) {
         this.internalHide();
       }
     } else if (
@@ -384,6 +395,9 @@ export class AuiTooltip extends LitElement {
       return;
     }
 
+    const transitionId = ++this.transitionId;
+    this.isShowing = true;
+
     // 支援原生 Popover API 進入 Top Layer
     if (typeof this.popupElement.showPopover === 'function') {
       try {
@@ -398,6 +412,8 @@ export class AuiTooltip extends LitElement {
 
     // 確保 DOM 渲染並定位後套用進場動畫 (0.95 -> 1.0)
     requestAnimationFrame(() => {
+      // 這一幀之前已被關閉（或重新開啟）時，交由較新的轉場處理
+      if (transitionId !== this.transitionId) return;
       this.isVisible = true;
       this.dispatchEvent(new CustomEvent('aui-after-show', { bubbles: true, composed: true }));
     });
@@ -418,12 +434,15 @@ export class AuiTooltip extends LitElement {
       return;
     }
 
+    const transitionId = ++this.transitionId;
+    this.isShowing = false;
     this.isVisible = false;
     this.removeAriaDescribedBy();
 
     // 等待 150ms 進出場動畫結束後關閉 popover 並停止監聽
     window.setTimeout(() => {
-      if (!this.open) {
+      // 期間若已重新開啟，不可關閉新的 popover
+      if (transitionId === this.transitionId) {
         if (typeof this.popupElement.hidePopover === 'function') {
           try {
             this.popupElement.hidePopover();

@@ -71,17 +71,27 @@ describe('AuiIconButton Accessibility (<aui-icon-button>)', () => {
       await expect(el).to.be.accessible();
     });
 
-    it('passes axe audit in dark theme mode', async () => {
-      document.documentElement.setAttribute('data-theme', 'dark');
-      try {
-        const el = await fixture<AuiIconButton>(
-          html`<aui-icon-button preset="download"></aui-icon-button>`,
-        );
-        await expect(el).to.be.accessible();
-      } finally {
-        document.documentElement.removeAttribute('data-theme');
-      }
-    });
+    for (const theme of ['light', 'dark'] as const) {
+      it(`passes axe audit for all variants and success state in ${theme} theme mode`, async () => {
+        if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        try {
+          const variants = ['ghost', 'subtle', 'outline', 'primary', 'danger'] as const;
+          for (const variant of variants) {
+            const el = await fixture<AuiIconButton>(
+              html`<aui-icon-button preset="download" .variant=${variant}></aui-icon-button>`,
+            );
+            await expect(el).to.be.accessible();
+
+            el.triggerFeedback('success');
+            await el.updateComplete;
+            await expect(el).to.be.accessible();
+            el.resetFeedback();
+          }
+        } finally {
+          document.documentElement.removeAttribute('data-theme');
+        }
+      });
+    }
   });
 
   describe('ARIA roles, attributes and live regions (WCAG 4.1.2 & 4.1.3)', () => {
@@ -118,7 +128,7 @@ describe('AuiIconButton Accessibility (<aui-icon-button>)', () => {
       expect(node.description).to.equal('複製至剪貼簿');
     });
 
-    it('manages aria-busy, aria-disabled and aria-pressed attributes', async () => {
+    it('manages aria-busy and aria-disabled attributes', async () => {
       const el = await fixture<AuiIconButton>(
         html`<aui-icon-button preset="refresh"></aui-icon-button>`,
       );
@@ -126,17 +136,30 @@ describe('AuiIconButton Accessibility (<aui-icon-button>)', () => {
 
       expect(innerBtn?.getAttribute('aria-busy')).to.equal('false');
       expect(innerBtn?.getAttribute('aria-disabled')).to.equal('false');
-      expect(innerBtn?.getAttribute('aria-pressed')).to.equal('false');
 
       el.loading = true;
       await el.updateComplete;
       expect(innerBtn?.getAttribute('aria-busy')).to.equal('true');
       expect(innerBtn?.getAttribute('aria-disabled')).to.equal('true');
+    });
 
-      el.loading = false;
+    it('is exposed as a plain button, not a toggle button (no aria-pressed)', async () => {
+      const el = await fixture<AuiIconButton>(
+        html`<aui-icon-button preset="copy" copy-value="x"></aui-icon-button>`,
+      );
+      const innerBtn = el.shadowRoot!.querySelector('button')!;
+      expect(innerBtn.hasAttribute('aria-pressed')).to.be.false;
+      expect((await getAxNode(innerBtn)).role).to.equal('button');
+
+      // active 視覺高亮與複製成功回饋都不代表「已按下」的切換狀態
       el.active = true;
       await el.updateComplete;
-      expect(innerBtn?.getAttribute('aria-pressed')).to.equal('true');
+      expect(innerBtn.hasAttribute('aria-pressed')).to.be.false;
+
+      el.triggerFeedback('success');
+      await el.updateComplete;
+      expect(innerBtn.hasAttribute('aria-pressed')).to.be.false;
+      expect((await getAxNode(innerBtn)).role).to.equal('button');
     });
 
     it('provides aria-live region for screen reader announcements on state change', async () => {

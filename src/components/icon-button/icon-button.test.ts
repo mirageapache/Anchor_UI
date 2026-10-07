@@ -1,7 +1,22 @@
 import { expect, fixture, html, oneEvent } from '@open-wc/testing';
 import './icon-button.js';
 import type { AuiIconButton } from './icon-button.js';
-import type { CopyDetail, DownloadDetail } from './icon-button.types.js';
+import type { CopyDetail, DownloadDetail, DownloadErrorDetail } from './icon-button.types.js';
+
+/**
+ * 攔截 <a>.click()，記錄元件建立的下載連結而不真的觸發導覽或下載
+ */
+function stubAnchorClick(): HTMLAnchorElement[] & { restore: () => void } {
+  const clicked = [] as unknown as HTMLAnchorElement[] & { restore: () => void };
+  const original = HTMLAnchorElement.prototype.click;
+  HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
+    clicked.push(this);
+  };
+  clicked.restore = () => {
+    HTMLAnchorElement.prototype.click = original;
+  };
+  return clicked;
+}
 
 describe('AuiIconButton (<aui-icon-button>)', () => {
   it('renders with default attributes and 1:1 square/rounded structure', async () => {
@@ -93,12 +108,19 @@ describe('AuiIconButton (<aui-icon-button>)', () => {
       ></aui-icon-button>
     `);
 
-    setTimeout(() => el.download());
-    const ev = (await oneEvent(el, 'aui-download')) as CustomEvent<DownloadDetail>;
-    expect(ev).to.exist;
-    expect(ev.detail.url).to.equal('https://example.com/test.png');
-    expect(ev.detail.filename).to.equal('test.png');
-    expect(el.status).to.equal('success');
+    const anchors = stubAnchorClick();
+    try {
+      setTimeout(() => el.download());
+      const ev = (await oneEvent(el, 'aui-download')) as CustomEvent<DownloadDetail>;
+      expect(ev).to.exist;
+      expect(ev.detail.url).to.equal('https://example.com/test.png');
+      expect(ev.detail.filename).to.equal('test.png');
+      await el.updateComplete;
+      expect(anchors).to.have.length(1);
+      expect(el.status).to.equal('success');
+    } finally {
+      anchors.restore();
+    }
   });
 
   it('blocks actions when disabled or loading', async () => {
@@ -174,14 +196,139 @@ describe('AuiIconButton (<aui-icon-button>)', () => {
     }
   });
 
-  it('triggers download on host click when preset is download', async () => {
+  it('dispatches aui-download on host click but does not claim success without a URL', async () => {
     const el = await fixture<AuiIconButton>(html`
       <aui-icon-button preset="download"></aui-icon-button>
     `);
-    setTimeout(() => el.click());
-    const ev = await oneEvent(el, 'aui-download');
-    expect(ev).to.exist;
-    expect(el.status).to.equal('success');
+    const anchors = stubAnchorClick();
+    try {
+      setTimeout(() => el.click());
+      const ev = await oneEvent(el, 'aui-download');
+      expect(ev).to.exist;
+      await el.updateComplete;
+      // 沒有 download-url 時由使用端處理下載，元件不可自行回報「已下載！」
+      expect(anchors).to.have.length(0);
+      expect(el.status).to.equal('idle');
+    } finally {
+      anchors.restore();
+    }
+  });
+
+  describe('honest feedback (no fake success)', () => {
+    it('reports an error instead of success when there is nothing to copy', async () => {
+      const el = await fixture<AuiIconButton>(html`
+        <aui-icon-button preset="copy"></aui-icon-button>
+      `);
+      let copyFired = false;
+      el.addEventListener('aui-copy', () => {
+        copyFired = true;
+      });
+
+      setTimeout(() => el.click());
+      const ev = (await oneEvent(el, 'aui-copy-error')) as CustomEvent<{ error: Error }>;
+      expect(ev.detail.error).to.be.instanceOf(Error);
+      expect(copyFired).to.be.false;
+      expect(el.status).to.equal('error');
+      expect(await el.copy()).to.be.false;
+    });
+
+    it('lets the consumer take over a download by cancelling aui-download', async () => {
+      const el = await fixture<AuiIconButton>(html`
+        <aui-icon-button download-url="/files/report.pdf"></aui-icon-button>
+      `);
+      el.addEventListener('aui-download', (event) => event.preventDefault());
+      const anchors = stubAnchorClick();
+      try {
+        expect(await el.download()).to.be.false;
+        expect(anchors).to.have.length(0);
+        expect(el.status).to.equal('idle');
+      } finally {
+        anchors.restore();
+      }
+    });
+  });
+
+  describe('download URL safety', () => {
+    const unsafeUrls = [
+      'javascript:alert(1)',
+      ' JavaScript:alert(1)',
+      'vbscript:msgbox(1)',
+      'file:///etc/passwd',
+    ];
+
+    for (const url of unsafeUrls) {
+      it(`refuses to open ${JSON.stringify(url)}`, async () => {
+        const el = await fixture<AuiIconButton>(html`<aui-icon-button></aui-icon-button>`);
+        el.downloadUrl = url;
+        let downloadFired = false;
+        el.addEventListener('aui-download', () => {
+          downloadFired = true;
+        });
+        const anchors = stubAnchorClick();
+        try {
+          setTimeout(() => el.download());
+          const ev = (await oneEvent(el, 'aui-download-error')) as CustomEvent<DownloadErrorDetail>;
+          expect(ev.detail.url).to.equal(url);
+          expect(anchors).to.have.length(0);
+          expect(downloadFired).to.be.false;
+          expect(el.status).to.equal('error');
+        } finally {
+          anchors.restore();
+        }
+      });
+    }
+
+    it('downloads same-origin URLs in place with the download attribute', async () => {
+      const el = await fixture<AuiIconButton>(html`
+        <aui-icon-button
+          download-url="/files/report.pdf"
+          download-filename="report.pdf"
+        ></aui-icon-button>
+      `);
+      const anchors = stubAnchorClick();
+      try {
+        expect(await el.download()).to.be.true;
+        expect(anchors).to.have.length(1);
+        expect(anchors[0].download).to.equal('report.pdf');
+        expect(anchors[0].target).to.equal('');
+      } finally {
+        anchors.restore();
+      }
+    });
+
+    it('opens cross-origin URLs in a new tab instead of navigating the current page', async () => {
+      const el = await fixture<AuiIconButton>(html`
+        <aui-icon-button download-url="https://cdn.example.com/file.zip"></aui-icon-button>
+      `);
+      const anchors = stubAnchorClick();
+      try {
+        expect(await el.download()).to.be.true;
+        expect(anchors).to.have.length(1);
+        expect(anchors[0].target).to.equal('_blank');
+        expect(anchors[0].rel).to.contain('noopener');
+        expect(anchors[0].rel).to.contain('noreferrer');
+      } finally {
+        anchors.restore();
+      }
+    });
+
+    it('allows blob: and data: URLs', async () => {
+      const blobUrl = URL.createObjectURL(new Blob(['hello'], { type: 'text/plain' }));
+      const urls = [blobUrl, 'data:text/plain;base64,aGVsbG8='];
+      const anchors = stubAnchorClick();
+      try {
+        for (const url of urls) {
+          const el = await fixture<AuiIconButton>(html`<aui-icon-button></aui-icon-button>`);
+          el.downloadUrl = url;
+          el.downloadFilename = 'hello.txt';
+          expect(await el.download(), url).to.be.true;
+        }
+        expect(anchors.map((a) => a.target)).to.deep.equal(['', '']);
+      } finally {
+        anchors.restore();
+        URL.revokeObjectURL(blobUrl);
+      }
+    });
   });
 
   it('computes default tooltip and label for presets', async () => {

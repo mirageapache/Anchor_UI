@@ -18,6 +18,7 @@ import type { TagSize, TagVariant } from './tag.types.js';
  * @slot suffix - 標籤後綴圖示
  *
  * @csspart base - 標籤本體外層容器
+ * @csspart action - 前綴、主體與後綴的包裝容器（interactive 時為 role="button" 的可聚焦元素）
  * @csspart prefix - 前綴內容包裝容器
  * @csspart content - 主體文字包裝容器
  * @csspart suffix - 後綴內容包裝容器
@@ -70,39 +71,17 @@ export class AuiTag extends LitElement {
   @property({ type: String, attribute: 'remove-label' })
   removeLabel = 'Remove tag';
 
-  override connectedCallback(): void {
-    super.connectedCallback();
-    this.addEventListener('keydown', this.handleHostKeyDown);
-    this.syncInteractiveA11y();
-  }
+  /**
+   * 互動語意（role="button" / tabindex）放在 shadow 內的 action 元素而非 host，
+   * 使移除鈕成為其兄弟節點而非子節點：避免 nested-interactive，
+   * 也讓移除鈕的 Enter / Space 不會被標籤本體的鍵盤處理攔截。
+   */
+  static override shadowRootOptions: ShadowRootInit = {
+    ...LitElement.shadowRootOptions,
+    delegatesFocus: true,
+  };
 
-  override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.removeEventListener('keydown', this.handleHostKeyDown);
-  }
-
-  override updated(changedProperties: Map<string | number | symbol, unknown>): void {
-    super.updated(changedProperties);
-    if (changedProperties.has('interactive')) {
-      this.syncInteractiveA11y();
-    }
-  }
-
-  private syncInteractiveA11y(): void {
-    if (this.interactive) {
-      if (!this.hasAttribute('tabindex')) {
-        this.setAttribute('tabindex', '0');
-      }
-      if (!this.hasAttribute('role')) {
-        this.setAttribute('role', 'button');
-      }
-    } else if (this.getAttribute('role') === 'button') {
-      this.removeAttribute('tabindex');
-      this.removeAttribute('role');
-    }
-  }
-
-  private handleHostKeyDown = (event: KeyboardEvent): void => {
+  private handleActionKeyDown = (event: KeyboardEvent): void => {
     if (this.interactive && (event.key === 'Enter' || event.key === ' ')) {
       // 避免空白鍵滾動頁面
       event.preventDefault();
@@ -135,16 +114,24 @@ export class AuiTag extends LitElement {
           'tag--removable': this.removable,
         })}
       >
-        <span class="tag__prefix" part="prefix">
-          <slot name="prefix"></slot>
-        </span>
+        <span
+          class="tag__action"
+          part="action"
+          role=${this.interactive ? 'button' : nothing}
+          tabindex=${this.interactive ? '0' : nothing}
+          @keydown=${this.handleActionKeyDown}
+        >
+          <span class="tag__prefix" part="prefix">
+            <slot name="prefix"></slot>
+          </span>
 
-        <span class="tag__content" part="content">
-          <slot></slot>
-        </span>
+          <span class="tag__content" part="content">
+            <slot></slot>
+          </span>
 
-        <span class="tag__suffix" part="suffix">
-          <slot name="suffix"></slot>
+          <span class="tag__suffix" part="suffix">
+            <slot name="suffix"></slot>
+          </span>
         </span>
 
         ${

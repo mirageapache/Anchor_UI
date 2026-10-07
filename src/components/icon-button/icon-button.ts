@@ -5,6 +5,7 @@ import { iconButtonStyles } from './icon-button.styles.js';
 import type {
   CopyDetail,
   DownloadDetail,
+  DownloadErrorDetail,
   IconButtonAction,
   IconButtonColor,
   IconButtonPreset,
@@ -126,6 +127,21 @@ const SVG_ICONS: Record<IconButtonPreset | 'spinner', TemplateResult> = {
   `,
 };
 
+/** 允許由元件直接開啟的下載網址協定 */
+const SAFE_DOWNLOAD_PROTOCOLS = new Set(['http:', 'https:', 'blob:', 'data:']);
+
+/**
+ * 解析下載網址（相對路徑以目前文件為基準）；協定不在允許清單或無法解析時回傳 null
+ */
+function parseDownloadUrl(value: string): URL | null {
+  try {
+    const url = new URL(value, document.baseURI);
+    return SAFE_DOWNLOAD_PROTOCOLS.has(url.protocol) ? url : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Anchor UI — Icon Button 元件 (`<aui-icon-button>`)
  *
@@ -148,8 +164,9 @@ const SVG_ICONS: Record<IconButtonPreset | 'spinner', TemplateResult> = {
  * @csspart loading-icon - 載入中狀態圖示層
  *
  * @fires aui-copy - 複製文字至剪貼簿成功時觸發
- * @fires aui-copy-error - 剪貼簿存取失敗時觸發
- * @fires aui-download - 觸發下載行為時分派
+ * @fires aui-copy-error - 剪貼簿存取失敗或沒有可複製內容（copy-value 為空）時觸發
+ * @fires aui-download - 觸發下載行為時分派（可被 preventDefault 取消以自行接手下載）
+ * @fires aui-download-error - download-url 使用不允許的協定（如 javascript:）而拒絕下載時觸發
  * @fires aui-status-change - 元件狀態發生改變時觸發
  */
 export class AuiIconButton extends LitElement {
@@ -265,7 +282,8 @@ export class AuiIconButton extends LitElement {
   loading = false;
 
   /**
-   * 是否處於啟動/成功高亮狀態（反映 is-active 琥珀金視覺）
+   * 是否處於啟動/成功高亮狀態（反映 is-active 琥珀金視覺）。
+   * 僅為視覺高亮，不代表切換按鈕（toggle）的按下狀態，因此不輸出 aria-pressed。
    */
   @property({ type: Boolean, reflect: true })
   active = false;
@@ -393,23 +411,26 @@ export class AuiIconButton extends LitElement {
     const textToCopy = this.copyValue;
 
     try {
-      if (textToCopy) {
-        if (navigator.clipboard && window.isSecureContext) {
-          await navigator.clipboard.writeText(textToCopy);
-        } else {
-          // 針對未具備 Secure Context 之後備相容方案
-          const textarea = document.createElement('textarea');
-          textarea.value = textToCopy;
-          textarea.style.position = 'fixed';
-          textarea.style.left = '-9999px';
-          textarea.style.top = '-9999px';
-          textarea.setAttribute('readonly', '');
-          document.body.appendChild(textarea);
-          textarea.select();
-          const successful = document.execCommand('copy');
-          document.body.removeChild(textarea);
-          if (!successful) throw new Error('execCommand copy failed');
-        }
+      // 沒有可複製的內容時不可回報成功（避免「已複製！」但剪貼簿其實沒有變更）
+      if (!textToCopy) {
+        throw new Error('沒有可複製的內容：copy-value 為空');
+      }
+
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(textToCopy);
+      } else {
+        // 針對未具備 Secure Context 之後備相容方案
+        const textarea = document.createElement('textarea');
+        textarea.value = textToCopy;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '-9999px';
+        textarea.setAttribute('readonly', '');
+        document.body.appendChild(textarea);
+        textarea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (!successful) throw new Error('execCommand copy failed');
       }
 
       this.triggerFeedback('success');
@@ -435,31 +456,65 @@ export class AuiIconButton extends LitElement {
   }
 
   /**
-   * 執行下載行為並觸發微動態反饋
+   * 執行下載行為並觸發微動態反饋。
+   *
+   * - 先分派可取消的 `aui-download`；使用端 `preventDefault()` 即可自行接手下載。
+   * - 未設定 `download-url` 時只分派事件、不回報成功，由使用端自行處理並呼叫 `triggerFeedback()`。
+   * - 僅允許 http(s) / blob / data 協定；其他協定（如 `javascript:`）會被拒絕並分派 `aui-download-error`。
+   * - 跨來源網址的 `download` 屬性會被瀏覽器忽略，改以新分頁開啟，避免整頁被導走。
+   *
+   * @returns 是否已由元件啟動下載
    */
-  async download(): Promise<void> {
-    if (this.disabled || this.loading) return;
+  async download(): Promise<boolean> {
+    if (this.disabled || this.loading) return false;
 
-    this.dispatchEvent(
-      new CustomEvent<DownloadDetail>('aui-download', {
-        detail: { url: this.downloadUrl, filename: this.downloadFilename },
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    const rawUrl = this.downloadUrl;
+    const url = rawUrl ? parseDownloadUrl(rawUrl) : null;
 
-    if (this.downloadUrl) {
-      const anchor = document.createElement('a');
-      anchor.href = this.downloadUrl;
-      if (this.downloadFilename) {
-        anchor.download = this.downloadFilename;
-      }
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
+    if (rawUrl && !url) {
+      this.triggerFeedback('error');
+      this.dispatchEvent(
+        new CustomEvent<DownloadErrorDetail>('aui-download-error', {
+          detail: {
+            url: rawUrl,
+            error: new Error(`不允許的下載網址協定：${rawUrl}`),
+          },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      return false;
     }
 
+    const event = new CustomEvent<DownloadDetail>('aui-download', {
+      detail: { url: rawUrl, filename: this.downloadFilename },
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    });
+    this.dispatchEvent(event);
+
+    if (event.defaultPrevented || !url) {
+      return false;
+    }
+
+    const anchor = document.createElement('a');
+    anchor.href = url.href;
+    const isCrossOrigin =
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      url.origin !== window.location.origin;
+    if (isCrossOrigin) {
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+    } else if (this.downloadFilename) {
+      anchor.download = this.downloadFilename;
+    }
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+
     this.triggerFeedback('success');
+    return true;
   }
 
   /**
@@ -608,7 +663,6 @@ export class AuiIconButton extends LitElement {
         aria-label=${ariaLabel}
         aria-busy=${isLoading ? 'true' : 'false'}
         aria-disabled=${isInactive ? 'true' : 'false'}
-        aria-pressed=${this.active ? 'true' : 'false'}
       >
         <span class="icon-wrapper" part="icon-wrapper">
           <!-- 1. 閒置圖示層 -->

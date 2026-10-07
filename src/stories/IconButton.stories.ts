@@ -407,6 +407,7 @@ export const Variants: Story = {
       <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
         <aui-icon-button
           preset="copy"
+          copy-value="Anchor UI"
           variant="ghost"
           tooltip="Ghost 變體 (預設)"
         ></aui-icon-button>
@@ -414,13 +415,19 @@ export const Variants: Story = {
       </div>
 
       <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
-        <aui-icon-button preset="copy" variant="subtle" tooltip="Subtle 淺底變體"></aui-icon-button>
+        <aui-icon-button
+          preset="copy"
+          copy-value="Anchor UI"
+          variant="subtle"
+          tooltip="Subtle 淺底變體"
+        ></aui-icon-button>
         <span style="font-size: 11px; color: var(--color-text-muted);">Subtle</span>
       </div>
 
       <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
         <aui-icon-button
           preset="copy"
+          copy-value="Anchor UI"
           variant="outline"
           tooltip="Outline 線框變體"
         ></aui-icon-button>
@@ -430,6 +437,7 @@ export const Variants: Story = {
       <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
         <aui-icon-button
           preset="copy"
+          copy-value="Anchor UI"
           variant="primary"
           tooltip="Primary 品牌海軍藍"
         ></aui-icon-button>
@@ -455,13 +463,19 @@ export const Sizes: Story = {
   render: () => html`
     <div style="display: flex; gap: 24px; align-items: center;">
       <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
-        <aui-icon-button preset="copy" size="sm" tooltip="Small (28×28px)"></aui-icon-button>
+        <aui-icon-button
+          preset="copy"
+          copy-value="Anchor UI"
+          size="sm"
+          tooltip="Small (28×28px)"
+        ></aui-icon-button>
         <span style="font-size: 11px; color: var(--color-text-muted);">sm (28px)</span>
       </div>
 
       <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
         <aui-icon-button
           preset="copy"
+          copy-value="Anchor UI"
           size="md"
           tooltip="Medium (32×32px 規範標準)"
         ></aui-icon-button>
@@ -471,7 +485,12 @@ export const Sizes: Story = {
       </div>
 
       <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
-        <aui-icon-button preset="copy" size="lg" tooltip="Large (40×40px)"></aui-icon-button>
+        <aui-icon-button
+          preset="copy"
+          copy-value="Anchor UI"
+          size="lg"
+          tooltip="Large (40×40px)"
+        ></aui-icon-button>
         <span style="font-size: 11px; color: var(--color-text-muted);">lg (40px)</span>
       </div>
     </div>
@@ -487,6 +506,7 @@ export const Shapes: Story = {
       <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
         <aui-icon-button
           preset="copy"
+          copy-value="Anchor UI"
           shape="rounded"
           variant="outline"
           tooltip="Rounded (6px 圓角)"
@@ -497,6 +517,7 @@ export const Shapes: Story = {
       <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
         <aui-icon-button
           preset="copy"
+          copy-value="Anchor UI"
           shape="circle"
           variant="outline"
           tooltip="Circle (全圓形)"
@@ -507,6 +528,7 @@ export const Shapes: Story = {
       <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
         <aui-icon-button
           preset="copy"
+          copy-value="Anchor UI"
           shape="square"
           variant="outline"
           tooltip="Square (直角)"
@@ -524,17 +546,32 @@ export const States: Story = {
   render: () => html`
     <div style="display: flex; gap: 24px; align-items: center;">
       <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
-        <aui-icon-button preset="copy" loading tooltip="載入處理中"></aui-icon-button>
+        <aui-icon-button
+          preset="copy"
+          copy-value="Anchor UI"
+          loading
+          tooltip="載入處理中"
+        ></aui-icon-button>
         <span style="font-size: 11px; color: var(--color-text-muted);">Loading (旋轉 Spinner)</span>
       </div>
 
       <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
-        <aui-icon-button preset="copy" disabled tooltip="停用不可點擊"></aui-icon-button>
+        <aui-icon-button
+          preset="copy"
+          copy-value="Anchor UI"
+          disabled
+          tooltip="停用不可點擊"
+        ></aui-icon-button>
         <span style="font-size: 11px; color: var(--color-text-muted);">Disabled</span>
       </div>
 
       <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
-        <aui-icon-button preset="copy" active tooltip="Active 翠綠高亮"></aui-icon-button>
+        <aui-icon-button
+          preset="copy"
+          copy-value="Anchor UI"
+          active
+          tooltip="Active 翠綠高亮"
+        ></aui-icon-button>
         <span style="font-size: 11px; color: var(--color-text-muted);">Active (Success 翠綠)</span>
       </div>
     </div>
@@ -578,13 +615,19 @@ export const TooltipPlacements: Story = {
       style="display: grid; grid-template-columns: repeat(4, 120px); gap: 24px; padding: 40px; justify-content: center;"
     >
       <div style="text-align: center;">
-        <aui-icon-button preset="copy" tooltip-placement="top" tooltip="Top 方位"></aui-icon-button>
+        <aui-icon-button
+          preset="copy"
+          copy-value="Anchor UI"
+          tooltip-placement="top"
+          tooltip="Top 方位"
+        ></aui-icon-button>
         <div style="font-size: 11px; color: var(--color-text-muted); margin-top: 6px;">top</div>
       </div>
 
       <div style="text-align: center;">
         <aui-icon-button
           preset="copy"
+          copy-value="Anchor UI"
           tooltip-placement="bottom"
           tooltip="Bottom 方位"
         ></aui-icon-button>
@@ -594,6 +637,7 @@ export const TooltipPlacements: Story = {
       <div style="text-align: center;">
         <aui-icon-button
           preset="copy"
+          copy-value="Anchor UI"
           tooltip-placement="left"
           tooltip="Left 方位"
         ></aui-icon-button>
@@ -603,6 +647,7 @@ export const TooltipPlacements: Story = {
       <div style="text-align: center;">
         <aui-icon-button
           preset="copy"
+          copy-value="Anchor UI"
           tooltip-placement="right"
           tooltip="Right 方位"
         ></aui-icon-button>
@@ -630,6 +675,7 @@ export const HoverColors: Story = {
           <div style="text-align: center;">
             <aui-icon-button
               preset="copy"
+              copy-value="Anchor UI"
               color="brand"
               tooltip="Brand (預設品牌海軍藍)"
             ></aui-icon-button>
@@ -640,6 +686,7 @@ export const HoverColors: Story = {
           <div style="text-align: center;">
             <aui-icon-button
               preset="copy"
+              copy-value="Anchor UI"
               color="accent"
               tooltip="Accent (琥珀金)"
             ></aui-icon-button>
@@ -650,6 +697,7 @@ export const HoverColors: Story = {
           <div style="text-align: center;">
             <aui-icon-button
               preset="copy"
+              copy-value="Anchor UI"
               color="success"
               tooltip="Success (翠綠)"
             ></aui-icon-button>
@@ -660,6 +708,7 @@ export const HoverColors: Story = {
           <div style="text-align: center;">
             <aui-icon-button
               preset="copy"
+              copy-value="Anchor UI"
               color="warning"
               tooltip="Warning (警示橙)"
             ></aui-icon-button>
@@ -668,13 +717,23 @@ export const HoverColors: Story = {
             </div>
           </div>
           <div style="text-align: center;">
-            <aui-icon-button preset="copy" color="danger" tooltip="Danger (赤紅)"></aui-icon-button>
+            <aui-icon-button
+              preset="copy"
+              copy-value="Anchor UI"
+              color="danger"
+              tooltip="Danger (赤紅)"
+            ></aui-icon-button>
             <div style="font-size: 11px; color: var(--color-text-muted); margin-top: 4px;">
               danger
             </div>
           </div>
           <div style="text-align: center;">
-            <aui-icon-button preset="copy" color="info" tooltip="Info (天藍)"></aui-icon-button>
+            <aui-icon-button
+              preset="copy"
+              copy-value="Anchor UI"
+              color="info"
+              tooltip="Info (天藍)"
+            ></aui-icon-button>
             <div style="font-size: 11px; color: var(--color-text-muted); margin-top: 4px;">
               info
             </div>
@@ -682,6 +741,7 @@ export const HoverColors: Story = {
           <div style="text-align: center;">
             <aui-icon-button
               preset="copy"
+              copy-value="Anchor UI"
               color="purple"
               tooltip="Purple (紫羅蘭)"
             ></aui-icon-button>
@@ -692,6 +752,7 @@ export const HoverColors: Story = {
           <div style="text-align: center;">
             <aui-icon-button
               preset="copy"
+              copy-value="Anchor UI"
               color="neutral"
               tooltip="Neutral (中性灰)"
             ></aui-icon-button>
@@ -712,6 +773,7 @@ export const HoverColors: Story = {
           <div style="text-align: center;">
             <aui-icon-button
               preset="copy"
+              copy-value="Anchor UI"
               tooltip="客製青翠色 (Emerald)"
               style="--aui-icon-btn-hover-bg: #ecfdf5; --aui-icon-btn-hover-border: #6ee7b7; --aui-icon-btn-hover-color: #059669;"
             ></aui-icon-button>
