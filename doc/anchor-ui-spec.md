@@ -101,7 +101,7 @@ anchor-ui/
   - 工程防線先行：調整建置架構使 Tree-shaking 生效（個別元件入口），導入 Bundle 體積門禁與視覺回歸測試（Visual Regression），並建立共用浮層基礎模組。
   - 實作 Input & Field、Output Row、Segmented Control，可參與原生表單並與 Vue 3 / Angular 表單機制雙向綁定。
   - **實作獨立的 Modal（通用彈窗外框容器）與以 Modal 為基礎的 Alert（提示與確認對話框服務）**。
-  - 實作全域 Toast 通知服務（`ToastService`），於 Top Layer 顯示以確保 Modal 開啟時仍可見。
+  - 實作全域 Toast 通知服務（`ToastService`），於 Top Layer 顯示，Modal 開啟期間移入 modal 子樹以確保仍可見、可操作且可被播報。
 
 - **Phase 3 — 業務複合型元件與自動化預覽 (6 款元件)**
   - 實作 Card、Accordion、FileUpload Dropzone、Favorite Toggle、Header、Kbd。
