@@ -70,8 +70,9 @@ jobs:
         run: pnpm build-storybook
 
   test:
-    name: Unit, a11y & Coverage
+    name: Unit, a11y, Coverage & Framework integration
     # TASK-110: a11y 測試需讀取 dist/tokens.css，因此須先 build；同樣在 lint 通過後才執行。
+    # Vue / Angular 整合測試透過 workspace 消費建置後的 dist/，同樣依賴 build。
     needs: lint-and-typecheck
     runs-on: ubuntu-latest
     steps:
@@ -98,11 +99,16 @@ jobs:
       - name: Install Playwright Chromium
         run: pnpm exec playwright install --with-deps chromium
 
-      - name: Run accessibility tests (axe-core)
-        run: pnpm test:a11y
-
-      - name: Run unit tests with coverage (thresholds enforced)
+      # test:coverage 會執行全部 *.test.ts（含 *.a11y.test.ts 的 axe-core 檢測），
+      # 不再另外跑 test:a11y，避免 a11y 測試重複執行
+      - name: Run unit & accessibility tests with coverage (thresholds enforced)
         run: pnpm test:coverage
+
+      - name: Run Vue 3 integration tests
+        run: pnpm test:vue
+
+      - name: Run Angular integration tests
+        run: pnpm test:angular
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5

@@ -1,7 +1,12 @@
 import { expect, fixture, html, oneEvent } from '@open-wc/testing';
 import './icon-button.js';
 import type { AuiIconButton } from './icon-button.js';
-import type { CopyDetail, DownloadDetail, DownloadErrorDetail } from './icon-button.types.js';
+import type {
+  CopyDetail,
+  DownloadDetail,
+  DownloadErrorDetail,
+  StatusChangeDetail,
+} from './icon-button.types.js';
 
 /**
  * 攔截 <a>.click()，記錄元件建立的下載連結而不真的觸發導覽或下載
@@ -212,6 +217,91 @@ describe('AuiIconButton (<aui-icon-button>)', () => {
     } finally {
       anchors.restore();
     }
+  });
+
+  describe('feedback state transitions', () => {
+    it('resetFeedback() reports the transition back to idle like the timer does', async () => {
+      const el = await fixture<AuiIconButton>(html`
+        <aui-icon-button preset="copy" .feedbackDuration=${60000}></aui-icon-button>
+      `);
+      el.triggerFeedback('success');
+      await el.updateComplete;
+
+      setTimeout(() => el.resetFeedback());
+      const ev = (await oneEvent(el, 'aui-status-change')) as CustomEvent<StatusChangeDetail>;
+      expect(ev.detail).to.deep.equal({ status: 'idle', previousStatus: 'success' });
+      expect(el.status).to.equal('idle');
+      expect(el.active).to.be.false;
+    });
+
+    it('does not report a status change when resetting while already idle', async () => {
+      const el = await fixture<AuiIconButton>(
+        html`<aui-icon-button preset="copy"></aui-icon-button>`,
+      );
+      let changes = 0;
+      el.addEventListener('aui-status-change', () => changes++);
+      el.resetFeedback();
+      expect(changes).to.equal(0);
+    });
+
+    it('returns to idle automatically after feedback-duration', async () => {
+      const el = await fixture<AuiIconButton>(html`
+        <aui-icon-button preset="copy" .feedbackDuration=${20}></aui-icon-button>
+      `);
+      el.triggerFeedback('success');
+      const ev = (await oneEvent(el, 'aui-status-change')) as CustomEvent<StatusChangeDetail>;
+      expect(ev.detail).to.deep.equal({ status: 'idle', previousStatus: 'success' });
+    });
+  });
+
+  describe('busy state (loading prop or status="loading")', () => {
+    for (const setup of ['loading', 'status'] as const) {
+      it(`blocks actions and exposes the busy state when set via ${setup}`, async () => {
+        const el = await fixture<AuiIconButton>(html`
+          <aui-icon-button preset="copy" copy-value="x"></aui-icon-button>
+        `);
+        if (setup === 'loading') el.loading = true;
+        else el.status = 'loading';
+        await el.updateComplete;
+
+        // 模擬剪貼簿成功，確保「沒有 aui-copy」是因為被攔截，而非剪貼簿失敗
+        const originalWriteText = navigator.clipboard.writeText;
+        let writes = 0;
+        navigator.clipboard.writeText = async () => {
+          writes++;
+        };
+        let events = 0;
+        el.addEventListener('aui-copy', () => events++);
+        el.addEventListener('aui-copy-error', () => events++);
+        try {
+          el.click();
+          expect(await el.copy()).to.be.false;
+          expect(await el.download()).to.be.false;
+          expect(writes).to.equal(0);
+          expect(events).to.equal(0);
+        } finally {
+          navigator.clipboard.writeText = originalWriteText;
+        }
+
+        const innerBtn = el.shadowRoot!.querySelector('button')!;
+        expect(innerBtn.getAttribute('aria-busy')).to.equal('true');
+        expect(innerBtn.getAttribute('aria-disabled')).to.equal('true');
+      });
+    }
+
+    it('keeps keyboard focus on the button while busy', async () => {
+      const el = await fixture<AuiIconButton>(
+        html`<aui-icon-button preset="refresh"></aui-icon-button>`,
+      );
+      const innerBtn = el.shadowRoot!.querySelector('button')!;
+      el.focus();
+      expect(el.shadowRoot!.activeElement).to.equal(innerBtn);
+
+      el.loading = true;
+      await el.updateComplete;
+      expect(innerBtn.hasAttribute('disabled')).to.be.false;
+      expect(el.shadowRoot!.activeElement).to.equal(innerBtn);
+    });
   });
 
   describe('click action resolution', () => {

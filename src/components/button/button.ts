@@ -2,6 +2,8 @@ import { LitElement, html, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { buttonStyles } from './button.styles.js';
+import { interceptInactiveClick } from '../../internal/inactive-click.js';
+import { spinnerIcon, spinnerStyles } from '../../internal/spinner.js';
 import type { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
 
 /**
@@ -23,7 +25,7 @@ import type { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
  * @csspart suffix - 後綴內容包裝容器
  */
 export class AuiButton extends LitElement {
-  static override styles = buttonStyles;
+  static override styles = [spinnerStyles, buttonStyles];
 
   static override shadowRootOptions: ShadowRootInit = {
     ...LitElement.shadowRootOptions,
@@ -98,11 +100,7 @@ export class AuiButton extends LitElement {
   }
 
   private handleHostClick = (event: MouseEvent) => {
-    if (this.disabled || this.loading) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      return;
-    }
+    if (interceptInactiveClick(event, this.disabled || this.loading)) return;
 
     // 與所屬 Form 表單原生連動
     const form = this.form;
@@ -115,20 +113,6 @@ export class AuiButton extends LitElement {
       form.reset();
     }
   };
-
-  /**
-   * 主動聚焦內部原生按鈕
-   */
-  override focus(options?: FocusOptions): void {
-    this.shadowRoot?.querySelector<HTMLButtonElement>('button')?.focus(options);
-  }
-
-  /**
-   * 主動移除內部原生按鈕焦點
-   */
-  override blur(): void {
-    this.shadowRoot?.querySelector<HTMLButtonElement>('button')?.blur();
-  }
 
   override render() {
     // loading 只以 aria-disabled 標示並由 handleHostClick 攔截點擊，不設原生 disabled：
@@ -153,12 +137,7 @@ export class AuiButton extends LitElement {
         ${
           this.loading
             ? html`
-                <span class="btn__spinner" part="spinner" aria-hidden="true">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                    <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
-                    <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
-                  </svg>
-                </span>
+                <span class="btn__spinner" part="spinner" aria-hidden="true">${spinnerIcon}</span>
               `
             : html`
                 <span class="btn__prefix" part="prefix">

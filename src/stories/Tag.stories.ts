@@ -76,7 +76,7 @@ const meta: Meta<TagStoryArgs> = {
     removeLabel: {
       control: 'text',
       description: '移除按鈕的無障礙 aria-label 提示文字',
-      table: { defaultValue: { summary: 'Remove tag' } },
+      table: { defaultValue: { summary: '移除標籤' } },
     },
     label: {
       control: 'text',
@@ -91,7 +91,7 @@ const meta: Meta<TagStoryArgs> = {
     preserveCase: false,
     removable: false,
     interactive: false,
-    removeLabel: 'Remove tag',
+    removeLabel: '移除標籤',
   },
 };
 

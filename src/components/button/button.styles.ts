@@ -79,9 +79,9 @@ export const buttonStyles = css`
 
   /* ─── Focus 雙層無障礙焦點環 ─── */
   .btn:focus-visible {
-    outline: 2px solid var(--color-brand-500, #38bdf8);
+    outline: 2px solid var(--color-brand-500, #1b6ca8);
     outline-offset: 2px;
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand-500, #38bdf8) 25%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand-500, #1b6ca8) 25%, transparent);
   }
 
   .btn:focus:not(:focus-visible) {
@@ -188,7 +188,6 @@ export const buttonStyles = css`
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
-    animation: aui-spin 0.8s linear infinite;
   }
 
   .btn__spinner svg {
@@ -197,24 +196,13 @@ export const buttonStyles = css`
     height: 1.15em;
   }
 
-  @keyframes aui-spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
+  /* Spinner 動畫由共用的 spinnerStyles（src/internal/spinner.ts）提供 */
 
   /* ─── 無障礙動態降級 ─── */
   @media (prefers-reduced-motion: reduce) {
     .btn {
       transition: none !important;
       transform: none !important;
-    }
-
-    .btn__spinner {
-      animation-duration: 2s;
     }
   }
 `;

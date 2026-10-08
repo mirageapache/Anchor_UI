@@ -91,8 +91,8 @@ describe('AuiTag (<aui-tag>)', () => {
     const el = await fixture<AuiTag>(html`<aui-tag removable>Removable</aui-tag>`);
     const removeBtn = el.shadowRoot?.querySelector<HTMLButtonElement>('.tag__remove');
     expect(removeBtn).to.exist;
-    expect(removeBtn?.getAttribute('aria-label')).to.equal('Remove tag');
-    expect(removeBtn?.getAttribute('title')).to.equal('Remove tag');
+    expect(removeBtn?.getAttribute('aria-label')).to.equal('移除標籤');
+    expect(removeBtn?.getAttribute('title')).to.equal('移除標籤');
 
     const base = el.shadowRoot?.querySelector('.tag');
     expect(base?.classList.contains('tag--removable')).to.be.true;

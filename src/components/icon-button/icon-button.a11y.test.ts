@@ -163,6 +163,52 @@ describe('AuiIconButton Accessibility (<aui-icon-button>)', () => {
       expect((await getAxNode(innerBtn)).role).to.equal('button');
     });
 
+    it('derives the accessible name of every preset from a single table', async () => {
+      const expected = {
+        copy: '複製',
+        download: '下載',
+        close: '關閉',
+        check: '確認',
+        refresh: '重新整理',
+        external: '另開新視窗',
+        more: '更多選項',
+      } as const;
+      for (const [preset, name] of Object.entries(expected)) {
+        const el = await fixture<AuiIconButton>(
+          html`<aui-icon-button .preset=${preset as AuiIconButton['preset']}></aui-icon-button>`,
+        );
+        const innerBtn = el.shadowRoot!.querySelector('button')!;
+        expect(innerBtn.getAttribute('aria-label'), preset).to.equal(name);
+      }
+
+      const fallback = await fixture<AuiIconButton>(html`<aui-icon-button></aui-icon-button>`);
+      expect(fallback.shadowRoot!.querySelector('button')!.getAttribute('aria-label')).to.equal(
+        '按鈕',
+      );
+    });
+
+    it('keeps a stable accessible name and announces feedback only via a live region outside the button', async () => {
+      const el = await fixture<AuiIconButton>(
+        html`<aui-icon-button preset="copy" label="複製程式碼"></aui-icon-button>`,
+      );
+      const innerBtn = el.shadowRoot!.querySelector('button')!;
+      const liveRegion = el.shadowRoot!.querySelector<HTMLElement>('[role="status"]')!;
+
+      // 按鈕子孫為 presentational，live region 放在按鈕內可能不會被播報
+      expect(innerBtn.contains(liveRegion)).to.be.false;
+
+      el.triggerFeedback('success');
+      await el.updateComplete;
+      // 名稱不隨狀態改變，避免 aria-label 與 live region 重複播報
+      expect(innerBtn.getAttribute('aria-label')).to.equal('複製程式碼');
+      expect(liveRegion.textContent?.trim()).to.equal('已複製！');
+
+      el.triggerFeedback('error');
+      await el.updateComplete;
+      expect(innerBtn.getAttribute('aria-label')).to.equal('複製程式碼');
+      expect(liveRegion.textContent?.trim()).to.equal('操作失敗');
+    });
+
     it('provides aria-live region for screen reader announcements on state change', async () => {
       const el = await fixture<AuiIconButton>(
         html`<aui-icon-button preset="copy" copy-value="Announce Me"></aui-icon-button>`,
@@ -254,9 +300,9 @@ describe('AuiIconButton Accessibility (<aui-icon-button>)', () => {
       const el = await fixture<AuiIconButton>(
         html`<aui-icon-button preset="copy" loading></aui-icon-button>`,
       );
-      const spinner = el.shadowRoot!.querySelector('.spinner-svg')!;
+      const spinner = el.shadowRoot!.querySelector('.aui-spinner')!;
       const style = getComputedStyle(spinner);
-      expect(style.animationName).to.equal('spin');
+      expect(style.animationName).to.equal('aui-spin');
       expect(parseFloat(style.animationDuration)).to.be.at.least(1.5);
     });
   });

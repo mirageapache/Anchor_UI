@@ -8,7 +8,7 @@ import type { TagSize, TagVariant } from './tag.types.js';
  * Anchor UI — Tag / Badge 元件 (`<aui-tag>`)
  *
  * 採用 JetBrains Mono 等寬字體呈現的專業標籤，用於技術分類、版本標號、格式與狀態標記。
- * 支援 7 種語意色彩變體、3 種尺寸規格、膠囊圓角 (pill)、可點擊互動 (interactive)、
+ * 支援 7 種語意色彩變體（另有 6 個相容別名）、3 種尺寸規格、膠囊圓角 (pill)、可點擊互動 (interactive)、
  * 可移除操作 (removable)，並預設落實全小寫標籤規範（支援 preserve-case 跳脫）。
  *
  * @element aui-tag
@@ -24,13 +24,14 @@ import type { TagSize, TagVariant } from './tag.types.js';
  * @csspart suffix - 後綴內容包裝容器
  * @csspart remove-button - 移除按鈕（當 removable 為 true 時）
  *
- * @event aui-remove - 當點擊移除按鈕時觸發，支援 bubbles 與 composed
+ * @fires aui-remove - 當點擊移除按鈕時觸發，支援 bubbles 與 composed
  */
 export class AuiTag extends LitElement {
   static override styles = tagStyles;
 
   /**
-   * 語意色彩變體（支援 7 種核心語意色與別名）
+   * 語意色彩變體：7 種核心語意色，另有相容別名
+   * deep-blue→brand、green→success、amber / accent→warning、red→danger、blue→info
    */
   @property({ type: String, reflect: true })
   variant: TagVariant = 'neutral';
@@ -69,7 +70,7 @@ export class AuiTag extends LitElement {
    * 移除按鈕的無障礙語意標籤
    */
   @property({ type: String, attribute: 'remove-label' })
-  removeLabel = 'Remove tag';
+  removeLabel = '移除標籤';
 
   /**
    * 互動語意（role="button" / tabindex）放在 shadow 內的 action 元素而非 host，

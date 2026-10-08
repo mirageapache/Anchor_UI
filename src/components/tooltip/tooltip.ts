@@ -284,12 +284,7 @@ export class AuiTooltip extends LitElement {
 
   private handleTargetMouseLeave = (): void => {
     if (this.disabled || !this.hasTrigger('hover')) return;
-    this.clearTimeouts();
-    if (this.hideDelay > 0) {
-      this.hideTimeoutId = window.setTimeout(() => this.hide(), this.hideDelay);
-    } else {
-      this.hide();
-    }
+    this.scheduleHide();
   };
 
   private handlePopupMouseEnter = (): void => {
@@ -301,14 +296,21 @@ export class AuiTooltip extends LitElement {
 
   private handlePopupMouseLeave = (): void => {
     if (this.hasTrigger('hover')) {
-      this.clearTimeouts();
-      if (this.hideDelay > 0) {
-        this.hideTimeoutId = window.setTimeout(() => this.hide(), this.hideDelay);
-      } else {
-        this.hide();
-      }
+      this.scheduleHide();
     }
   };
+
+  /**
+   * 依 hide-delay 延遲收合（滑鼠離開觸發目標或氣泡本體時共用）
+   */
+  private scheduleHide(): void {
+    this.clearTimeouts();
+    if (this.hideDelay > 0) {
+      this.hideTimeoutId = window.setTimeout(() => this.hide(), this.hideDelay);
+    } else {
+      this.hide();
+    }
+  }
 
   private handleTargetFocusIn = (): void => {
     if (this.disabled || !this.hasTrigger('focus')) return;

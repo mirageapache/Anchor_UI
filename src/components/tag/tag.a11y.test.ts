@@ -126,8 +126,8 @@ describe('AuiTag Accessibility (<aui-tag>)', () => {
     it('provides accessible name and title for removal button', async () => {
       const defaultEl = await fixture<AuiTag>(html`<aui-tag removable>Item</aui-tag>`);
       const defaultBtn = defaultEl.shadowRoot?.querySelector<HTMLButtonElement>('.tag__remove');
-      expect(defaultBtn?.getAttribute('aria-label')).to.equal('Remove tag');
-      expect(defaultBtn?.getAttribute('title')).to.equal('Remove tag');
+      expect(defaultBtn?.getAttribute('aria-label')).to.equal('移除標籤');
+      expect(defaultBtn?.getAttribute('title')).to.equal('移除標籤');
 
       const customEl = await fixture<AuiTag>(
         html`<aui-tag removable remove-label="Delete Tag">Item</aui-tag>`,

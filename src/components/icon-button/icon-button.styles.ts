@@ -235,7 +235,7 @@ export const iconButtonStyles = css`
   .icon-btn--outline:hover:not(:disabled):not(.is-disabled):not(.is-active) {
     border-color: var(
       --aui-icon-btn-hover-border,
-      var(--aui-icon-btn-color-border, var(--color-brand-500, #38bdf8))
+      var(--aui-icon-btn-color-border, var(--color-brand-500, #1b6ca8))
     );
     background: var(
       --aui-icon-btn-hover-bg,
@@ -272,10 +272,13 @@ export const iconButtonStyles = css`
   }
 
   .icon-btn--danger:hover:not(:disabled):not(.is-disabled):not(.is-active) {
-    background: var(--aui-icon-btn-hover-bg, var(--color-danger-dim, rgba(239, 68, 68, 0.14)));
+    background: var(
+      --aui-icon-btn-hover-bg,
+      var(--color-danger-dim, color-mix(in srgb, #ef4444 10%, transparent))
+    );
     border-color: var(
       --aui-icon-btn-hover-border,
-      var(--color-danger-border, rgba(239, 68, 68, 0.3))
+      var(--color-danger-border, color-mix(in srgb, #ef4444 25%, transparent))
     );
     color: var(--aui-icon-btn-hover-color, var(--color-danger-hover, #dc2626));
   }
@@ -297,43 +300,67 @@ export const iconButtonStyles = css`
 
   :host([color='accent']),
   .icon-btn--color-accent {
-    --aui-icon-btn-color-dim: var(--color-accent-dim, rgba(245, 158, 11, 0.16));
-    --aui-icon-btn-color-border: var(--color-accent-border, rgba(245, 158, 11, 0.35));
-    --aui-icon-btn-color-text: var(--color-accent-text, #b45309);
+    --aui-icon-btn-color-dim: var(--color-accent-dim, color-mix(in srgb, #f59e0b 14%, transparent));
+    --aui-icon-btn-color-border: var(
+      --color-accent-border,
+      color-mix(in srgb, #f59e0b 30%, transparent)
+    );
+    --aui-icon-btn-color-text: var(--color-accent-text, #92400e);
   }
 
   :host([color='warning']),
   .icon-btn--color-warning {
-    --aui-icon-btn-color-dim: var(--color-warning-dim, rgba(245, 158, 11, 0.16));
-    --aui-icon-btn-color-border: var(--color-warning-border, rgba(245, 158, 11, 0.35));
-    --aui-icon-btn-color-text: var(--color-warning-text, #b45309);
+    --aui-icon-btn-color-dim: var(
+      --color-warning-dim,
+      color-mix(in srgb, #f59e0b 14%, transparent)
+    );
+    --aui-icon-btn-color-border: var(
+      --color-warning-border,
+      color-mix(in srgb, #f59e0b 30%, transparent)
+    );
+    --aui-icon-btn-color-text: var(--color-warning-text, #92400e);
   }
 
   :host([color='success']),
   .icon-btn--color-success {
-    --aui-icon-btn-color-dim: var(--color-success-dim, rgba(16, 185, 129, 0.16));
-    --aui-icon-btn-color-border: var(--color-success-border, rgba(16, 185, 129, 0.35));
+    --aui-icon-btn-color-dim: var(
+      --color-success-dim,
+      color-mix(in srgb, #10b981 10%, transparent)
+    );
+    --aui-icon-btn-color-border: var(
+      --color-success-border,
+      color-mix(in srgb, #10b981 28%, transparent)
+    );
     --aui-icon-btn-color-text: var(--color-success-text, #047857);
   }
 
   :host([color='danger']),
   .icon-btn--color-danger {
-    --aui-icon-btn-color-dim: var(--color-danger-dim, rgba(239, 68, 68, 0.16));
-    --aui-icon-btn-color-border: var(--color-danger-border, rgba(239, 68, 68, 0.35));
-    --aui-icon-btn-color-text: var(--color-danger-text, #dc2626);
+    --aui-icon-btn-color-dim: var(--color-danger-dim, color-mix(in srgb, #ef4444 10%, transparent));
+    --aui-icon-btn-color-border: var(
+      --color-danger-border,
+      color-mix(in srgb, #ef4444 25%, transparent)
+    );
+    --aui-icon-btn-color-text: var(--color-danger-text, #b91c1c);
   }
 
   :host([color='info']),
   .icon-btn--color-info {
-    --aui-icon-btn-color-dim: var(--color-info-dim, rgba(14, 165, 233, 0.16));
-    --aui-icon-btn-color-border: var(--color-info-border, rgba(14, 165, 233, 0.35));
+    --aui-icon-btn-color-dim: var(--color-info-dim, color-mix(in srgb, #0284c7 12%, transparent));
+    --aui-icon-btn-color-border: var(
+      --color-info-border,
+      color-mix(in srgb, #0284c7 25%, transparent)
+    );
     --aui-icon-btn-color-text: var(--color-info-text, #0369a1);
   }
 
   :host([color='purple']),
   .icon-btn--color-purple {
-    --aui-icon-btn-color-dim: var(--color-purple-dim, rgba(139, 92, 246, 0.16));
-    --aui-icon-btn-color-border: var(--color-purple-border, rgba(139, 92, 246, 0.35));
+    --aui-icon-btn-color-dim: var(--color-purple-dim, color-mix(in srgb, #8b5cf6 12%, transparent));
+    --aui-icon-btn-color-border: var(
+      --color-purple-border,
+      color-mix(in srgb, #8b5cf6 25%, transparent)
+    );
     --aui-icon-btn-color-text: var(--color-purple-text, #6d28d9);
   }
 
@@ -353,26 +380,36 @@ export const iconButtonStyles = css`
   /* ─── 成功回饋狀態 (Active & Success Feedback - 翡翠綠 Success 主題) ─── */
   .icon-btn.is-active,
   .icon-btn.is-success {
-    background: var(--color-success-dim, rgba(16, 185, 129, 0.16)) !important;
+    background: var(--color-success-dim, color-mix(in srgb, #10b981 10%, transparent)) !important;
     color: var(--color-success-text, #047857) !important;
-    border-color: var(--color-success-border, rgba(16, 185, 129, 0.35)) !important;
+    border-color: var(
+      --color-success-border,
+      color-mix(in srgb, #10b981 28%, transparent)
+    ) !important;
     box-shadow: 0 0 0 3px
-      color-mix(in srgb, var(--color-success-border, rgba(16, 185, 129, 0.35)) 40%, transparent) !important;
+      color-mix(
+        in srgb,
+        var(--color-success-border, color-mix(in srgb, #10b981 28%, transparent)) 40%,
+        transparent
+      ) !important;
     animation: pulse-ring 600ms cubic-bezier(0.25, 1, 0.5, 1);
   }
 
   /* 錯誤反饋狀態 */
   .icon-btn.is-error {
-    background: var(--color-danger-dim, rgba(239, 68, 68, 0.14)) !important;
+    background: var(--color-danger-dim, color-mix(in srgb, #ef4444 10%, transparent)) !important;
     color: var(--color-danger, #ef4444) !important;
-    border-color: var(--color-danger-border, rgba(239, 68, 68, 0.3)) !important;
+    border-color: var(
+      --color-danger-border,
+      color-mix(in srgb, #ef4444 25%, transparent)
+    ) !important;
   }
 
   /* ─── Focus 雙層無障礙焦點環 ─── */
   .icon-btn:focus-visible {
-    outline: 2px solid var(--color-brand-500, #38bdf8);
+    outline: 2px solid var(--color-brand-500, #1b6ca8);
     outline-offset: 2px;
-    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand-500, #38bdf8) 25%, transparent);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand-500, #1b6ca8) 25%, transparent);
   }
 
   .icon-btn:focus:not(:focus-visible) {
@@ -499,22 +536,11 @@ export const iconButtonStyles = css`
     pointer-events: auto;
   }
 
-  .spinner-svg {
-    animation: spin 750ms linear infinite;
-  }
-
-  @keyframes spin {
-    from {
-      transform: rotate(0deg);
-    }
-    to {
-      transform: rotate(360deg);
-    }
-  }
+  /* Spinner 動畫由共用的 spinnerStyles（src/internal/spinner.ts）提供 */
 
   @keyframes pulse-ring {
     0% {
-      box-shadow: 0 0 0 0 var(--color-success-border, rgba(16, 185, 129, 0.5));
+      box-shadow: 0 0 0 0 var(--color-success-border, color-mix(in srgb, #10b981 28%, transparent));
     }
     60% {
       box-shadow: 0 0 0 6px transparent;
@@ -547,11 +573,6 @@ export const iconButtonStyles = css`
     .icon-btn.is-active,
     .icon-btn.is-success {
       animation: none !important;
-    }
-
-    /* 載入中 Spinner 保留但放慢，讓忙碌狀態仍可被感知（與 Button 一致） */
-    .spinner-svg {
-      animation-duration: 2s;
     }
   }
 `;

@@ -2,6 +2,8 @@ import { LitElement, html, type TemplateResult } from 'lit';
 import { property, state, query } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { iconButtonStyles } from './icon-button.styles.js';
+import { interceptInactiveClick } from '../../internal/inactive-click.js';
+import { spinnerIcon, spinnerStyles } from '../../internal/spinner.js';
 import type {
   CopyDetail,
   DownloadDetail,
@@ -19,112 +21,127 @@ import type { TooltipPlacement } from '../tooltip/tooltip.types.js';
 import type { AuiTooltip } from '../tooltip/tooltip.js';
 import '../tooltip/index.js';
 
-/* ─── 預設向量圖示庫 (Crisp 24x24 Vector SVGs) ─── */
-const SVG_ICONS: Record<IconButtonPreset | 'spinner', TemplateResult> = {
-  copy: html`
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
-      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
-    </svg>
-  `,
-  download: html`
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-      <polyline points="7 10 12 15 17 10"></polyline>
-      <line x1="12" y1="15" x2="12" y2="3"></line>
-    </svg>
-  `,
-  check: html`
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2.5"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <polyline points="20 6 9 17 4 12"></polyline>
-    </svg>
-  `,
-  close: html`
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <line x1="18" y1="6" x2="6" y2="18"></line>
-      <line x1="6" y1="6" x2="18" y2="18"></line>
-    </svg>
-  `,
-  refresh: html`
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
-    </svg>
-  `,
-  external: html`
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-      <polyline points="15 3 21 3 21 9"></polyline>
-      <line x1="10" y1="14" x2="21" y2="3"></line>
-    </svg>
-  `,
-  more: html`
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-    >
-      <circle cx="12" cy="12" r="1.5"></circle>
-      <circle cx="19" cy="12" r="1.5"></circle>
-      <circle cx="5" cy="12" r="1.5"></circle>
-    </svg>
-  `,
-  spinner: html`
-    <svg
-      class="spinner-svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2.5"
-    >
-      <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
-      <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
-    </svg>
-  `,
+/* ─── 內建 Preset：圖示與預設文字的單一對照表 (Crisp 24x24 Vector SVGs) ─── */
+const PRESETS: Record<IconButtonPreset, { label: string; icon: TemplateResult }> = {
+  copy: {
+    label: '複製',
+    icon: html`
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+      </svg>
+    `,
+  },
+  download: {
+    label: '下載',
+    icon: html`
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+    `,
+  },
+  check: {
+    label: '確認',
+    icon: html`
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    `,
+  },
+  close: {
+    label: '關閉',
+    icon: html`
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    `,
+  },
+  refresh: {
+    label: '重新整理',
+    icon: html`
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+      </svg>
+    `,
+  },
+  external: {
+    label: '另開新視窗',
+    icon: html`
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+        <polyline points="15 3 21 3 21 9"></polyline>
+        <line x1="10" y1="14" x2="21" y2="3"></line>
+      </svg>
+    `,
+  },
+  more: {
+    label: '更多選項',
+    icon: html`
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="1.5"></circle>
+        <circle cx="19" cy="12" r="1.5"></circle>
+        <circle cx="5" cy="12" r="1.5"></circle>
+      </svg>
+    `,
+  },
+};
+
+/** 各動作成功時的預設提示文字 */
+const SUCCESS_LABELS: Partial<Record<IconButtonAction, string>> = {
+  copy: '已複製！',
+  download: '已下載！',
 };
 
 /** 允許由元件直接開啟的下載網址協定 */
@@ -170,7 +187,7 @@ function parseDownloadUrl(value: string): URL | null {
  * @fires aui-status-change - 元件狀態發生改變時觸發
  */
 export class AuiIconButton extends LitElement {
-  static override styles = iconButtonStyles;
+  static override styles = [spinnerStyles, iconButtonStyles];
 
   static override shadowRootOptions: ShadowRootInit = {
     ...LitElement.shadowRootOptions,
@@ -178,9 +195,6 @@ export class AuiIconButton extends LitElement {
   };
 
   private feedbackTimer: number | null = null;
-
-  @query('.icon-btn')
-  private buttonElement?: HTMLButtonElement;
 
   @query('aui-tooltip')
   private tooltipElement?: AuiTooltip;
@@ -313,10 +327,7 @@ export class AuiIconButton extends LitElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    if (this.feedbackTimer) {
-      window.clearTimeout(this.feedbackTimer);
-      this.feedbackTimer = null;
-    }
+    this.clearFeedbackTimer();
   }
 
   /**
@@ -344,39 +355,29 @@ export class AuiIconButton extends LitElement {
    * 計算成功狀態提示文字
    */
   private computeSuccessTooltip(): string {
-    if (this.successTooltip) return this.successTooltip;
-    const action = this.computeEffectiveAction();
-    if (action === 'copy') return '已複製！';
-    if (action === 'download') return '已下載！';
-    return '操作成功！';
+    return this.successTooltip || SUCCESS_LABELS[this.computeEffectiveAction()] || '操作成功！';
   }
 
   /**
    * 計算閒置狀態之提示文字
    */
   private computeIdleTooltip(): string {
-    if (this.tooltip) return this.tooltip;
-    if (this.preset === 'copy') return '複製';
-    if (this.preset === 'download') return '下載';
-    if (this.preset === 'close') return '關閉';
-    if (this.preset === 'check') return '確認';
-    if (this.preset === 'refresh') return '重新整理';
-    if (this.preset === 'external') return '另開新視窗';
-    if (this.preset === 'more') return '更多選項';
-    return '';
+    return this.tooltip || (this.preset ? PRESETS[this.preset]?.label : '') || '';
   }
 
   /**
-   * 計算無障礙 aria-label
+   * 計算無障礙 aria-label。
+   * 名稱不隨成功／錯誤狀態改變：狀態只透過 live region 播報，避免重複播報。
    */
   private computeAriaLabel(): string {
-    if (this.status === 'success') {
-      return this.computeSuccessTooltip();
-    }
-    if (this.label) return this.label;
-    const idleTooltip = this.computeIdleTooltip();
-    if (idleTooltip) return idleTooltip;
-    return '按鈕';
+    return this.label || this.computeIdleTooltip() || '按鈕';
+  }
+
+  /**
+   * 是否忙碌中：loading 屬性與 status="loading" 視為同一狀態
+   */
+  private get isBusy(): boolean {
+    return this.loading || this.status === 'loading';
   }
 
   /**
@@ -391,11 +392,7 @@ export class AuiIconButton extends LitElement {
    * 點擊事件處理常式
    */
   private handleHostClick = async (event: MouseEvent) => {
-    if (this.disabled || this.loading) {
-      event.preventDefault();
-      event.stopImmediatePropagation();
-      return;
-    }
+    if (interceptInactiveClick(event, this.disabled || this.isBusy)) return;
 
     const action = this.computeEffectiveAction();
     if (action === 'copy') {
@@ -411,7 +408,7 @@ export class AuiIconButton extends LitElement {
    * 執行複製行為並觸發微動態反饋
    */
   async copy(): Promise<boolean> {
-    if (this.disabled || this.loading) return false;
+    if (this.disabled || this.isBusy) return false;
 
     const textToCopy = this.copyValue;
 
@@ -471,7 +468,7 @@ export class AuiIconButton extends LitElement {
    * @returns 是否已由元件啟動下載
    */
   async download(): Promise<boolean> {
-    if (this.disabled || this.loading) return false;
+    if (this.disabled || this.isBusy) return false;
 
     const rawUrl = this.downloadUrl;
     const url = rawUrl ? parseDownloadUrl(rawUrl) : null;
@@ -526,64 +523,52 @@ export class AuiIconButton extends LitElement {
    * 主動觸發狀態反饋（支援 'success' 或 'error'）
    */
   triggerFeedback(type: 'success' | 'error' = 'success'): void {
-    if (this.feedbackTimer) {
-      window.clearTimeout(this.feedbackTimer);
-      this.feedbackTimer = null;
-    }
-
-    const previousStatus = this.status;
-    this.status = type;
-    this.active = type === 'success';
-
-    if (type === 'success') {
-      this.announcement = this.computeSuccessTooltip();
-    } else {
-      this.announcement = '操作失敗';
-    }
-
-    this.dispatchEvent(
-      new CustomEvent<StatusChangeDetail>('aui-status-change', {
-        detail: { status: this.status, previousStatus },
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    this.clearFeedbackTimer();
+    this.setStatus(type);
 
     // 觸發反饋時主動展現 Tooltip 告知即時結果
     if (this.hasTooltip) {
       this.showTooltipTemporarily();
     }
 
-    this.feedbackTimer = window.setTimeout(() => {
-      const prev = this.status;
-      this.status = 'idle';
-      this.active = false;
-      this.announcement = '';
-      this.hideTooltipIfShown();
-
-      this.dispatchEvent(
-        new CustomEvent<StatusChangeDetail>('aui-status-change', {
-          detail: { status: 'idle', previousStatus: prev },
-          bubbles: true,
-          composed: true,
-        }),
-      );
-      this.feedbackTimer = null;
-    }, this.feedbackDuration);
+    this.feedbackTimer = window.setTimeout(() => this.resetFeedback(), this.feedbackDuration);
   }
 
   /**
-   * 取消重設反饋狀態
+   * 取消並重設反饋狀態（與 feedback-duration 到期時相同，會分派 aui-status-change）
    */
   resetFeedback(): void {
+    this.clearFeedbackTimer();
+    this.setStatus('idle');
+    this.hideTooltipIfShown();
+  }
+
+  private clearFeedbackTimer(): void {
     if (this.feedbackTimer) {
       window.clearTimeout(this.feedbackTimer);
       this.feedbackTimer = null;
     }
-    this.status = 'idle';
-    this.active = false;
-    this.announcement = '';
-    this.hideTooltipIfShown();
+  }
+
+  /**
+   * 回饋狀態的唯一轉換點：同步 active、播報文字，並在狀態實際改變時分派 aui-status-change
+   */
+  private setStatus(next: IconButtonStatus): void {
+    const previousStatus = this.status;
+    this.status = next;
+    this.active = next === 'success';
+    this.announcement =
+      next === 'success' ? this.computeSuccessTooltip() : next === 'error' ? '操作失敗' : '';
+
+    if (previousStatus !== next) {
+      this.dispatchEvent(
+        new CustomEvent<StatusChangeDetail>('aui-status-change', {
+          detail: { status: next, previousStatus },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }
   }
 
   private showTooltipTemporarily(): void {
@@ -597,25 +582,11 @@ export class AuiIconButton extends LitElement {
   }
 
   /**
-   * 主動聚焦內部原生按鈕
-   */
-  override focus(options?: FocusOptions): void {
-    this.buttonElement?.focus(options);
-  }
-
-  /**
-   * 主動移除內部原生按鈕焦點
-   */
-  override blur(): void {
-    this.buttonElement?.blur();
-  }
-
-  /**
    * 渲染閒置圖示本體（支援 preset 或 slots）
    */
   private renderIdleIcon(): TemplateResult {
-    if (this.preset && SVG_ICONS[this.preset]) {
-      return SVG_ICONS[this.preset];
+    if (this.preset && PRESETS[this.preset]) {
+      return PRESETS[this.preset].icon;
     }
     return html`
       <slot name="icon">
@@ -628,21 +599,21 @@ export class AuiIconButton extends LitElement {
    * 渲染成功打勾反饋圖示
    */
   private renderSuccessIcon(): TemplateResult {
-    return html` <slot name="success-icon"> ${SVG_ICONS.check} </slot> `;
+    return html` <slot name="success-icon"> ${PRESETS.check.icon} </slot> `;
   }
 
   /**
    * 渲染載入中圖示
    */
   private renderLoadingIcon(): TemplateResult {
-    return html` <slot name="loading-icon"> ${SVG_ICONS.spinner} </slot> `;
+    return html` <slot name="loading-icon"> ${spinnerIcon} </slot> `;
   }
 
   override render() {
-    const isInactive = this.disabled || this.loading;
+    const isLoading = this.isBusy;
+    const isInactive = this.disabled || isLoading;
     const isSuccess = this.status === 'success';
     const isError = this.status === 'error';
-    const isLoading = this.loading || this.status === 'loading';
 
     const currentTooltipText = isSuccess ? this.computeSuccessTooltip() : this.computeIdleTooltip();
 
@@ -664,7 +635,7 @@ export class AuiIconButton extends LitElement {
           'is-disabled': this.disabled,
         })}
         type="button"
-        ?disabled=${isInactive}
+        ?disabled=${this.disabled}
         aria-label=${ariaLabel}
         aria-busy=${isLoading ? 'true' : 'false'}
         aria-disabled=${isInactive ? 'true' : 'false'}
@@ -709,10 +680,13 @@ export class AuiIconButton extends LitElement {
             ${this.renderLoadingIcon()}
           </span>
         </span>
-
-        <!-- 螢幕閱讀器狀態即時通報 (Live Region) -->
-        <span class="sr-only" role="status" aria-live="polite"> ${this.announcement} </span>
       </button>
+    `;
+
+    // 螢幕閱讀器狀態即時通報 (Live Region)：放在按鈕外，
+    // 因按鈕子孫為 presentational，置於其內可能不會被播報
+    const liveRegion = html`
+      <span class="sr-only" role="status" aria-live="polite">${this.announcement}</span>
     `;
 
     if (this.hasTooltip && currentTooltipText) {
@@ -725,10 +699,11 @@ export class AuiIconButton extends LitElement {
         >
           ${buttonTemplate}
         </aui-tooltip>
+        ${liveRegion}
       `;
     }
 
-    return buttonTemplate;
+    return html`${buttonTemplate}${liveRegion}`;
   }
 }
 

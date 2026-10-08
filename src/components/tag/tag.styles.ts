@@ -91,7 +91,7 @@ export const tagStyles = css`
   .tag--warning,
   .tag--amber,
   .tag--accent {
-    color: var(--color-warning-text, #b45309);
+    color: var(--color-warning-text, #92400e);
     background-color: var(--color-warning-dim, rgba(245, 158, 11, 0.14));
     border-color: var(--color-warning-border, rgba(245, 158, 11, 0.3));
   }
@@ -154,7 +154,7 @@ export const tagStyles = css`
 
   /* 焦點位於 shadow 內的 action 元素，焦點環畫在整顆標籤外框上 */
   .tag:has(.tag__action:focus-visible) {
-    outline: 2px solid var(--color-brand-500, #38bdf8);
+    outline: 2px solid var(--color-brand-500, #1b6ca8);
     outline-offset: 2px;
   }
 
