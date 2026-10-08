@@ -140,7 +140,7 @@
 - [✅] `<aui-button>`、`<aui-tag>`、`<aui-tooltip>`、`<aui-icon-button>` 在 Vue 3 與 Angular 中皆無需特殊 wrapper 即可原生使用。
 - [✅] 元件內部樣式受 Shadow DOM 保護，同時能正常讀取外部全域 CSS Custom Properties（主題變數切換正常）。
 - [✅] 所有元件通過 `axe-core` 檢驗，無任何 WCAG 2.1 AA 違規（淺色與深色主題皆涵蓋所有變體）。AAA 對比度（7:1）不列為目標。
-- [ ] GitHub Actions CI 自動跑完所有測試案例，PR 綠燈才允許 Merge。（待辦：`main` 尚未設定分支保護／必要狀態檢查，且擴充後的 test job 尚未在 GitHub 上實際執行過）
+- [✅] GitHub Actions CI 自動跑完所有測試案例，PR 綠燈才允許 Merge。（CI 已於 PR #1 實際執行並全數通過；`main` 以 Ruleset 強制透過 PR 並要求三項 CI 檢查通過）
 
 ---
 
