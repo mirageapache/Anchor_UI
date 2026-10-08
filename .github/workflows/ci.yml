@@ -68,3 +68,58 @@ jobs:
 
       - name: Build Storybook documentation
         run: pnpm build-storybook
+
+  test:
+    name: Unit, a11y, Coverage & Framework integration
+    # TASK-110: a11y 測試需讀取 dist/tokens.css，因此須先 build；同樣在 lint 通過後才執行。
+    # Vue / Angular 整合測試透過 workspace 消費建置後的 dist/，同樣依賴 build。
+    needs: lint-and-typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.26.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build library (a11y tests need dist/tokens.css)
+        run: pnpm build
+
+      - name: Install Playwright Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      # test:coverage 會執行全部 *.test.ts（含 *.a11y.test.ts 的 axe-core 檢測），
+      # 不再另外跑 test:a11y，避免 a11y 測試重複執行
+      - name: Run unit & accessibility tests with coverage (thresholds enforced)
+        run: pnpm test:coverage
+
+      - name: Run Vue 3 integration tests
+        run: pnpm test:vue
+
+      - name: Run Angular integration tests
+        run: pnpm test:angular
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./coverage/lcov.info
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+
+      - name: Upload coverage report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14

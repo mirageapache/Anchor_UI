@@ -1,0 +1,719 @@
+import { LitElement, html, type TemplateResult } from 'lit';
+import { property, state, query } from 'lit/decorators.js';
+import { classMap } from 'lit/directives/class-map.js';
+import { iconButtonStyles } from './icon-button.styles.js';
+import { interceptInactiveClick } from '../../internal/inactive-click.js';
+import { spinnerIcon, spinnerStyles } from '../../internal/spinner.js';
+import type {
+  CopyDetail,
+  DownloadDetail,
+  DownloadErrorDetail,
+  IconButtonAction,
+  IconButtonColor,
+  IconButtonPreset,
+  IconButtonShape,
+  IconButtonSize,
+  IconButtonStatus,
+  IconButtonVariant,
+  StatusChangeDetail,
+} from './icon-button.types.js';
+import type { TooltipPlacement } from '../tooltip/tooltip.types.js';
+import type { AuiTooltip } from '../tooltip/tooltip.js';
+import '../tooltip/index.js';
+
+/* ─── 內建 Preset：圖示與預設文字的單一對照表 (Crisp 24x24 Vector SVGs) ─── */
+const PRESETS: Record<IconButtonPreset, { label: string; icon: TemplateResult }> = {
+  copy: {
+    label: '複製',
+    icon: html`
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+        <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+      </svg>
+    `,
+  },
+  download: {
+    label: '下載',
+    icon: html`
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+        <polyline points="7 10 12 15 17 10"></polyline>
+        <line x1="12" y1="15" x2="12" y2="3"></line>
+      </svg>
+    `,
+  },
+  check: {
+    label: '確認',
+    icon: html`
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+    `,
+  },
+  close: {
+    label: '關閉',
+    icon: html`
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    `,
+  },
+  refresh: {
+    label: '重新整理',
+    icon: html`
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+      </svg>
+    `,
+  },
+  external: {
+    label: '另開新視窗',
+    icon: html`
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+        <polyline points="15 3 21 3 21 9"></polyline>
+        <line x1="10" y1="14" x2="21" y2="3"></line>
+      </svg>
+    `,
+  },
+  more: {
+    label: '更多選項',
+    icon: html`
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="12" cy="12" r="1.5"></circle>
+        <circle cx="19" cy="12" r="1.5"></circle>
+        <circle cx="5" cy="12" r="1.5"></circle>
+      </svg>
+    `,
+  },
+};
+
+/** 各動作成功時的預設提示文字 */
+const SUCCESS_LABELS: Partial<Record<IconButtonAction, string>> = {
+  copy: '已複製！',
+  download: '已下載！',
+};
+
+/** 允許由元件直接開啟的下載網址協定 */
+const SAFE_DOWNLOAD_PROTOCOLS = new Set(['http:', 'https:', 'blob:', 'data:']);
+
+/**
+ * 解析下載網址（相對路徑以目前文件為基準）；協定不在允許清單或無法解析時回傳 null
+ */
+function parseDownloadUrl(value: string): URL | null {
+  try {
+    const url = new URL(value, document.baseURI);
+    return SAFE_DOWNLOAD_PROTOCOLS.has(url.protocol) ? url : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Anchor UI — Icon Button 元件 (`<aui-icon-button>`)
+ *
+ * 專為複製 (Copy)、下載 (Download)、關閉、重新整理等動作打造之 32×32px 方形微型操作鈕。
+ * 具備 Active 成功回饋狀態（背景與圖示變換為 Success 翠綠色）、平滑淡入淡出切換、
+ * 深度結合 `<aui-tooltip>` 與螢幕閱讀器無障礙標籤播報。
+ *
+ * @element aui-icon-button
+ *
+ * @slot - 預設自訂圖示內容
+ * @slot icon - 明確指定之閒置圖示
+ * @slot success-icon - 自訂成功回饋圖示（預設為彈出打勾符號）
+ * @slot loading-icon - 自訂載入中圖示（預設為 Spinner）
+ *
+ * @csspart button - 內部原生 `<button>` 元素容器
+ * @csspart tooltip - 內建 `<aui-tooltip>` 浮層容器
+ * @csspart icon-wrapper - 圖示定位容器
+ * @csspart idle-icon - 閒置狀態圖示層
+ * @csspart success-icon - 成功回饋狀態圖示層
+ * @csspart loading-icon - 載入中狀態圖示層
+ *
+ * @fires aui-copy - 複製文字至剪貼簿成功時觸發
+ * @fires aui-copy-error - 剪貼簿存取失敗或沒有可複製內容（copy-value 為空）時觸發
+ * @fires aui-download - 觸發下載行為時分派（可被 preventDefault 取消以自行接手下載）
+ * @fires aui-download-error - download-url 使用不允許的協定（如 javascript:）而拒絕下載時觸發
+ * @fires aui-status-change - 元件狀態發生改變時觸發
+ */
+export class AuiIconButton extends LitElement {
+  static override styles = [spinnerStyles, iconButtonStyles];
+
+  static override shadowRootOptions: ShadowRootInit = {
+    ...LitElement.shadowRootOptions,
+    delegatesFocus: true,
+  };
+
+  private feedbackTimer: number | null = null;
+
+  @query('aui-tooltip')
+  private tooltipElement?: AuiTooltip;
+
+  /**
+   * 樣式風格變體
+   */
+  @property({ type: String, reflect: true })
+  variant: IconButtonVariant = 'ghost';
+
+  /**
+   * 語意色彩與懸停控制（預設 'brand'，支援 'brand' | 'accent' | 'success' | 'warning' | 'danger' | 'info' | 'purple' | 'neutral'）
+   */
+  @property({ type: String, reflect: true })
+  color: IconButtonColor = 'brand';
+
+  /**
+   * 尺寸規格（sm: 28px, md: 32px, lg: 40px，預設 32px 觸控盒）
+   */
+  @property({ type: String, reflect: true })
+  size: IconButtonSize = 'md';
+
+  /**
+   * 外觀幾何形狀（rounded: 6px 圓角, circle: 圓形, square: 直角）
+   */
+  @property({ type: String, reflect: true })
+  shape: IconButtonShape = 'rounded';
+
+  /**
+   * 內建預設圖示名（例如 'copy', 'download', 'close', 'check', 'refresh', 'external', 'more'）
+   */
+  @property({ type: String, reflect: true })
+  preset?: IconButtonPreset;
+
+  /**
+   * 按鈕點擊行為模式 ('copy' | 'download' | 'custom' | 'none')
+   */
+  @property({ type: String, reflect: true })
+  action: IconButtonAction = 'none';
+
+  /**
+   * 複製至剪貼簿之目標文字（設定後預設點擊即複製該字串）
+   */
+  @property({ type: String, attribute: 'copy-value' })
+  copyValue = '';
+
+  /**
+   * 觸發下載之檔案連結 URL
+   */
+  @property({ type: String, attribute: 'download-url' })
+  downloadUrl = '';
+
+  /**
+   * 觸發下載之指定檔名
+   */
+  @property({ type: String, attribute: 'download-filename' })
+  downloadFilename = '';
+
+  /**
+   * 浮動氣泡提示文字（空字串時自動依 preset 提供預設提示）
+   */
+  @property({ type: String })
+  tooltip = '';
+
+  /**
+   * 成功回饋時切換顯示之氣泡提示文字（預設複製為 "已複製！"，下載為 "已下載！"）
+   */
+  @property({ type: String, attribute: 'success-tooltip' })
+  successTooltip = '';
+
+  /**
+   * 氣泡提示顯示方位（預設 'top'）
+   */
+  @property({ type: String, attribute: 'tooltip-placement' })
+  tooltipPlacement: TooltipPlacement = 'top';
+
+  /**
+   * 是否強制隱藏 Tooltip 氣泡
+   */
+  @property({ type: Boolean, attribute: 'no-tooltip' })
+  noTooltip = false;
+
+  /**
+   * 無障礙 aria-label 標籤文字（若無指定則自動回退至 tooltip 內容）
+   */
+  @property({ type: String, reflect: true })
+  label = '';
+
+  /**
+   * 是否處於停用狀態
+   */
+  @property({ type: Boolean, reflect: true })
+  disabled = false;
+
+  /**
+   * 是否處於載入運算中（顯示旋轉 Spinner 並阻止重複點擊）
+   */
+  @property({ type: Boolean, reflect: true })
+  loading = false;
+
+  /**
+   * 是否處於啟動/成功高亮狀態（反映 is-active 翠綠 Success 視覺）。
+   * 僅為視覺高亮，不代表切換按鈕（toggle）的按下狀態，因此不輸出 aria-pressed。
+   */
+  @property({ type: Boolean, reflect: true })
+  active = false;
+
+  /**
+   * 當前運作狀態 ('idle' | 'loading' | 'success' | 'error')
+   */
+  @property({ type: String, reflect: true })
+  status: IconButtonStatus = 'idle';
+
+  /**
+   * 成功/錯誤反饋動態維持時間（毫秒，預設 2000ms）
+   */
+  @property({ type: Number, attribute: 'feedback-duration' })
+  feedbackDuration = 2000;
+
+  /**
+   * 螢幕閱讀器即時播報文字
+   */
+  @state()
+  private announcement = '';
+
+  constructor() {
+    super();
+    this.addEventListener('click', this.handleHostClick, { capture: true });
+  }
+
+  override disconnectedCallback(): void {
+    super.disconnectedCallback();
+    this.clearFeedbackTimer();
+  }
+
+  /**
+   * 計算目前生效之動作類別。
+   * 優先順序：明確的 action → preset（copy / download）→ 由 copy-value / download-url 推斷。
+   * preset 須優先於推斷，否則 preset 切到 download 時，仍綁定著的 copy-value 會讓點擊變成複製。
+   */
+  private computeEffectiveAction(): IconButtonAction {
+    if (this.action && this.action !== 'none') {
+      return this.action;
+    }
+    if (this.preset === 'copy' || this.preset === 'download') {
+      return this.preset;
+    }
+    if (this.copyValue) {
+      return 'copy';
+    }
+    if (this.downloadUrl) {
+      return 'download';
+    }
+    return 'none';
+  }
+
+  /**
+   * 計算成功狀態提示文字
+   */
+  private computeSuccessTooltip(): string {
+    return this.successTooltip || SUCCESS_LABELS[this.computeEffectiveAction()] || '操作成功！';
+  }
+
+  /**
+   * 計算閒置狀態之提示文字
+   */
+  private computeIdleTooltip(): string {
+    return this.tooltip || (this.preset ? PRESETS[this.preset]?.label : '') || '';
+  }
+
+  /**
+   * 計算無障礙 aria-label。
+   * 名稱不隨成功／錯誤狀態改變：狀態只透過 live region 播報，避免重複播報。
+   */
+  private computeAriaLabel(): string {
+    return this.label || this.computeIdleTooltip() || '按鈕';
+  }
+
+  /**
+   * 是否忙碌中：loading 屬性與 status="loading" 視為同一狀態
+   */
+  private get isBusy(): boolean {
+    return this.loading || this.status === 'loading';
+  }
+
+  /**
+   * 是否啟用 Tooltip 氣泡
+   */
+  private get hasTooltip(): boolean {
+    if (this.noTooltip) return false;
+    return Boolean(this.tooltip || this.preset);
+  }
+
+  /**
+   * 點擊事件處理常式
+   */
+  private handleHostClick = async (event: MouseEvent) => {
+    if (interceptInactiveClick(event, this.disabled || this.isBusy)) return;
+
+    const action = this.computeEffectiveAction();
+    if (action === 'copy') {
+      event.preventDefault();
+      await this.copy();
+    } else if (action === 'download') {
+      event.preventDefault();
+      await this.download();
+    }
+  };
+
+  /**
+   * 執行複製行為並觸發微動態反饋
+   */
+  async copy(): Promise<boolean> {
+    if (this.disabled || this.isBusy) return false;
+
+    const textToCopy = this.copyValue;
+
+    try {
+      // 沒有可複製的內容時不可回報成功（避免「已複製！」但剪貼簿其實沒有變更）
+      if (!textToCopy) {
+        throw new Error('沒有可複製的內容：copy-value 為空');
+      }
+
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(textToCopy);
+      } else {
+        // 針對未具備 Secure Context 之後備相容方案
+        const textarea = document.createElement('textarea');
+        textarea.value = textToCopy;
+        textarea.style.position = 'fixed';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '-9999px';
+        textarea.setAttribute('readonly', '');
+        document.body.appendChild(textarea);
+        textarea.select();
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (!successful) throw new Error('execCommand copy failed');
+      }
+
+      this.triggerFeedback('success');
+      this.dispatchEvent(
+        new CustomEvent<CopyDetail>('aui-copy', {
+          detail: { value: textToCopy },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      return true;
+    } catch (err) {
+      this.triggerFeedback('error');
+      this.dispatchEvent(
+        new CustomEvent('aui-copy-error', {
+          detail: { error: err },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      return false;
+    }
+  }
+
+  /**
+   * 執行下載行為並觸發微動態反饋。
+   *
+   * - 先分派可取消的 `aui-download`；使用端 `preventDefault()` 即可自行接手下載。
+   * - 未設定 `download-url` 時只分派事件、不回報成功，由使用端自行處理並呼叫 `triggerFeedback()`。
+   * - 僅允許 http(s) / blob / data 協定；其他協定（如 `javascript:`）會被拒絕並分派 `aui-download-error`。
+   * - 跨來源網址的 `download` 屬性會被瀏覽器忽略，改以新分頁開啟，避免整頁被導走。
+   *
+   * @returns 是否已由元件啟動下載
+   */
+  async download(): Promise<boolean> {
+    if (this.disabled || this.isBusy) return false;
+
+    const rawUrl = this.downloadUrl;
+    const url = rawUrl ? parseDownloadUrl(rawUrl) : null;
+
+    if (rawUrl && !url) {
+      this.triggerFeedback('error');
+      this.dispatchEvent(
+        new CustomEvent<DownloadErrorDetail>('aui-download-error', {
+          detail: {
+            url: rawUrl,
+            error: new Error(`不允許的下載網址協定：${rawUrl}`),
+          },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      return false;
+    }
+
+    const event = new CustomEvent<DownloadDetail>('aui-download', {
+      detail: { url: rawUrl, filename: this.downloadFilename },
+      bubbles: true,
+      composed: true,
+      cancelable: true,
+    });
+    this.dispatchEvent(event);
+
+    if (event.defaultPrevented || !url) {
+      return false;
+    }
+
+    const anchor = document.createElement('a');
+    anchor.href = url.href;
+    const isCrossOrigin =
+      (url.protocol === 'http:' || url.protocol === 'https:') &&
+      url.origin !== window.location.origin;
+    if (isCrossOrigin) {
+      anchor.target = '_blank';
+      anchor.rel = 'noopener noreferrer';
+    } else if (this.downloadFilename) {
+      anchor.download = this.downloadFilename;
+    }
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+
+    this.triggerFeedback('success');
+    return true;
+  }
+
+  /**
+   * 主動觸發狀態反饋（支援 'success' 或 'error'）
+   */
+  triggerFeedback(type: 'success' | 'error' = 'success'): void {
+    this.clearFeedbackTimer();
+    this.setStatus(type);
+
+    // 觸發反饋時主動展現 Tooltip 告知即時結果
+    if (this.hasTooltip) {
+      this.showTooltipTemporarily();
+    }
+
+    this.feedbackTimer = window.setTimeout(() => this.resetFeedback(), this.feedbackDuration);
+  }
+
+  /**
+   * 取消並重設反饋狀態（與 feedback-duration 到期時相同，會分派 aui-status-change）
+   */
+  resetFeedback(): void {
+    this.clearFeedbackTimer();
+    this.setStatus('idle');
+    this.hideTooltipIfShown();
+  }
+
+  private clearFeedbackTimer(): void {
+    if (this.feedbackTimer) {
+      window.clearTimeout(this.feedbackTimer);
+      this.feedbackTimer = null;
+    }
+  }
+
+  /**
+   * 回饋狀態的唯一轉換點：同步 active、播報文字，並在狀態實際改變時分派 aui-status-change
+   */
+  private setStatus(next: IconButtonStatus): void {
+    const previousStatus = this.status;
+    this.status = next;
+    this.active = next === 'success';
+    this.announcement =
+      next === 'success' ? this.computeSuccessTooltip() : next === 'error' ? '操作失敗' : '';
+
+    if (previousStatus !== next) {
+      this.dispatchEvent(
+        new CustomEvent<StatusChangeDetail>('aui-status-change', {
+          detail: { status: next, previousStatus },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    }
+  }
+
+  private showTooltipTemporarily(): void {
+    if (this.tooltipElement && !this.tooltipElement.disabled) {
+      this.tooltipElement.show();
+    }
+  }
+
+  private hideTooltipIfShown(): void {
+    this.tooltipElement?.hide();
+  }
+
+  /**
+   * 渲染閒置圖示本體（支援 preset 或 slots）
+   */
+  private renderIdleIcon(): TemplateResult {
+    if (this.preset && PRESETS[this.preset]) {
+      return PRESETS[this.preset].icon;
+    }
+    return html`
+      <slot name="icon">
+        <slot></slot>
+      </slot>
+    `;
+  }
+
+  /**
+   * 渲染成功打勾反饋圖示
+   */
+  private renderSuccessIcon(): TemplateResult {
+    return html` <slot name="success-icon"> ${PRESETS.check.icon} </slot> `;
+  }
+
+  /**
+   * 渲染載入中圖示
+   */
+  private renderLoadingIcon(): TemplateResult {
+    return html` <slot name="loading-icon"> ${spinnerIcon} </slot> `;
+  }
+
+  override render() {
+    const isLoading = this.isBusy;
+    const isInactive = this.disabled || isLoading;
+    const isSuccess = this.status === 'success';
+    const isError = this.status === 'error';
+
+    const currentTooltipText = isSuccess ? this.computeSuccessTooltip() : this.computeIdleTooltip();
+
+    const ariaLabel = this.computeAriaLabel();
+
+    const buttonTemplate = html`
+      <button
+        part="button"
+        class=${classMap({
+          'icon-btn': true,
+          [`icon-btn--${this.variant}`]: true,
+          [`icon-btn--${this.size}`]: true,
+          [`icon-btn--${this.shape}`]: true,
+          [`icon-btn--color-${this.color}`]: Boolean(this.color),
+          'is-active': this.active || isSuccess,
+          'is-success': isSuccess,
+          'is-error': isError,
+          'is-loading': isLoading,
+          'is-disabled': this.disabled,
+        })}
+        type="button"
+        ?disabled=${this.disabled}
+        aria-label=${ariaLabel}
+        aria-busy=${isLoading ? 'true' : 'false'}
+        aria-disabled=${isInactive ? 'true' : 'false'}
+      >
+        <span class="icon-wrapper" part="icon-wrapper">
+          <!-- 1. 閒置圖示層 -->
+          <span
+            part="idle-icon"
+            class=${classMap({
+              'icon-layer': true,
+              'icon-layer--idle': true,
+              'is-hidden': isSuccess || isLoading,
+            })}
+            aria-hidden="true"
+          >
+            ${this.renderIdleIcon()}
+          </span>
+
+          <!-- 2. 成功打勾圖示層 -->
+          <span
+            part="success-icon"
+            class=${classMap({
+              'icon-layer': true,
+              'icon-layer--success': true,
+              'is-visible': isSuccess,
+            })}
+            aria-hidden="true"
+          >
+            ${this.renderSuccessIcon()}
+          </span>
+
+          <!-- 3. 載入中 Spinner 圖示層 -->
+          <span
+            part="loading-icon"
+            class=${classMap({
+              'icon-layer': true,
+              'icon-layer--loading': true,
+              'is-visible': isLoading,
+            })}
+            aria-hidden="true"
+          >
+            ${this.renderLoadingIcon()}
+          </span>
+        </span>
+      </button>
+    `;
+
+    // 螢幕閱讀器狀態即時通報 (Live Region)：放在按鈕外，
+    // 因按鈕子孫為 presentational，置於其內可能不會被播報
+    const liveRegion = html`
+      <span class="sr-only" role="status" aria-live="polite">${this.announcement}</span>
+    `;
+
+    if (this.hasTooltip && currentTooltipText) {
+      return html`
+        <aui-tooltip
+          part="tooltip"
+          .content=${currentTooltipText}
+          .placement=${this.tooltipPlacement}
+          ?disabled=${this.disabled}
+        >
+          ${buttonTemplate}
+        </aui-tooltip>
+        ${liveRegion}
+      `;
+    }
+
+    return html`${buttonTemplate}${liveRegion}`;
+  }
+}
+
+// 跨微前端 / 多重載入防禦註冊
+if (!customElements.get('aui-icon-button')) {
+  customElements.define('aui-icon-button', AuiIconButton);
+}
+
+declare global {
+  interface HTMLElementTagNameMap {
+    'aui-icon-button': AuiIconButton;
+  }
+}

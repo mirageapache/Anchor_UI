@@ -5,6 +5,7 @@ node_modules/
 # Production & Build outputs
 dist/
 storybook-static/
+coverage/
 
 # IDE & OS
 .DS_Store
@@ -25,3 +26,7 @@ pnpm-debug.log*
 #env
 .env
 .env.local
+
+# yalc
+.yalc/
+yalc.lock

@@ -30,6 +30,15 @@
   --color-text-secondary: #475569; // 卡片描述、輔助說明 (Slate-600)
   --color-text-muted: #64748b; // Placeholder、中繼標籤 (Slate-500)
 
+  /* On-color (實心底上的文字／圖示色，兩種主題相同，暗色模式不另覆寫) */
+  --color-on-solid: #ffffff; // Brand / Danger / Success 實心底上的白字
+  --color-on-accent: #0f172a; // Accent 琥珀實心底上的深色字 (Slate-900)
+
+  /* Tooltip (反白浮層：淺色底上的冷黑氣泡) */
+  --color-tooltip-bg: #0f172a; // Slate-900
+  --color-tooltip-text: #f8fafc; // Slate-50 (WCAG AAA)
+  --color-tooltip-border: rgb(255 255 255 / 14%);
+
   /* ─── 語意與狀態色完整系統 (Semantic Status & Actions) ─── */
 
   /* 1. Danger (Red): 錯誤、刪除、危險操作 */
@@ -39,12 +48,14 @@
   --color-danger-text: #b91c1c; // Red 700: 淺底高對比文字 (WCAG AA > 4.5:1)
   --color-danger-dim: color-mix(in srgb, var(--color-danger) 10%, transparent);
   --color-danger-border: color-mix(in srgb, var(--color-danger) 25%, transparent);
+  --color-danger-solid: #dc2626; // Red 600: 實心按鈕底色 (白字 4.83:1 AA)
+  --color-danger-solid-hover: #b91c1c; // Red 700: 實心按鈕懸停 (白字 6.47:1)
 
   /* 2. Warning (Amber): 效能警告、提示、星號收藏、HOT 徽章 (統一整併 Accent) */
   --color-warning: #f59e0b; // Amber 500: 主狀態色
   --color-warning-hover: #d97706; // Amber 600: 懸停態 (加深)
   --color-warning-light: #fbbf24; // Amber 400: 次級裝飾、淺態
-  --color-warning-text: #b45309; // Amber 700: 淺底高對比文字 (WCAG AA > 4.5:1)
+  --color-warning-text: #92400e; // Amber 800: 淺底高對比文字 (WCAG AA > 4.5:1 在有色底上)
   --color-warning-dim: color-mix(in srgb, var(--color-warning) 14%, transparent);
   --color-warning-border: color-mix(in srgb, var(--color-warning) 30%, transparent);
 
@@ -55,6 +66,8 @@
   --color-success-text: #047857; // Emerald 700: 淺底深綠輸出文字 (WCAG AA > 4.5:1)
   --color-success-dim: color-mix(in srgb, var(--color-success) 10%, transparent);
   --color-success-border: color-mix(in srgb, var(--color-success) 28%, transparent);
+  --color-success-solid: #047857; // Emerald 700: 實心按鈕底色 (白字 5.48:1 AA)
+  --color-success-solid-hover: #065f46; // Emerald 800: 實心按鈕懸停 (白字 7.68:1)
 
   /* 4. Info (Sky Blue): 資訊提示、Tooltip、系統導覽 */
   --color-info: #0284c7; // Sky 600: 主狀態色
@@ -102,16 +115,16 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  /* Brand Primary (加亮的海軍藍) */
+  /* Brand Primary (加亮的海軍藍，確保高對比度) */
   --color-brand-50: #0b1f33;
   --color-brand-100: #102f4c;
   --color-brand-500: #38bdf8;
-  --color-brand-600: #0284c7;
-  --color-brand-700: #0369a1;
+  --color-brand-600: #0369a1; // Sky-700 (WCAG AA > 4.5:1 對比度)
+  --color-brand-700: #025584;
   --color-brand-800: #0c4a6e;
   --color-brand-dim: color-mix(in srgb, var(--color-brand-500) 15%, transparent);
   --color-brand-border: color-mix(in srgb, var(--color-brand-500) 30%, transparent);
-  --color-brand-text: var(--color-brand-500); // 品牌文字色 (加亮淺天藍)
+  --color-brand-text: #bae6fd; // Sky 200 (WCAG AAA)
 
   /* Background / Surface */
   --color-base: #1e293b; // Slate-800
@@ -129,6 +142,11 @@
   --color-text-secondary: #94a3b8; // Slate-400
   --color-text-muted: #64748b; // Slate-500
 
+  /* Tooltip (深色底上提亮一階，與頁面背景區隔) */
+  --color-tooltip-bg: #1e293b; // Slate-800
+  --color-tooltip-text: #f8fafc; // Slate-50 (WCAG AAA)
+  --color-tooltip-border: rgb(255 255 255 / 18%);
+
   /* ─── 語意與狀態色 (Dark Mode: 提升亮度確保清晰度與對比度) ─── */
 
   /* 1. Danger (Red) */
@@ -138,6 +156,10 @@
   --color-danger-text: #fecaca; // Red 200 (WCAG AAA)
   --color-danger-dim: color-mix(in srgb, var(--color-danger) 15%, transparent);
   --color-danger-border: color-mix(in srgb, var(--color-danger) 30%, transparent);
+
+  // 實心按鈕為白字，暗色模式不套用「hover 調亮」原則，維持與淺色相同以確保 AA 對比
+  --color-danger-solid: #dc2626; // Red 600 (白字 4.83:1)
+  --color-danger-solid-hover: #b91c1c; // Red 700 (白字 6.47:1)
 
   /* 2. Warning (Amber) */
   --color-warning: #fbbf24; // Amber 400
@@ -155,11 +177,15 @@
   --color-success-dim: color-mix(in srgb, var(--color-success) 15%, transparent);
   --color-success-border: color-mix(in srgb, var(--color-success) 30%, transparent);
 
+  // 實心按鈕為白字，暗色模式維持與淺色相同以確保 AA 對比
+  --color-success-solid: #047857; // Emerald 700 (白字 5.48:1)
+  --color-success-solid-hover: #065f46; // Emerald 800 (白字 7.68:1)
+
   /* 4. Info (Sky Blue) */
   --color-info: #38bdf8; // Sky 400
   --color-info-hover: #7dd3fc; // Sky 300 (暗色 hover 調亮)
   --color-info-light: #bae6fd; // Sky 200
-  --color-info-text: #bae6fd; // Sky 200 (WCAG AAA)
+  --color-info-text: var(--color-info); // Sky 400 (#38bdf8: 明亮天藍文字)
   --color-info-dim: color-mix(in srgb, var(--color-info) 15%, transparent);
   --color-info-border: color-mix(in srgb, var(--color-info) 30%, transparent);
 

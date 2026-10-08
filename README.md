@@ -113,6 +113,31 @@ pnpm build-storybook
 | `pnpm stylelint:fix`   | 自動修復 Stylelint 樣式問題                                          |
 | `pnpm format:check`    | 檢查程式碼排版格式 (Prettier)                                        |
 | `pnpm format`          | 自動格式化所有代碼 (Prettier)                                        |
+| `pnpm yalc:publish`    | 建置並發布至本機 yalc store                                          |
+| `pnpm yalc:push`       | 建置並推送更新至所有已 `yalc add` 的專案                             |
+| `pnpm dev:yalc`        | 監聽 `src/`，變更時自動建置並 `yalc push`                            |
+
+---
+
+## 本地開發工作流 (yalc)
+
+在不發布到 npm 的情況下，於真實的 Vue 3 / Angular 專案測試本套件：
+
+```bash
+# 1. 在 Anchor_UI 發布到本機 store（會先 build）
+pnpm yalc:publish
+
+# 2. 在消費端專案安裝（寫入 file:.yalc/@anchor-ui/core）
+cd ../my-app && npx yalc add @anchor-ui/core && pnpm install
+
+# 3. 回到 Anchor_UI，持續監聽並推送更新
+pnpm dev:yalc          # 或手動：pnpm yalc:push
+```
+
+- 消費端的 dev server（Vite / Angular）偵測到 `node_modules/@anchor-ui/core` 變更後會自動重新載入。
+- 若 Vite 預打包快取未更新，請於消費端執行 `vite --force`。
+- 結束後以 `npx yalc remove @anchor-ui/core`（或 `--all`）還原依賴，避免把 `file:.yalc` 提交進版控。
+- `.yalc/` 與 `yalc.lock` 已列入 `.gitignore`。
 
 ---
 

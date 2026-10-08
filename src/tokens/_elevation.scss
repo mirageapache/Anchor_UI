@@ -1,0 +1,5 @@
+/* ─── 陰影層級 Tokens (Elevation) ─── */
+:root {
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 8%); // 互動元件懸停微抬升（Tag、Icon Button）
+  --shadow-popover: 0 4px 12px rgb(0 0 0 / 28%); // 浮層氣泡（Tooltip）
+}

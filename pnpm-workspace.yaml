@@ -7,7 +7,15 @@
 #     - 'packages/*'
 packages:
   - '.'
+  - 'examples/*'
 
 allowBuilds:
   '@parcel/watcher': true
   'esbuild': true
+  'lmdb': true
+  'msgpackr-extract': true
+
+# 整個 workspace 鎖定 TypeScript 5.8：examples/angular 使用的 @angular/compiler-cli 19.2
+# 其 peerDependencies 要求 typescript ">=5.5 <5.9"。升級 Angular 後可一併解除此限制。
+overrides:
+  typescript: '~5.8.2'

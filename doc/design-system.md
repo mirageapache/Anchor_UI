@@ -83,68 +83,81 @@
   --color-brand-text: var(--color-brand-600); // 品牌文字色 (海軍藍)
 
   /* Background / Surface (表面與背景層級) */
-  --color-base: #ffffff;             // 輸入框、程式區塊底色
-  --color-bg: #f8fafc;               // 全站頁面背景 (Slate-50)
-  --color-surface: #f1f5f9;          // 側欄、分段控制器軌道、次要容器 (Slate-100)
-  --color-surface-plus: #ffffff;     // 工具卡片背景 (浮凸一階)
-  --color-border: #e2e8f0;           // 分隔線、一般邊框 (Slate-200)
-  --color-ghost-border: #cbd5e1;     // Ghost 按鈕邊框 (Slate-300，確保清晰度)
-  --color-output-bg: #f0fdf4;        // 成功輸出框淺綠底色 (Emerald-50)
+  --color-base: #ffffff; // 輸入框、程式區塊底色
+  --color-bg: #f8fafc; // 全站頁面背景 (Slate-50)
+  --color-surface: #f1f5f9; // 側欄、分段控制器軌道、次要容器 (Slate-100)
+  --color-surface-plus: #ffffff; // 工具卡片背景 (浮凸一階)
+  --color-border: #e2e8f0; // 分隔線、一般邊框 (Slate-200)
+  --color-ghost-border: #cbd5e1; // Ghost 按鈕邊框 (Slate-300，確保清晰度)
+  --color-output-bg: #f0fdf4; // 成功輸出框淺綠底色 (Emerald-50)
   --color-output-placeholder: var(--color-text-muted);
-  --color-error-bg: #fef2f2;         // 錯誤輸出框淺紅底色 (Red-50)
+  --color-error-bg: #fef2f2; // 錯誤輸出框淺紅底色 (Red-50)
 
   /* Text (文字階層) */
-  --color-text-primary: #0f172a;     // 主標題、內文、輸入文字 (Slate-900)
-  --color-text-secondary: #475569;   // 卡片描述、輔助說明 (Slate-600)
-  --color-text-muted: #64748b;       // Placeholder、中繼標籤 (Slate-500)
+  --color-text-primary: #0f172a; // 主標題、內文、輸入文字 (Slate-900)
+  --color-text-secondary: #475569; // 卡片描述、輔助說明 (Slate-600)
+  --color-text-muted: #64748b; // Placeholder、中繼標籤 (Slate-500)
+
+  /* On-color (實心底上的文字／圖示色，兩種主題相同，暗色模式不另覆寫) */
+  --color-on-solid: #ffffff; // Brand / Danger / Success 實心底上的白字
+  --color-on-accent: #0f172a; // Accent 琥珀實心底上的深色字 (Slate-900)
+
+  /* Tooltip (反白浮層：淺色底上的冷黑氣泡) */
+  --color-tooltip-bg: #0f172a; // Slate-900
+  --color-tooltip-text: #f8fafc; // Slate-50 (WCAG AAA)
+  --color-tooltip-border: rgb(255 255 255 / 14%);
 
   /* ─── 語意與狀態色完整系統 (Semantic Status & Actions) ─── */
 
   /* 1. Danger (Red): 錯誤、刪除、危險操作 */
-  --color-danger: #ef4444;           // Red 500: 主狀態色
-  --color-danger-hover: #dc2626;     // Red 600: 懸停態 (加深)
-  --color-danger-light: #f87171;     // Red 400: 次級裝飾、淺態
-  --color-danger-text: #b91c1c;      // Red 700: 淺底高對比文字 (WCAG AA > 4.5:1)
+  --color-danger: #ef4444; // Red 500: 主狀態色
+  --color-danger-hover: #dc2626; // Red 600: 懸停態 (加深)
+  --color-danger-light: #f87171; // Red 400: 次級裝飾、淺態
+  --color-danger-text: #b91c1c; // Red 700: 淺底高對比文字 (WCAG AA > 4.5:1)
   --color-danger-dim: color-mix(in srgb, var(--color-danger) 10%, transparent);
   --color-danger-border: color-mix(in srgb, var(--color-danger) 25%, transparent);
+  --color-danger-solid: #dc2626; // Red 600: 實心按鈕底色 (白字 4.83:1 AA)
+  --color-danger-solid-hover: #b91c1c; // Red 700: 實心按鈕懸停 (白字 6.47:1)
 
   /* 2. Warning (Amber): 效能警告、提示、星號收藏、HOT 徽章 (統一整併 Accent) */
-  --color-warning: #f59e0b;          // Amber 500: 主狀態色
-  --color-warning-hover: #d97706;    // Amber 600: 懸停態 (加深)
-  --color-warning-light: #fbbf24;    // Amber 400: 次級裝飾、淺態
-  --color-warning-text: #b45309;     // Amber 700: 淺底高對比文字 (WCAG AA > 4.5:1)
+  --color-warning: #f59e0b; // Amber 500: 主狀態色
+  --color-warning-hover: #d97706; // Amber 600: 懸停態 (加深)
+  --color-warning-light: #fbbf24; // Amber 400: 次級裝飾、淺態
+  --color-warning-text: #92400e; // Amber 800: 淺底高對比文字 (WCAG AA > 4.5:1 在有色底上)
   --color-warning-dim: color-mix(in srgb, var(--color-warning) 14%, transparent);
   --color-warning-border: color-mix(in srgb, var(--color-warning) 30%, transparent);
 
   /* 3. Success (Emerald): 成功輸出、就緒狀態、複製成功 */
-  --color-success: #10b981;          // Emerald 500: 主狀態色
-  --color-success-hover: #059669;    // Emerald 600: 懸停態 (加深)
-  --color-success-light: #34d399;    // Emerald 400: 次級裝飾、淺態
-  --color-success-text: #047857;     // Emerald 700: 淺底深綠輸出文字 (WCAG AA > 4.5:1)
+  --color-success: #10b981; // Emerald 500: 主狀態色
+  --color-success-hover: #059669; // Emerald 600: 懸停態 (加深)
+  --color-success-light: #34d399; // Emerald 400: 次級裝飾、淺態
+  --color-success-text: #047857; // Emerald 700: 淺底深綠輸出文字 (WCAG AA > 4.5:1)
   --color-success-dim: color-mix(in srgb, var(--color-success) 10%, transparent);
   --color-success-border: color-mix(in srgb, var(--color-success) 28%, transparent);
+  --color-success-solid: #047857; // Emerald 700: 實心按鈕底色 (白字 5.48:1 AA)
+  --color-success-solid-hover: #065f46; // Emerald 800: 實心按鈕懸停 (白字 7.68:1)
 
   /* 4. Info (Sky Blue): 資訊提示、Tooltip、系統導覽 */
-  --color-info: #0284c7;             // Sky 600: 主狀態色
-  --color-info-hover: #0369a1;       // Sky 700: 懸停態 (加深)
-  --color-info-light: #38bdf8;       // Sky 400: 次級裝飾、淺態
-  --color-info-text: #0369a1;        // Sky 700: 淺底高對比文字 (WCAG AA > 4.5:1)
+  --color-info: #0284c7; // Sky 600: 主狀態色
+  --color-info-hover: #0369a1; // Sky 700: 懸停態 (加深)
+  --color-info-light: #38bdf8; // Sky 400: 次級裝飾、淺態
+  --color-info-text: #0369a1; // Sky 700: 淺底高對比文字 (WCAG AA > 4.5:1)
   --color-info-dim: color-mix(in srgb, var(--color-info) 12%, transparent);
   --color-info-border: color-mix(in srgb, var(--color-info) 25%, transparent);
 
   /* 5. Purple (Violet): WASM、進階演算法、特化工具標示 */
-  --color-purple: #8b5cf6;           // Violet 500: 主狀態色
-  --color-purple-hover: #7c3aed;     // Violet 600: 懸停態 (加深)
-  --color-purple-light: #a78bfa;     // Violet 400: 次級裝飾、淺態
-  --color-purple-text: #6d28d9;      // Violet 700: 淺底高對比文字 (WCAG AA > 4.5:1)
+  --color-purple: #8b5cf6; // Violet 500: 主狀態色
+  --color-purple-hover: #7c3aed; // Violet 600: 懸停態 (加深)
+  --color-purple-light: #a78bfa; // Violet 400: 次級裝飾、淺態
+  --color-purple-text: #6d28d9; // Violet 700: 淺底高對比文字 (WCAG AA > 4.5:1)
   --color-purple-dim: color-mix(in srgb, var(--color-purple) 12%, transparent);
   --color-purple-border: color-mix(in srgb, var(--color-purple) 25%, transparent);
 
   /* 6. Neutral (Slate): 次要中性分類、一般停用/草稿狀態 */
-  --color-neutral: #64748b;          // Slate 500: 主狀態色
-  --color-neutral-hover: #475569;    // Slate 600: 懸停態 (加深)
-  --color-neutral-light: #94a3b8;    // Slate 400: 次級裝飾、淺態
-  --color-neutral-text: #334155;     // Slate 700: 淺底次要中性文字 (WCAG AA > 4.5:1)
+  --color-neutral: #64748b; // Slate 500: 主狀態色
+  --color-neutral-hover: #475569; // Slate 600: 懸停態 (加深)
+  --color-neutral-light: #94a3b8; // Slate 400: 次級裝飾、淺態
+  --color-neutral-text: #334155; // Slate 700: 淺底次要中性文字 (WCAG AA > 4.5:1)
   --color-neutral-dim: color-mix(in srgb, var(--color-neutral) 10%, transparent);
   --color-neutral-border: color-mix(in srgb, var(--color-neutral) 22%, transparent);
 
@@ -161,80 +174,92 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  /* Brand Primary (加亮的海軍藍) */
+  /* Brand Primary (加亮的海軍藍，確保高對比度) */
   --color-brand-50: #0b1f33;
   --color-brand-100: #102f4c;
   --color-brand-500: #38bdf8;
-  --color-brand-600: #0284c7;
-  --color-brand-700: #0369a1;
+  // brand-600 / 700 是白字實心按鈕的底色與 hover：為維持白字 AA 對比，hover 加深而非套用「暗色 hover 調亮」原則
+  --color-brand-600: #0369a1; // Sky-700 (WCAG AA > 4.5:1 對比度)
+  --color-brand-700: #025584;
   --color-brand-800: #0c4a6e;
   --color-brand-dim: color-mix(in srgb, var(--color-brand-500) 15%, transparent);
   --color-brand-border: color-mix(in srgb, var(--color-brand-500) 30%, transparent);
-  --color-brand-text: var(--color-brand-500); // 品牌文字色 (加亮淺天藍)
+  --color-brand-text: #bae6fd; // Sky 200 (WCAG AAA)
 
   /* Background / Surface */
-  --color-base: #1e293b;             // Slate-800
-  --color-bg: #0f172a;               // Slate-900 (深邃黑底)
-  --color-surface: #1e293b;          // Slate-800
-  --color-surface-plus: #334155;     // Slate-700 (卡片背景)
+  --color-base: #1e293b; // Slate-800
+  --color-bg: #0f172a; // Slate-900 (深邃黑底)
+  --color-surface: #1e293b; // Slate-800
+  --color-surface-plus: #334155; // Slate-700 (卡片背景)
   --color-border: #334155;
   --color-ghost-border: #475569;
-  --color-output-bg: #064e3b;        // 深翠綠底色
-  --color-output-placeholder: #6ee7b7;// Emerald-300: 清晰翠綠提示 (WCAG AA 6.38:1)
-  --color-error-bg: #450a0a;         // 深紅底色
+  --color-output-bg: #064e3b; // 深翠綠底色
+  --color-output-placeholder: #6ee7b7; // Emerald-300: 清晰翠綠提示 (WCAG AA 6.38:1)
+  --color-error-bg: #450a0a; // 深紅底色
 
   /* Text */
-  --color-text-primary: #f8fafc;     // Slate-50
-  --color-text-secondary: #94a3b8;   // Slate-400
-  --color-text-muted: #64748b;       // Slate-500
+  --color-text-primary: #f8fafc; // Slate-50
+  --color-text-secondary: #94a3b8; // Slate-400
+  --color-text-muted: #64748b; // Slate-500
+
+  /* Tooltip (深色底上提亮一階，與頁面背景區隔) */
+  --color-tooltip-bg: #1e293b; // Slate-800
+  --color-tooltip-text: #f8fafc; // Slate-50 (WCAG AAA)
+  --color-tooltip-border: rgb(255 255 255 / 18%);
 
   /* ─── 語意與狀態色 (Dark Mode: 提升亮度確保清晰度與對比度) ─── */
 
   /* 1. Danger (Red) */
-  --color-danger: #f87171;           // Red 400
-  --color-danger-hover: #fca5a5;     // Red 300 (暗色 hover 調亮)
-  --color-danger-light: #fecaca;     // Red 200
-  --color-danger-text: #fecaca;      // Red 200 (WCAG AAA)
+  --color-danger: #f87171; // Red 400
+  --color-danger-hover: #fca5a5; // Red 300 (暗色 hover 調亮)
+  --color-danger-light: #fecaca; // Red 200
+  --color-danger-text: #fecaca; // Red 200 (WCAG AAA)
   --color-danger-dim: color-mix(in srgb, var(--color-danger) 15%, transparent);
   --color-danger-border: color-mix(in srgb, var(--color-danger) 30%, transparent);
+  // 實心按鈕為白字，暗色模式不套用「hover 調亮」原則，維持與淺色相同以確保 AA 對比
+  --color-danger-solid: #dc2626; // Red 600 (白字 4.83:1)
+  --color-danger-solid-hover: #b91c1c; // Red 700 (白字 6.47:1)
 
   /* 2. Warning (Amber) */
-  --color-warning: #fbbf24;          // Amber 400
-  --color-warning-hover: #fcd34d;    // Amber 300 (暗色 hover 調亮)
-  --color-warning-light: #fde68a;    // Amber 200
-  --color-warning-text: #fde68a;     // Amber 200 (WCAG AAA)
+  --color-warning: #fbbf24; // Amber 400
+  --color-warning-hover: #fcd34d; // Amber 300 (暗色 hover 調亮)
+  --color-warning-light: #fde68a; // Amber 200
+  --color-warning-text: #fde68a; // Amber 200 (WCAG AAA)
   --color-warning-dim: color-mix(in srgb, var(--color-warning) 18%, transparent);
   --color-warning-border: color-mix(in srgb, var(--color-warning) 35%, transparent);
 
   /* 3. Success (Emerald) */
-  --color-success: #34d399;          // Emerald 400
-  --color-success-hover: #6ee7b7;    // Emerald 300 (暗色 hover 調亮)
-  --color-success-light: #a7f3d0;    // Emerald 200
-  --color-success-text: #a7f3d0;     // Emerald 200 (WCAG AAA 7.58:1)
+  --color-success: #34d399; // Emerald 400
+  --color-success-hover: #6ee7b7; // Emerald 300 (暗色 hover 調亮)
+  --color-success-light: #a7f3d0; // Emerald 200
+  --color-success-text: #a7f3d0; // Emerald 200 (WCAG AAA 7.58:1)
   --color-success-dim: color-mix(in srgb, var(--color-success) 15%, transparent);
   --color-success-border: color-mix(in srgb, var(--color-success) 30%, transparent);
+  // 實心按鈕為白字，暗色模式維持與淺色相同以確保 AA 對比
+  --color-success-solid: #047857; // Emerald 700 (白字 5.48:1)
+  --color-success-solid-hover: #065f46; // Emerald 800 (白字 7.68:1)
 
   /* 4. Info (Sky Blue) */
-  --color-info: #38bdf8;             // Sky 400
-  --color-info-hover: #7dd3fc;       // Sky 300 (暗色 hover 調亮)
-  --color-info-light: #bae6fd;       // Sky 200
-  --color-info-text: #bae6fd;        // Sky 200 (WCAG AAA)
+  --color-info: #38bdf8; // Sky 400
+  --color-info-hover: #7dd3fc; // Sky 300 (暗色 hover 調亮)
+  --color-info-light: #bae6fd; // Sky 200
+  --color-info-text: var(--color-info); // Sky 400 (#38bdf8: 明亮天藍文字)
   --color-info-dim: color-mix(in srgb, var(--color-info) 15%, transparent);
   --color-info-border: color-mix(in srgb, var(--color-info) 30%, transparent);
 
   /* 5. Purple (Violet) */
-  --color-purple: #a78bfa;           // Violet 400
-  --color-purple-hover: #c4b5fd;     // Violet 300 (暗色 hover 調亮)
-  --color-purple-light: #ddd6fe;     // Violet 200
-  --color-purple-text: #ddd6fe;      // Violet 200 (WCAG AAA)
+  --color-purple: #a78bfa; // Violet 400
+  --color-purple-hover: #c4b5fd; // Violet 300 (暗色 hover 調亮)
+  --color-purple-light: #ddd6fe; // Violet 200
+  --color-purple-text: #ddd6fe; // Violet 200 (WCAG AAA)
   --color-purple-dim: color-mix(in srgb, var(--color-purple) 15%, transparent);
   --color-purple-border: color-mix(in srgb, var(--color-purple) 30%, transparent);
 
   /* 6. Neutral (Slate) */
-  --color-neutral: #94a3b8;          // Slate 400
-  --color-neutral-hover: #cbd5e1;    // Slate 300 (暗色 hover 調亮)
-  --color-neutral-light: #e2e8f0;    // Slate 200
-  --color-neutral-text: #e2e8f0;     // Slate 200 (WCAG AAA)
+  --color-neutral: #94a3b8; // Slate 400
+  --color-neutral-hover: #cbd5e1; // Slate 300 (暗色 hover 調亮)
+  --color-neutral-light: #e2e8f0; // Slate 200
+  --color-neutral-text: #e2e8f0; // Slate 200 (WCAG AAA)
   --color-neutral-dim: color-mix(in srgb, var(--color-neutral) 12%, transparent);
   --color-neutral-border: color-mix(in srgb, var(--color-neutral) 25%, transparent);
 
@@ -261,47 +286,48 @@
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Menlo', monospace;
 
   /* Tailwind CSS 標準字體階層 (Font Sizes) */
-  --text-2xs: 0.6875rem;     // 11px: 微型標籤、區塊微標籤、次要徽章
-  --text-xs: 0.75rem;        // 12px: 輔助說明、次要標註、Tooltip、卡片描述
-  --text-sm: 0.875rem;       // 14px: 主要內文、控制項、表單輸入/輸出、代碼區、按鈕
-  --text-base: 1rem;         // 16px: 標準內文、彈窗/面板輸入框、卡片標題
-  --text-lg: 1.125rem;       // 18px: 強調段落、副標題
-  --text-xl: 1.25rem;        // 20px: 區塊與分組標題 (H3)
-  --text-2xl: 1.5rem;        // 24px: 彈窗標題、小頁首 (H2)
-  --text-3xl: 1.875rem;      // 30px: 頁面主標題 (H1)
-  --text-4xl: 2.25rem;       // 36px: 大型展示標題、Hero Text
-  --text-5xl: 3rem;          // 48px: 超大數字/重點數據展示
+  --text-2xs: 0.6875rem; // 11px: 微型標籤、區塊微標籤、次要徽章
+  --text-xs: 0.75rem; // 12px: 輔助說明、次要標註、Tooltip、卡片描述
+  --text-sm: 0.875rem; // 14px: 主要內文、控制項、表單輸入/輸出、代碼區、按鈕
+  --text-base: 1rem; // 16px: 標準內文、彈窗/面板輸入框、卡片標題
+  --text-lg: 1.125rem; // 18px: 強調段落、副標題
+  --text-xl: 1.25rem; // 20px: 區塊與分組標題 (H3)
+  --text-2xl: 1.5rem; // 24px: 彈窗標題、小頁首 (H2)
+  --text-3xl: 1.875rem; // 30px: 頁面主標題 (H1)
+  --text-4xl: 2.25rem; // 36px: 大型展示標題、Hero Text
+  --text-5xl: 3rem; // 48px: 超大數字/重點數據展示
 
   /* 字重 (Font Weights) - 對齊 Tailwind CSS */
-  --weight-medium: 500;      // font-medium
-  --weight-semibold: 600;    // font-semibold
-  --weight-bold: 700;        // font-bold
-  --weight-black: 900;       // font-black
+  --weight-medium: 500; // font-medium
+  --weight-semibold: 600; // font-semibold
+  --weight-bold: 700; // font-bold
+  --weight-black: 900; // font-black
 
   /* 行高 (Line Heights) - 對齊 Tailwind CSS */
-  --leading-none: 1;         // leading-none: 徽章、圖標
-  --leading-tight: 1.25;     // leading-tight: 大標題 (H1, H2)
-  --leading-snug: 1.375;     // leading-snug: 卡片標題、Modal 大標
-  --leading-normal: 1.5;     // leading-normal: 標準文字段落
-  --leading-relaxed: 1.625;  // leading-relaxed: 長篇閱讀文章、說明文件
-  --leading-loose: 2;        // leading-loose: 鬆散代碼與清單
+  --leading-none: 1; // leading-none: 徽章、圖標
+  --leading-tight: 1.25; // leading-tight: 大標題 (H1, H2)
+  --leading-snug: 1.375; // leading-snug: 卡片標題、Modal 大標
+  --leading-normal: 1.5; // leading-normal: 標準文字段落
+  --leading-relaxed: 1.625; // leading-relaxed: 長篇閱讀文章、說明文件
+  --leading-loose: 2; // leading-loose: 鬆散代碼與清單
 }
 ```
 
-| Token | rem | px | Tailwind Utility | 典型用途 |
-|---|---|---|---|---|
-| `--text-2xs` | `0.6875rem` | `11px` | `text-2xs` | 分類 Tag (`.tag`)、大寫微標籤 (`.section-label`) |
-| `--text-xs` | `0.75rem` | `12px` | `text-xs` | 輔助說明、卡片描述 (`.card__desc`)、Tooltip (`.app-tooltip`) |
-| `--text-sm` | `0.875rem` | `14px` | `text-sm` | 主要內文 (`body`)、按鈕 (`.btn`)、輸入框 (`.input`)、代碼區 (`.code-view`) |
-| `--text-base` | `1rem` | `16px` | `text-base` | 標準內文、指令面板輸入 (`.cp-input`)、卡片標題 |
-| `--text-lg` | `1.125rem` | `18px` | `text-lg` | 強調段落、次小標題 |
-| `--text-xl` | `1.25rem` | `20px` | `text-xl` | 區塊與分組標題、側欄大標 |
-| `--text-2xl` | `1.5rem` | `24px` | `text-2xl` | 彈窗標題、小頁首 |
-| `--text-3xl` | `1.875rem` | `30px` | `text-3xl` | 頁面主標題 (`h1`) |
-| `--text-4xl` | `2.25rem` | `36px` | `text-4xl` | 展示標題、Hero Text |
-| `--text-5xl` | `3rem` | `48px` | `text-5xl` | 重點指標數據、超大展示字 |
+| Token         | rem         | px     | Tailwind Utility | 典型用途                                                                   |
+| ------------- | ----------- | ------ | ---------------- | -------------------------------------------------------------------------- |
+| `--text-2xs`  | `0.6875rem` | `11px` | `text-2xs`       | 分類 Tag (`.tag`)、大寫微標籤 (`.section-label`)                           |
+| `--text-xs`   | `0.75rem`   | `12px` | `text-xs`        | 輔助說明、卡片描述 (`.card__desc`)、Tooltip (`.app-tooltip`)               |
+| `--text-sm`   | `0.875rem`  | `14px` | `text-sm`        | 主要內文 (`body`)、按鈕 (`.btn`)、輸入框 (`.input`)、代碼區 (`.code-view`) |
+| `--text-base` | `1rem`      | `16px` | `text-base`      | 標準內文、指令面板輸入 (`.cp-input`)、卡片標題                             |
+| `--text-lg`   | `1.125rem`  | `18px` | `text-lg`        | 強調段落、次小標題                                                         |
+| `--text-xl`   | `1.25rem`   | `20px` | `text-xl`        | 區塊與分組標題、側欄大標                                                   |
+| `--text-2xl`  | `1.5rem`    | `24px` | `text-2xl`       | 彈窗標題、小頁首                                                           |
+| `--text-3xl`  | `1.875rem`  | `30px` | `text-3xl`       | 頁面主標題 (`h1`)                                                          |
+| `--text-4xl`  | `2.25rem`   | `36px` | `text-4xl`       | 展示標題、Hero Text                                                        |
+| `--text-5xl`  | `3rem`      | `48px` | `text-5xl`       | 重點指標數據、超大展示字                                                   |
 
 #### 字型應用準則
+
 1. **Inter**：用於所有標題、按鈕、導覽列、說明段落與表單標籤。
 2. **JetBrains Mono**：專門用於輸入框（Input）、輸出框（Output）、程式碼（Code/Pre）、分類標籤（Tag）與鍵盤鍵帽（Kbd）。
 3. **大小寫規範**：
@@ -315,27 +341,27 @@
 
 採用基於 4px / 8px 的對齊格線系統：
 
-| Token | 數值 | 典型用途 |
-|---|---|---|
-| `--space-xs` | `4px` | 元素內部細微間隙、標籤內行距、圖示微調 |
-| `--space-sm` | `8px` | 相鄰按鈕間距、欄位與標題間隔 |
-| `--space-ms` | `12px`| 卡片垂直內距、控制項內左右間距 |
-| `--space-md` | `16px`| 標準卡片內距、表單欄位下外距 |
-| `--space-lg` | `24px`| 區塊間距、頁面邊界 gutter |
-| `--space-xl` | `40px`| 主要段落區隔、頁面大模組間隔 |
-| `--space-xxl`| `64px`| 頁首與頁底留白、Empty State 內距 |
+| Token         | 數值   | 典型用途                               |
+| ------------- | ------ | -------------------------------------- |
+| `--space-xs`  | `4px`  | 元素內部細微間隙、標籤內行距、圖示微調 |
+| `--space-sm`  | `8px`  | 相鄰按鈕間距、欄位與標題間隔           |
+| `--space-ms`  | `12px` | 卡片垂直內距、控制項內左右間距         |
+| `--space-md`  | `16px` | 標準卡片內距、表單欄位下外距           |
+| `--space-lg`  | `24px` | 區塊間距、頁面邊界 gutter              |
+| `--space-xl`  | `40px` | 主要段落區隔、頁面大模組間隔           |
+| `--space-xxl` | `64px` | 頁首與頁底留白、Empty State 內距       |
 
 ---
 
 ### 2.4 圓角系統 (Border Radius)
 
-| Token | 數值 | 典型用途 |
-|---|---|---|
-| `--radius-sm` | `6px` | 標籤 Tag、圖示小按鈕、模式切換選項、Tooltip |
-| `--radius-md` | `8px` | 標準按鈕 (`.btn`)、輸入框 (`.input`)、Toast |
-| `--radius-lg` | `12px`| 工具卡片 (`.card`)、分段控制器外框 (`.segmented`) |
-| `--radius-xl` | `16px`| 彈窗對話框 (`.alert`)、指令面板 (`.cp-dialog`) |
-| `--radius-pill` | `9999px`| 圓形圖標、頭像、Logo、全角按鈕 |
+| Token           | 數值     | 典型用途                                          |
+| --------------- | -------- | ------------------------------------------------- |
+| `--radius-sm`   | `6px`    | 標籤 Tag、圖示小按鈕、模式切換選項、Tooltip       |
+| `--radius-md`   | `8px`    | 標準按鈕 (`.btn`)、輸入框 (`.input`)、Toast       |
+| `--radius-lg`   | `12px`   | 工具卡片 (`.card`)、分段控制器外框 (`.segmented`) |
+| `--radius-xl`   | `16px`   | 彈窗對話框 (`.alert`)、指令面板 (`.cp-dialog`)    |
+| `--radius-pill` | `9999px` | 圓形圖標、頭像、Logo、全角按鈕                    |
 
 ---
 
@@ -349,9 +375,13 @@
   --nav-height: 64px;
 
   /* Motion */
-  --transition-fast: 100ms ease;   // 按鈕 active、圖示 hover
-  --transition-base: 150ms ease;   // 邊框顏色切換、懸浮微抬升
-  --transition-theme: 200ms ease;  // 深淺模式切換背景與文字過渡
+  --transition-fast: 100ms ease; // 按鈕 active、圖示 hover
+  --transition-base: 150ms ease; // 邊框顏色切換、懸浮微抬升
+  --transition-theme: 200ms ease; // 深淺模式切換背景與文字過渡
+
+  /* Elevation (陰影層級) */
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 8%); // 互動元件懸停微抬升（Tag、Icon Button）
+  --shadow-popover: 0 4px 12px rgb(0 0 0 / 28%); // 浮層氣泡（Tooltip）
 }
 ```
 
@@ -517,8 +547,8 @@ select {
 // 1. Primary: 品牌海軍藍實心 (主要 CTA)
 .btn-primary {
   background: var(--color-brand-600);
-  color: #ffffff;
-  box-shadow: 0 1px 2px rgba(15, 76, 129, 0.2);
+  color: var(--color-on-solid);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-brand-600) 20%, transparent);
 
   &:hover {
     background: var(--color-brand-700);
@@ -529,9 +559,10 @@ select {
 // 2. Accent: 琥珀金高反差 (核心轉檔、加值功能)
 .btn-accent {
   background: var(--color-accent);
-  color: #ffffff;
+  // 琥珀底配白字對比不足，改用深色字 (--color-on-accent)
+  color: var(--color-on-accent);
   font-weight: var(--weight-bold);
-  box-shadow: 0 1px 2px rgba(245, 158, 11, 0.25);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-accent) 25%, transparent);
 
   &:hover {
     background: var(--color-accent-hover);
@@ -563,15 +594,16 @@ select {
 
 // 4. Danger: 刪除或破壞性按鈕
 .btn-danger {
-  color: #ffffff;
-  background-color: var(--color-danger);
+  color: var(--color-on-solid);
+  // 白字實心底使用 -solid token：--color-danger (#ef4444) 配白字僅 3.76:1，未達 AA
+  background-color: var(--color-danger-solid);
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background-color var(--transition-base);
 
   &:hover {
-    background-color: color-mix(in srgb, var(--color-danger) 85%, black);
+    background-color: var(--color-danger-solid-hover);
   }
 }
 ```
@@ -663,10 +695,18 @@ select {
     background var(--transition-base),
     color var(--transition-base);
 
-  &:hover,
-  &.is-active {
-    background: var(--color-accent-dim);
-    color: var(--color-accent-text);
+  // 懸停色依 color 屬性而定（預設 brand）
+  &:hover {
+    background: var(--color-brand-dim);
+    color: var(--color-brand-text);
+  }
+
+  // 複製／下載成功回饋：翠綠 Success（成功語意），而非 Accent 琥珀色
+  &.is-active,
+  &.is-success {
+    background: var(--color-success-dim);
+    color: var(--color-success-text);
+    border-color: var(--color-success-border);
   }
 
   svg {
@@ -699,7 +739,9 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
   border: 1px solid var(--color-border);
   background: var(--color-surface);
   color: var(--color-text-secondary);
-  transition: background var(--transition-fast), color var(--transition-fast);
+  transition:
+    background var(--transition-fast),
+    color var(--transition-fast);
 
   // 語意色彩多態 (直接食用全域語意 Tokens，深淺色自動適應)
   &[data-variant='blue'],
@@ -809,6 +851,7 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
 ### 4.6 輸出框與程式碼檢視 (Output Rows & Code View)
 
 #### 1. 單行/區塊結果列 (`.output-row`)
+
 帶有 4px 左側語意邊條，成功為翠綠、錯誤為珊瑚紅：
 
 ```scss
@@ -846,6 +889,7 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
 ```
 
 #### 2. IDE 風格程式碼預覽 (`.code-view`)
+
 支援 **Sticky 行號列**、**行展開/收折**、**水平捲動且行號不位移**：
 
 ```scss
@@ -907,7 +951,7 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
   }
 
   &.is-collapsed svg {
-    transform: rotate(0);   // 收合朝右
+    transform: rotate(0); // 收合朝右
   }
 }
 
@@ -1125,7 +1169,9 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
   border-top: 1px dashed var(--color-border);
   line-height: var(--leading-normal);
 
-  p, ul, ol {
+  p,
+  ul,
+  ol {
     margin-bottom: var(--space-sm);
     padding-inline-start: var(--space-lg);
   }
@@ -1148,9 +1194,9 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
   font-size: var(--text-xs);
   font-weight: var(--weight-medium);
   line-height: 1.35;
-  color: #f8fafc;
-  background-color: #0f172a;
-  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--color-tooltip-text);
+  background-color: var(--color-tooltip-bg);
+  border: 1px solid var(--color-tooltip-border);
   border-radius: var(--radius-sm);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
   pointer-events: none;
@@ -1164,13 +1210,10 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
     opacity: 1;
     transform: scale(1);
   }
-
-  :root[data-theme='dark'] & {
-    background-color: #1e293b;
-    border-color: rgba(255, 255, 255, 0.18);
-  }
 }
 ```
+
+> 深色模式不另寫選擇器：`[data-theme='dark']` 覆寫 `--color-tooltip-*` token 後，經 CSS 繼承穿透 Shadow DOM 自動生效。避免使用 `:host-context()`（Firefox / Safari 不支援）。
 
 ---
 
@@ -1204,11 +1247,21 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
   animation: toast-slide-in 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 
-  &.toast-success .toast-icon { color: var(--color-success-text); }
-  &.toast-error .toast-icon   { color: var(--color-danger); }
-  &.toast-warning .toast-icon { color: var(--color-warning); }
-  &.toast-info .toast-icon    { color: var(--color-info); }
-  &.toast-loading .toast-icon { color: var(--color-brand-600); }
+  &.toast-success .toast-icon {
+    color: var(--color-success-text);
+  }
+  &.toast-error .toast-icon {
+    color: var(--color-danger);
+  }
+  &.toast-warning .toast-icon {
+    color: var(--color-warning);
+  }
+  &.toast-info .toast-icon {
+    color: var(--color-info);
+  }
+  &.toast-loading .toast-icon {
+    color: var(--color-brand-600);
+  }
 }
 
 @keyframes toast-slide-in {
