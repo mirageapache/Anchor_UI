@@ -55,14 +55,15 @@ export const tooltipStyles = css`
     background-color: var(--color-tooltip-bg, #0f172a);
     border: 1px solid var(--color-tooltip-border, rgba(255, 255, 255, 0.14));
     border-radius: var(--radius-sm, 6px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+    box-shadow: var(--shadow-popover, 0 4px 12px rgb(0 0 0 / 28%));
     pointer-events: none;
     opacity: 0;
     transform: scale(0.95);
     transform-origin: var(--tooltip-transform-origin, center);
+    /* 時長來自 motion token；tooltip.ts 會讀取計算後的 transition 時長來決定何時關閉 popover */
     transition:
-      opacity 0.15s cubic-bezier(0.16, 1, 0.3, 1),
-      transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity var(--transition-base, 150ms ease),
+      transform var(--transition-base, 150ms ease);
     word-break: break-word;
     white-space: normal;
     user-select: none;

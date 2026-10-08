@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { nextTick } from 'vue';
 import { mount } from '@vue/test-utils';
 import App from '../src/App.vue';
 
@@ -6,11 +7,30 @@ import App from '../src/App.vue';
 import '@anchor-ui/core';
 import type { AuiButton, AuiTag, AuiTooltip, AuiIconButton } from '@anchor-ui/core';
 
+/**
+ * happy-dom 沒有真實剪貼簿：模擬 Secure Context 與 navigator.clipboard.writeText
+ */
+function mockClipboard() {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal('isSecureContext', true);
+  Object.defineProperty(navigator, 'clipboard', {
+    value: { writeText },
+    configurable: true,
+  });
+  return writeText;
+}
+
 describe('Vue 3 + Anchor UI Integration Test Suite (TASK-107)', () => {
   let wrapper: ReturnType<typeof mount>;
 
+  afterEach(() => {
+    wrapper.unmount();
+    vi.unstubAllGlobals();
+  });
+
   beforeEach(() => {
-    wrapper = mount(App);
+    // 掛到 document 上：Lit 元件需 connected 才會渲染 Shadow DOM（例如 Tag 的移除鈕）
+    wrapper = mount(App, { attachTo: document.body });
   });
 
   describe('1. Custom Element recognition (compilerOptions.isCustomElement)', () => {
@@ -100,9 +120,11 @@ describe('Vue 3 + Anchor UI Integration Test Suite (TASK-107)', () => {
       const countTextBefore = wrapper.find('#tag-count-text');
       expect(countTextBefore.text()).toContain('5 個');
 
-      const tag1 = wrapper.find('aui-tag#tag-1');
-      // 觸發自訂事件 aui-remove
-      await tag1.trigger('aui-remove', { detail: { tag: tag1.element } });
+      const tag1 = wrapper.find('aui-tag#tag-1').element as AuiTag;
+      await tag1.updateComplete;
+      // 點擊元件內部的移除鈕，由元件本身分派 aui-remove（而非測試手動分派）
+      tag1.shadowRoot!.querySelector<HTMLButtonElement>('.tag__remove')!.click();
+      await nextTick();
 
       const countTextAfter = wrapper.find('#tag-count-text');
       expect(countTextAfter.text()).toContain('4 個');
@@ -140,20 +162,32 @@ describe('Vue 3 + Anchor UI Integration Test Suite (TASK-107)', () => {
       expect(iconBtnEl.preset).toBe('download');
     });
 
-    it('handles @aui-copy custom event and renders reactive feedback', async () => {
-      const iconBtn = wrapper.find('aui-icon-button#target-icon-btn');
-      await iconBtn.trigger('aui-copy', { detail: { value: 'npm test snippet' } });
+    it('copies the bound copy-value on click and handles the emitted @aui-copy', async () => {
+      const writeText = mockClipboard();
+      await wrapper.find<HTMLInputElement>('#input-copy-snippet').setValue('npm test snippet');
 
-      const feedback = wrapper.find('#icon-feedback-text');
-      expect(feedback.text()).toContain('已成功複製：npm test snippet');
+      const iconBtn = wrapper.find('aui-icon-button#target-icon-btn').element as AuiIconButton;
+      iconBtn.click();
+
+      await vi.waitFor(() => {
+        expect(wrapper.find('#icon-feedback-text').text()).toContain(
+          '已成功複製：npm test snippet',
+        );
+      });
+      expect(writeText).toHaveBeenCalledWith('npm test snippet');
     });
 
-    it('handles @aui-download custom event', async () => {
-      const iconBtn = wrapper.find('aui-icon-button#target-icon-btn');
-      await iconBtn.trigger('aui-download', { detail: { filename: 'report.pdf' } });
+    it('handles the @aui-download emitted by the component in download mode', async () => {
+      await wrapper.find<HTMLSelectElement>('#select-icon-preset').setValue('download');
+      const iconBtn = wrapper.find('aui-icon-button#target-icon-btn').element as AuiIconButton;
+      iconBtn.click();
 
-      const feedback = wrapper.find('#icon-feedback-text');
-      expect(feedback.text()).toContain('下載事件觸發：report.pdf');
+      await vi.waitFor(() => {
+        // detail.filename 來自模板上的 download-filename 屬性
+        expect(wrapper.find('#icon-feedback-text').text()).toContain(
+          '下載事件觸發：anchor-ui.json',
+        );
+      });
     });
   });
 

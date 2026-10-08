@@ -98,6 +98,10 @@
   --color-text-secondary: #475569; // 卡片描述、輔助說明 (Slate-600)
   --color-text-muted: #64748b; // Placeholder、中繼標籤 (Slate-500)
 
+  /* On-color (實心底上的文字／圖示色，兩種主題相同，暗色模式不另覆寫) */
+  --color-on-solid: #ffffff; // Brand / Danger / Success 實心底上的白字
+  --color-on-accent: #0f172a; // Accent 琥珀實心底上的深色字 (Slate-900)
+
   /* Tooltip (反白浮層：淺色底上的冷黑氣泡) */
   --color-tooltip-bg: #0f172a; // Slate-900
   --color-tooltip-text: #f8fafc; // Slate-50 (WCAG AAA)
@@ -119,7 +123,7 @@
   --color-warning: #f59e0b; // Amber 500: 主狀態色
   --color-warning-hover: #d97706; // Amber 600: 懸停態 (加深)
   --color-warning-light: #fbbf24; // Amber 400: 次級裝飾、淺態
-  --color-warning-text: #b45309; // Amber 700: 淺底高對比文字 (WCAG AA > 4.5:1)
+  --color-warning-text: #92400e; // Amber 800: 淺底高對比文字 (WCAG AA > 4.5:1 在有色底上)
   --color-warning-dim: color-mix(in srgb, var(--color-warning) 14%, transparent);
   --color-warning-border: color-mix(in srgb, var(--color-warning) 30%, transparent);
 
@@ -170,16 +174,17 @@
 [data-theme='dark'] {
   color-scheme: dark;
 
-  /* Brand Primary (加亮的海軍藍) */
+  /* Brand Primary (加亮的海軍藍，確保高對比度) */
   --color-brand-50: #0b1f33;
   --color-brand-100: #102f4c;
   --color-brand-500: #38bdf8;
-  --color-brand-600: #0284c7;
-  --color-brand-700: #0369a1;
+  // brand-600 / 700 是白字實心按鈕的底色與 hover：為維持白字 AA 對比，hover 加深而非套用「暗色 hover 調亮」原則
+  --color-brand-600: #0369a1; // Sky-700 (WCAG AA > 4.5:1 對比度)
+  --color-brand-700: #025584;
   --color-brand-800: #0c4a6e;
   --color-brand-dim: color-mix(in srgb, var(--color-brand-500) 15%, transparent);
   --color-brand-border: color-mix(in srgb, var(--color-brand-500) 30%, transparent);
-  --color-brand-text: var(--color-brand-500); // 品牌文字色 (加亮淺天藍)
+  --color-brand-text: #bae6fd; // Sky 200 (WCAG AAA)
 
   /* Background / Surface */
   --color-base: #1e293b; // Slate-800
@@ -238,7 +243,7 @@
   --color-info: #38bdf8; // Sky 400
   --color-info-hover: #7dd3fc; // Sky 300 (暗色 hover 調亮)
   --color-info-light: #bae6fd; // Sky 200
-  --color-info-text: #bae6fd; // Sky 200 (WCAG AAA)
+  --color-info-text: var(--color-info); // Sky 400 (#38bdf8: 明亮天藍文字)
   --color-info-dim: color-mix(in srgb, var(--color-info) 15%, transparent);
   --color-info-border: color-mix(in srgb, var(--color-info) 30%, transparent);
 
@@ -373,6 +378,10 @@
   --transition-fast: 100ms ease; // 按鈕 active、圖示 hover
   --transition-base: 150ms ease; // 邊框顏色切換、懸浮微抬升
   --transition-theme: 200ms ease; // 深淺模式切換背景與文字過渡
+
+  /* Elevation (陰影層級) */
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 8%); // 互動元件懸停微抬升（Tag、Icon Button）
+  --shadow-popover: 0 4px 12px rgb(0 0 0 / 28%); // 浮層氣泡（Tooltip）
 }
 ```
 
@@ -538,8 +547,8 @@ select {
 // 1. Primary: 品牌海軍藍實心 (主要 CTA)
 .btn-primary {
   background: var(--color-brand-600);
-  color: #ffffff;
-  box-shadow: 0 1px 2px rgba(15, 76, 129, 0.2);
+  color: var(--color-on-solid);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-brand-600) 20%, transparent);
 
   &:hover {
     background: var(--color-brand-700);
@@ -550,9 +559,10 @@ select {
 // 2. Accent: 琥珀金高反差 (核心轉檔、加值功能)
 .btn-accent {
   background: var(--color-accent);
-  color: #ffffff;
+  // 琥珀底配白字對比不足，改用深色字 (--color-on-accent)
+  color: var(--color-on-accent);
   font-weight: var(--weight-bold);
-  box-shadow: 0 1px 2px rgba(245, 158, 11, 0.25);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-accent) 25%, transparent);
 
   &:hover {
     background: var(--color-accent-hover);
@@ -584,7 +594,7 @@ select {
 
 // 4. Danger: 刪除或破壞性按鈕
 .btn-danger {
-  color: #ffffff;
+  color: var(--color-on-solid);
   // 白字實心底使用 -solid token：--color-danger (#ef4444) 配白字僅 3.76:1，未達 AA
   background-color: var(--color-danger-solid);
   border: 1px solid transparent;
@@ -685,10 +695,18 @@ select {
     background var(--transition-base),
     color var(--transition-base);
 
-  &:hover,
-  &.is-active {
-    background: var(--color-accent-dim);
-    color: var(--color-accent-text);
+  // 懸停色依 color 屬性而定（預設 brand）
+  &:hover {
+    background: var(--color-brand-dim);
+    color: var(--color-brand-text);
+  }
+
+  // 複製／下載成功回饋：翠綠 Success（成功語意），而非 Accent 琥珀色
+  &.is-active,
+  &.is-success {
+    background: var(--color-success-dim);
+    color: var(--color-success-text);
+    border-color: var(--color-success-border);
   }
 
   svg {

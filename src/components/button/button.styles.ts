@@ -107,47 +107,50 @@ export const buttonStyles = css`
 
   /* ─── 1. Primary: 品牌海軍藍實心 (主要 CTA) ─── */
   .btn--primary {
-    background-color: var(--color-brand-600);
-    color: #ffffff;
-    box-shadow: 0 1px 2px rgba(15, 76, 129, 0.2);
+    background-color: var(--color-brand-600, #0f4c81);
+    color: var(--color-on-solid, #ffffff);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--color-brand-600, #0f4c81) 20%, transparent);
   }
 
   .btn--primary:hover:not(:disabled):not(.btn--loading) {
-    background-color: var(--color-brand-700);
+    background-color: var(--color-brand-700, #0a3356);
     filter: brightness(1.05);
   }
 
   /* ─── 2. Accent: 琥珀金高反差 (核心轉檔、加值功能) ─── */
   .btn--accent {
-    background-color: var(--color-accent);
-    color: #0f172a;
+    background-color: var(--color-accent, #f59e0b);
+    color: var(--color-on-accent, #0f172a);
     font-weight: var(--weight-bold, 700);
-    box-shadow: 0 1px 2px rgba(245, 158, 11, 0.25);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--color-accent, #f59e0b) 25%, transparent);
   }
 
   .btn--accent:hover:not(:disabled):not(.btn--loading) {
-    background-color: var(--color-accent-hover);
+    background-color: var(--color-accent-hover, #d97706);
   }
 
   /* ─── 3. Ghost: 次要線框操作 (載入範例、清除、副操作) ─── */
   .btn--ghost {
     background-color: transparent;
-    color: var(--color-text-secondary);
-    border-color: var(--color-ghost-border);
+    color: var(--color-text-secondary, #475569);
+    border-color: var(--color-ghost-border, #cbd5e1);
     font-weight: var(--weight-medium, 500);
   }
 
   .btn--ghost:hover:not(:disabled):not(.btn--loading) {
-    border-color: var(--color-brand-500);
-    color: var(--color-text-primary);
-    background-color: var(--color-brand-dim);
+    border-color: var(--color-brand-500, #1b6ca8);
+    color: var(--color-text-primary, #0f172a);
+    background-color: var(
+      --color-brand-dim,
+      color-mix(in srgb, var(--color-brand-600, #0f4c81) 12%, transparent)
+    );
   }
 
   /* ─── 4. Danger: 刪除或破壞性按鈕 ─── */
   .btn--danger {
     background-color: var(--color-danger-solid, #dc2626);
-    color: #ffffff;
-    box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2);
+    color: var(--color-on-solid, #ffffff);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--color-danger-solid, #dc2626) 20%, transparent);
   }
 
   .btn--danger:hover:not(:disabled):not(.btn--loading) {
@@ -157,8 +160,8 @@ export const buttonStyles = css`
   /* ─── 5. Success: 成功、確認或完成操作 ─── */
   .btn--success {
     background-color: var(--color-success-solid, #047857);
-    color: #ffffff;
-    box-shadow: 0 1px 2px rgba(4, 120, 87, 0.2);
+    color: var(--color-on-solid, #ffffff);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--color-success-solid, #047857) 20%, transparent);
   }
 
   .btn--success:hover:not(:disabled):not(.btn--loading) {

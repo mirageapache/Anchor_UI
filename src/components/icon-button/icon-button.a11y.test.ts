@@ -1,4 +1,5 @@
 import { expect, fixture, html, oneEvent } from '@open-wc/testing';
+import { emulateMedia } from '@web/test-runner-commands';
 import { getAxNode } from '../../test-utils/ax.js';
 import './icon-button.js';
 import type { AuiIconButton } from './icon-button.js';
@@ -225,6 +226,38 @@ describe('AuiIconButton Accessibility (<aui-icon-button>)', () => {
           navigator.clipboard.writeText = originalWriteText;
         }
       }
+    });
+  });
+
+  describe('Reduced motion (WCAG 2.3.3)', () => {
+    afterEach(async () => {
+      await emulateMedia({ reducedMotion: 'no-preference' });
+    });
+
+    it('disables transitions and the success pulse when the user prefers reduced motion', async () => {
+      await emulateMedia({ reducedMotion: 'reduce' });
+      const el = await fixture<AuiIconButton>(
+        html`<aui-icon-button preset="copy" copy-value="x"></aui-icon-button>`,
+      );
+      const innerBtn = el.shadowRoot!.querySelector('button')!;
+      const layer = el.shadowRoot!.querySelector<HTMLElement>('.icon-layer')!;
+      expect(getComputedStyle(innerBtn).transitionDuration).to.match(/^0s(, 0s)*$/);
+      expect(getComputedStyle(layer).transitionDuration).to.match(/^0s(, 0s)*$/);
+
+      el.triggerFeedback('success');
+      await el.updateComplete;
+      expect(getComputedStyle(innerBtn).animationName).to.equal('none');
+    });
+
+    it('keeps the loading spinner moving (slower) so the busy state stays perceivable', async () => {
+      await emulateMedia({ reducedMotion: 'reduce' });
+      const el = await fixture<AuiIconButton>(
+        html`<aui-icon-button preset="copy" loading></aui-icon-button>`,
+      );
+      const spinner = el.shadowRoot!.querySelector('.spinner-svg')!;
+      const style = getComputedStyle(spinner);
+      expect(style.animationName).to.equal('spin');
+      expect(parseFloat(style.animationDuration)).to.be.at.least(1.5);
     });
   });
 });

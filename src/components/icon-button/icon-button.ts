@@ -282,7 +282,7 @@ export class AuiIconButton extends LitElement {
   loading = false;
 
   /**
-   * 是否處於啟動/成功高亮狀態（反映 is-active 琥珀金視覺）。
+   * 是否處於啟動/成功高亮狀態（反映 is-active 翠綠 Success 視覺）。
    * 僅為視覺高亮，不代表切換按鈕（toggle）的按下狀態，因此不輸出 aria-pressed。
    */
   @property({ type: Boolean, reflect: true })
@@ -320,16 +320,21 @@ export class AuiIconButton extends LitElement {
   }
 
   /**
-   * 計算目前生效之動作類別
+   * 計算目前生效之動作類別。
+   * 優先順序：明確的 action → preset（copy / download）→ 由 copy-value / download-url 推斷。
+   * preset 須優先於推斷，否則 preset 切到 download 時，仍綁定著的 copy-value 會讓點擊變成複製。
    */
   private computeEffectiveAction(): IconButtonAction {
     if (this.action && this.action !== 'none') {
       return this.action;
     }
-    if (this.copyValue || this.preset === 'copy') {
+    if (this.preset === 'copy' || this.preset === 'download') {
+      return this.preset;
+    }
+    if (this.copyValue) {
       return 'copy';
     }
-    if (this.downloadUrl || this.preset === 'download') {
+    if (this.downloadUrl) {
       return 'download';
     }
     return 'none';

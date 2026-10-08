@@ -150,7 +150,6 @@ export class AuiTooltip extends LitElement {
 
   override connectedCallback(): void {
     super.connectedCallback();
-    document.addEventListener('keydown', this.handleDocumentKeyDown);
 
     // 重新插入 DOM（框架重排節點、拖曳排序等）時，disconnectedCallback 已解除目標監聽，
     // 而 firstUpdated 只會執行一次，因此須在此重新綁定並還原開啟狀態
@@ -187,7 +186,10 @@ export class AuiTooltip extends LitElement {
       this.hide();
     }
 
-    if (changedProperties.has('for')) {
+    // trigger 於執行期變更時須重新綁定監聽（初次渲染已由 firstUpdated 綁定）
+    const triggerChanged =
+      changedProperties.has('trigger') && changedProperties.get('trigger') !== undefined;
+    if (changedProperties.has('for') || triggerChanged) {
       this.setupTarget();
     }
 
@@ -330,12 +332,16 @@ export class AuiTooltip extends LitElement {
     }
   };
 
+  /**
+   * WCAG 1.4.13 規範：按下 Escape 鍵時應能直接關閉由 hover / focus 觸發的氣泡。
+   * 此監聽只在氣泡開啟期間掛上；manual 模式由應用程式自行控制開關，不攔截 Escape；
+   * 已被其他元件處理（defaultPrevented）的 Escape 也不再重複處理。
+   */
   private handleDocumentKeyDown = (event: KeyboardEvent): void => {
-    // WCAG 1.4.13 規範：按下 Escape 鍵時應能直接關閉氣泡
-    if (event.key === 'Escape' && this.open) {
-      event.preventDefault();
-      this.hide();
-    }
+    if (event.key !== 'Escape' || event.defaultPrevented || !this.open) return;
+    if (this.hasTrigger('manual')) return;
+    event.preventDefault();
+    this.hide();
   };
 
   private hasTrigger(type: TooltipTrigger): boolean {
@@ -397,6 +403,7 @@ export class AuiTooltip extends LitElement {
 
     const transitionId = ++this.transitionId;
     this.isShowing = true;
+    document.addEventListener('keydown', this.handleDocumentKeyDown);
 
     // 支援原生 Popover API 進入 Top Layer
     if (typeof this.popupElement.showPopover === 'function') {
@@ -437,9 +444,10 @@ export class AuiTooltip extends LitElement {
     const transitionId = ++this.transitionId;
     this.isShowing = false;
     this.isVisible = false;
+    document.removeEventListener('keydown', this.handleDocumentKeyDown);
     this.removeAriaDescribedBy();
 
-    // 等待 150ms 進出場動畫結束後關閉 popover 並停止監聽
+    // 等待退場動畫結束後關閉 popover 並停止監聽（時長取自 CSS，避免與樣式隱性耦合）
     window.setTimeout(() => {
       // 期間若已重新開啟，不可關閉新的 popover
       if (transitionId === this.transitionId) {
@@ -453,7 +461,23 @@ export class AuiTooltip extends LitElement {
         this.stopAutoUpdate();
         this.dispatchEvent(new CustomEvent('aui-after-hide', { bubbles: true, composed: true }));
       }
-    }, 160);
+    }, this.getTransitionTimeMs());
+  }
+
+  /**
+   * 浮層 transition 的最長「時長 + 延遲」（毫秒）。
+   * 由 --transition-base token 或 prefers-reduced-motion 決定，取代寫死的動畫時間。
+   */
+  private getTransitionTimeMs(): number {
+    const style = getComputedStyle(this.popupElement);
+    const toMs = (value: string): number => {
+      const amount = parseFloat(value);
+      if (Number.isNaN(amount)) return 0;
+      return value.trim().endsWith('ms') ? amount : amount * 1000;
+    };
+    const durations = style.transitionDuration.split(',').map(toMs);
+    const delays = style.transitionDelay.split(',').map(toMs);
+    return Math.max(0, ...durations.map((duration, i) => duration + delays[i % delays.length]));
   }
 
   /**

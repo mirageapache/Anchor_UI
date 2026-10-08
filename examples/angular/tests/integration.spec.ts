@@ -1,10 +1,23 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { AppComponent } from '../src/app/app.component';
 
 // 匯入 Web Components 定義與型別
 import '@anchor-ui/core';
 import type { AuiButton, AuiTag, AuiTooltip, AuiIconButton } from '@anchor-ui/core';
+
+/**
+ * happy-dom 沒有真實剪貼簿：模擬 Secure Context 與 navigator.clipboard.writeText
+ */
+function mockClipboard() {
+  const writeText = vi.fn().mockResolvedValue(undefined);
+  vi.stubGlobal('isSecureContext', true);
+  Object.defineProperty(navigator, 'clipboard', {
+    value: { writeText },
+    configurable: true,
+  });
+  return writeText;
+}
 
 describe('Angular 19 + Anchor UI Integration Test Suite (TASK-108)', () => {
   let fixture: ComponentFixture<AppComponent>;
@@ -24,6 +37,7 @@ describe('Angular 19 + Anchor UI Integration Test Suite (TASK-108)', () => {
 
   afterEach(() => {
     document.documentElement.removeAttribute('data-theme');
+    vi.unstubAllGlobals();
   });
 
   describe('1. Custom Element recognition (CUSTOM_ELEMENTS_SCHEMA)', () => {
@@ -120,19 +134,14 @@ describe('Angular 19 + Anchor UI Integration Test Suite (TASK-108)', () => {
       expect(component.selectedTagName).toBe('typescript');
     });
 
-    it('handles custom event (aui-remove) and updates reactive tag list', () => {
+    it('handles custom event (aui-remove) and updates reactive tag list', async () => {
       const countTextBefore = compiled.querySelector<HTMLParagraphElement>('#tag-count-text');
       expect(countTextBefore?.textContent).toContain('5 個');
 
       const tag1 = compiled.querySelector<AuiTag>('aui-tag#tag-1')!;
-      // 觸發自訂事件 aui-remove
-      tag1.dispatchEvent(
-        new CustomEvent('aui-remove', {
-          bubbles: true,
-          composed: true,
-          detail: { tag: tag1 },
-        }),
-      );
+      await tag1.updateComplete;
+      // 點擊元件內部的移除鈕，由元件本身分派 aui-remove（而非測試手動分派）
+      tag1.shadowRoot!.querySelector<HTMLButtonElement>('.tag__remove')!.click();
       fixture.detectChanges();
 
       const countTextAfter = compiled.querySelector<HTMLParagraphElement>('#tag-count-text');
@@ -171,36 +180,37 @@ describe('Angular 19 + Anchor UI Integration Test Suite (TASK-108)', () => {
       expect(iconBtn.preset).toBe('download');
     });
 
-    it('handles (aui-copy) custom event and updates reactive feedback text', () => {
-      const iconBtn = compiled.querySelector<AuiIconButton>('aui-icon-button#target-icon-btn')!;
-      iconBtn.dispatchEvent(
-        new CustomEvent('aui-copy', {
-          bubbles: true,
-          composed: true,
-          detail: { value: 'npm test snippet' },
-        }),
-      );
+    it('copies the bound [copyValue] on click and handles the emitted (aui-copy)', async () => {
+      const writeText = mockClipboard();
+      component.copySnippet = 'npm test snippet';
       fixture.detectChanges();
 
+      const iconBtn = compiled.querySelector<AuiIconButton>('aui-icon-button#target-icon-btn')!;
+      iconBtn.click();
+
+      await vi.waitFor(() => {
+        expect(component.copyFeedbackText).toBe('已成功複製：npm test snippet');
+      });
+      fixture.detectChanges();
       const feedback = compiled.querySelector<HTMLParagraphElement>('#icon-feedback-text');
       expect(feedback?.textContent).toContain('已成功複製：npm test snippet');
-      expect(component.copyFeedbackText).toBe('已成功複製：npm test snippet');
+      expect(writeText).toHaveBeenCalledWith('npm test snippet');
     });
 
-    it('handles (aui-download) custom event', () => {
-      const iconBtn = compiled.querySelector<AuiIconButton>('aui-icon-button#target-icon-btn')!;
-      iconBtn.dispatchEvent(
-        new CustomEvent('aui-download', {
-          bubbles: true,
-          composed: true,
-          detail: { filename: 'report.pdf' },
-        }),
-      );
+    it('handles the (aui-download) emitted by the component in download mode', async () => {
+      component.iconPreset = 'download';
       fixture.detectChanges();
 
+      const iconBtn = compiled.querySelector<AuiIconButton>('aui-icon-button#target-icon-btn')!;
+      iconBtn.click();
+
+      await vi.waitFor(() => {
+        // detail.filename 來自模板上的 download-filename 屬性
+        expect(component.copyFeedbackText).toBe('下載事件觸發：anchor-ui.json');
+      });
+      fixture.detectChanges();
       const feedback = compiled.querySelector<HTMLParagraphElement>('#icon-feedback-text');
-      expect(feedback?.textContent).toContain('下載事件觸發：report.pdf');
-      expect(component.copyFeedbackText).toBe('下載事件觸發：report.pdf');
+      expect(feedback?.textContent).toContain('下載事件觸發：anchor-ui.json');
     });
   });
 

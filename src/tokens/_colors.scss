@@ -30,6 +30,10 @@
   --color-text-secondary: #475569; // 卡片描述、輔助說明 (Slate-600)
   --color-text-muted: #64748b; // Placeholder、中繼標籤 (Slate-500)
 
+  /* On-color (實心底上的文字／圖示色，兩種主題相同，暗色模式不另覆寫) */
+  --color-on-solid: #ffffff; // Brand / Danger / Success 實心底上的白字
+  --color-on-accent: #0f172a; // Accent 琥珀實心底上的深色字 (Slate-900)
+
   /* Tooltip (反白浮層：淺色底上的冷黑氣泡) */
   --color-tooltip-bg: #0f172a; // Slate-900
   --color-tooltip-text: #f8fafc; // Slate-50 (WCAG AAA)

@@ -214,6 +214,51 @@ describe('AuiIconButton (<aui-icon-button>)', () => {
     }
   });
 
+  describe('click action resolution', () => {
+    it('follows the explicit preset over a leftover copy-value', async () => {
+      // 例如由選單把 preset 從 copy 切到 download，copy-value 仍綁定著
+      const el = await fixture<AuiIconButton>(html`
+        <aui-icon-button
+          preset="download"
+          copy-value="npm install @anchor-ui/core"
+          download-filename="anchor-ui.json"
+        ></aui-icon-button>
+      `);
+      let copied = false;
+      el.addEventListener('aui-copy', () => {
+        copied = true;
+      });
+
+      setTimeout(() => el.click());
+      const ev = (await oneEvent(el, 'aui-download')) as CustomEvent<DownloadDetail>;
+      expect(ev.detail.filename).to.equal('anchor-ui.json');
+      expect(copied).to.be.false;
+    });
+
+    it('lets an explicit action override the preset', async () => {
+      const el = await fixture<AuiIconButton>(html`
+        <aui-icon-button preset="download" action="copy" copy-value="x"></aui-icon-button>
+      `);
+      const originalWriteText = navigator.clipboard.writeText;
+      navigator.clipboard.writeText = async () => {};
+      try {
+        setTimeout(() => el.click());
+        await oneEvent(el, 'aui-copy');
+      } finally {
+        navigator.clipboard.writeText = originalWriteText;
+      }
+    });
+
+    it('still infers the action from copy-value / download-url without a preset', async () => {
+      const el = await fixture<AuiIconButton>(html`
+        <aui-icon-button label="Get file" download-url="/files/a.txt"></aui-icon-button>
+      `);
+      el.addEventListener('aui-download', (event) => event.preventDefault());
+      setTimeout(() => el.click());
+      await oneEvent(el, 'aui-download');
+    });
+  });
+
   describe('honest feedback (no fake success)', () => {
     it('reports an error instead of success when there is nothing to copy', async () => {
       const el = await fixture<AuiIconButton>(html`

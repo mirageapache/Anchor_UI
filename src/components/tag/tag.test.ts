@@ -1,6 +1,7 @@
 import { expect, fixture, html, oneEvent } from '@open-wc/testing';
+import { resetMouse, sendMouse } from '@web/test-runner-commands';
 import './index.js';
-import type { AuiTag } from './tag.js';
+import { AuiTag } from './tag.js';
 
 describe('AuiTag (<aui-tag>)', () => {
   it('renders with default attributes and base structure', async () => {
@@ -109,5 +110,40 @@ describe('AuiTag (<aui-tag>)', () => {
     const removeBtn = el.shadowRoot?.querySelector<HTMLButtonElement>('.tag__remove');
     expect(removeBtn?.getAttribute('aria-label')).to.equal('Delete item');
     expect(removeBtn?.getAttribute('title')).to.equal('Delete item');
+  });
+
+  describe('interactive hover feedback', () => {
+    it('does not rely on :host-context() (unsupported in Firefox / Safari)', () => {
+      const cssText = [AuiTag.styles]
+        .flat()
+        .map((style) => String(style))
+        .join(' ')
+        .replace(/\/\*[\s\S]*?\*\//g, ''); // 忽略註解中的說明文字
+      expect(cssText.includes(':host-context'), 'styles use :host-context()').to.be.false;
+    });
+
+    for (const theme of ['light', 'dark'] as const) {
+      it(`tints the tag toward its text color on hover (${theme})`, async () => {
+        if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
+        try {
+          const el = await fixture<AuiTag>(html`<aui-tag interactive>filter</aui-tag>`);
+          const base = el.shadowRoot!.querySelector<HTMLElement>('.tag')!;
+          expect(getComputedStyle(base).backgroundImage).to.equal('none');
+
+          const rect = base.getBoundingClientRect();
+          await sendMouse({
+            type: 'move',
+            position: [Math.round(rect.x + rect.width / 2), Math.round(rect.y + rect.height / 2)],
+          });
+          const hover = getComputedStyle(base);
+          // 以文字色（currentColor）疊色：淺色主題變深、深色主題變亮，不需要依主題切換的 filter
+          expect(hover.backgroundImage).to.contain('linear-gradient');
+          expect(hover.filter).to.equal('none');
+        } finally {
+          await resetMouse();
+          document.documentElement.removeAttribute('data-theme');
+        }
+      });
+    }
   });
 });

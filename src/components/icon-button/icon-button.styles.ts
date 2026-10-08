@@ -222,7 +222,7 @@ export const iconButtonStyles = css`
       --aui-icon-btn-hover-color,
       var(--aui-icon-btn-color-text, var(--color-brand-text, #0f4c81))
     );
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgb(0 0 0 / 8%));
   }
 
   /* 3. Outline (清晰線框與微白底) */
@@ -248,20 +248,20 @@ export const iconButtonStyles = css`
       --aui-icon-btn-hover-color,
       var(--aui-icon-btn-color-text, var(--color-brand-text, #0f4c81))
     );
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    box-shadow: var(--shadow-sm, 0 1px 3px rgb(0 0 0 / 8%));
   }
 
   /* 4. Primary (海軍藍實心底、懸停加亮與發光) */
   .icon-btn--primary {
     background: var(--color-brand-600, #0f4c81);
-    color: #ffffff;
-    box-shadow: 0 1px 2px rgba(15, 76, 129, 0.2);
+    color: var(--color-on-solid, #ffffff);
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--color-brand-600, #0f4c81) 20%, transparent);
   }
 
   .icon-btn--primary:hover:not(:disabled):not(.is-disabled):not(.is-active) {
     background: var(--color-brand-700, #0a3356);
     filter: brightness(1.1);
-    box-shadow: 0 2px 6px rgba(15, 76, 129, 0.35);
+    box-shadow: 0 2px 6px color-mix(in srgb, var(--color-brand-600, #0f4c81) 35%, transparent);
   }
 
   /* 5. Danger (破壞性操作) */
@@ -464,7 +464,7 @@ export const iconButtonStyles = css`
     width: 100%;
     height: 100%;
     aspect-ratio: 1 / 1;
-    transition: opacity 180ms ease;
+    transition: opacity var(--transition-base, 150ms ease);
   }
 
   /* 靜態閒置圖示 (Idle) */
@@ -535,5 +535,23 @@ export const iconButtonStyles = css`
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
+  }
+
+  /* ─── 無障礙動態降級：減少動畫 ─── */
+  @media (prefers-reduced-motion: reduce) {
+    .icon-btn,
+    .icon-layer {
+      transition: none !important;
+    }
+
+    .icon-btn.is-active,
+    .icon-btn.is-success {
+      animation: none !important;
+    }
+
+    /* 載入中 Spinner 保留但放慢，讓忙碌狀態仍可被感知（與 Button 一致） */
+    .spinner-svg {
+      animation-duration: 2s;
+    }
   }
 `;

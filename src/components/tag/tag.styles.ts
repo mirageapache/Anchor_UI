@@ -136,13 +136,16 @@ export const tagStyles = css`
     cursor: pointer;
   }
 
+  /*
+   * 懸停時以文字色（currentColor）在底色上疊一層淡色：
+   * 淺色主題文字深 → 變深、深色主題文字亮 → 變亮，不需 :host-context()（Firefox / Safari 不支援）
+   */
   .tag--interactive:hover {
-    filter: brightness(0.95);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  }
-
-  :host-context([data-theme='dark']) .tag--interactive:hover {
-    filter: brightness(1.15);
+    background-image: linear-gradient(
+      color-mix(in srgb, currentColor 8%, transparent),
+      color-mix(in srgb, currentColor 8%, transparent)
+    );
+    box-shadow: var(--shadow-sm, 0 1px 3px rgb(0 0 0 / 8%));
   }
 
   .tag--interactive:active {

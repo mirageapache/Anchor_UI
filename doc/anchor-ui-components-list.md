@@ -1,8 +1,9 @@
 # Anchor UI — 共用元件清單與規格說明 (Components Catalog)
 
 > **文件定位**：本文件依據 [`design-system.md`] 的樣式規範與 [`anchor-ui-planning.md`] 的架構規劃，整理出 Anchor UI 共用元件庫所有預計實作之元件項目、分類、功能與狀態能力說明。
-> 
+>
 > 📌 **相關文件**：
+>
 > - 實際開發排程與 Phase 階段劃分，請參閱：[`anchor-ui-development-schedule.md`]
 > - 樣式規範與 Design Tokens 字典，請參閱：[`design-system.md`]
 
@@ -13,7 +14,9 @@
 共計盤點出 **20 項** 可共用之 UI 元件與系統模組，依據原子設計理念（Atomic Design）與功能角色劃分如下：
 
 ### 1. 基礎設施 (Foundation)
-*非獨立 UI 元件，但為所有元件實作之外觀基礎與依賴單一事實來源。*
+
+_非獨立 UI 元件，但為所有元件實作之外觀基礎與依賴單一事實來源。_
+
 - **Design Tokens & Base System**：
   - **說明**：包含 CSS Custom Properties 變數字典（色彩、字級、間距、圓角、動態過渡）。
   - **核心規範**：Minimal Reset、無障礙雙層焦點環（Focus Ring：`:focus-visible`）、輔助 Utilities（`.sr-only`、`.section-label`、`.container`）與執行期深淺雙主題（`data-theme="dark"`）切換。
@@ -25,12 +28,12 @@
 1. **Button（通用按鈕）**
    - **自訂標籤**：`<aui-button>`
    - **說明**：系統中最核心的互動元件，支援 4 種語意層級：Primary（品牌主色）、Accent（琥珀金強調）、Ghost（次要邊框）、Danger（破壞性危險操作）。
-   - **狀態與能力**：支援 Hover、Active（縮放反饋）、Disabled、鍵盤 Focus 高亮，符合 40px 最低觸控規範。
+   - **狀態與能力**：支援 Hover、Active（縮放反饋）、Disabled、鍵盤 Focus 高亮；預設 `md` 尺寸符合 40px 最低觸控規範，`sm`（32px）供高密度介面使用（仍高於 WCAG 2.5.8 AA 的 24px 目標尺寸下限）。
 
 2. **Icon Button（圖示操作按鈕）**
    - **自訂標籤**：`<aui-icon-button>`
    - **說明**：專為複製（Copy）、下載（Download）、關閉等動作設計的 32×32px 方形微型操作鈕。
-   - **狀態與能力**：具備 Active 成功回饋狀態（背景與圖示變換為 Accent 琥珀色），內建無障礙 aria-label 提示。
+   - **狀態與能力**：具備 Active 成功回饋狀態（背景與圖示變換為 Success 翠綠色），內建無障礙 aria-label 提示。
 
 3. **Tag / Badge（標籤與徽章）**
    - **自訂標籤**：`<aui-tag>`
@@ -138,27 +141,26 @@
 
 ## 二、元件清單總覽對照表 (Component Inventory)
 
-| 序號 | 元件名稱 | 建議自訂標籤 | 分類 (Category) | 核心職責與特性簡述 |
-|:---:|---|---|:---:|---|
-| - | **Design Tokens & Base** | *(CSS / SCSS)* | Foundation | 樣式系統基石，包含色彩、字型、間距、Reset 與雙主題切換。 |
-| 1 | **Button** | `<aui-button>` | Atom | 4 種語意層級按鈕，支援 Hover/Active/Disabled/Loading 狀態。 |
-| 2 | **Icon Button** | `<aui-icon-button>` | Atom | 32×32px 微型圖示操作鈕，複製/下載狀態微動態回饋。 |
-| 3 | **Tag / Badge** | `<aui-tag>` | Atom | JetBrains Mono 等寬標籤，7 種語意色彩多態變體。 |
-| 4 | **Segmented Control** | `<aui-segmented>` | Atom | 膠囊軌道單選切換器，具備平滑選中過渡與鍵盤無障礙。 |
-| 5 | **Kbd** | `<aui-kbd>` | Atom | 鍵盤按鍵鍵帽微元件，等寬字體微立體邊框風格。 |
-| 6 | **Input & Form Field** | `<aui-input>`, `<aui-field>` | Atom | 單行/多行等寬輸入框，整合標籤與右側快捷操作鈕。 |
-| 7 | **Output Row** | `<aui-output-row>` | Atom | 結果輸出展示框，4px 左側語意指示條與安全換行防禦。 |
-| 8 | **Tooltip** | `<aui-tooltip>` | Overlay | Shadcn 風格冷黑浮層氣泡，微縮放動態與全域定位。 |
-| 9 | **Toast Notification** | `<aui-toast>`, `ToastService` | Overlay | 右下角堆疊全域通知，5 種語意狀態與 TS 單例調用 API。 |
-| 10 | **Modal** | `<aui-modal>` | Overlay | 通用彈窗外框容器（大/中/小尺寸），具備 Header/Body/Footer 插槽供自訂業務功能，似 Bootstrap Modal。 |
-| 11 | **Alert** | `<aui-alert>`, `AlertService` | Overlay | 提示與確認彈窗（SweetAlert2 風格），專注於語意圖示、標題、訊息與確認/取消。 |
-| 12 | **Card** | `<aui-card>` | Molecule | 卡片，自適應 Grid、Hover 微浮凸與 HOT 邊框。 |
-| 13 | **Accordion** | `<aui-accordion>` | Molecule | 基於 `<details>` 封裝的收折說明與 FAQ 區塊。 |
-| 14 | **FileUpload Dropzone** | `<aui-dropzone>` | Molecule | 虛線框拖放上傳區，Dragover 琥珀金背景與邊框染色提示。 |
-| 15 | **Favorite Toggle** | `<aui-favorite-btn>` | Molecule | 星號收藏按鈕，微縮放彈跳動態與實心琥珀金高亮。 |
-| 16 | **Code View** | `<aui-code-view>` | Molecule | IDE 風格代碼檢視區，Sticky 黏性行號列與程式碼摺疊。 |
-| 17 | **Header** | `<aui-header>` | Molecule | 整合標籤、HOT 徽標、H1 標題、收藏鈕與簡述的頁首展示容器。 |
-| 18 | **Drawer** | `<aui-drawer>` | Navigation | 可收合抽屜側邊欄，支援側滑展開/收合、遮罩與背景捲動鎖定。 |
-| 19 | **Navbar** | `<aui-navbar>` | Navigation | 64px 獨立頂部導覽列，整合 Logo、搜尋按鈕、導覽選單與主題切換。 |
-| 20 | **Footer** | `<aui-footer>` | Navigation | 獨立通用頁尾，整合版權宣告、版本資訊、外部連結與次要選單。 |
-
+| 序號 | 元件名稱                 | 建議自訂標籤                  | 分類 (Category) | 核心職責與特性簡述                                                                                 |
+| :--: | ------------------------ | ----------------------------- | :-------------: | -------------------------------------------------------------------------------------------------- |
+|  -   | **Design Tokens & Base** | _(CSS / SCSS)_                |   Foundation    | 樣式系統基石，包含色彩、字型、間距、Reset 與雙主題切換。                                           |
+|  1   | **Button**               | `<aui-button>`                |      Atom       | 4 種語意層級按鈕，支援 Hover/Active/Disabled/Loading 狀態。                                        |
+|  2   | **Icon Button**          | `<aui-icon-button>`           |      Atom       | 32×32px 微型圖示操作鈕，複製/下載狀態微動態回饋。                                                  |
+|  3   | **Tag / Badge**          | `<aui-tag>`                   |      Atom       | JetBrains Mono 等寬標籤，7 種語意色彩多態變體。                                                    |
+|  4   | **Segmented Control**    | `<aui-segmented>`             |      Atom       | 膠囊軌道單選切換器，具備平滑選中過渡與鍵盤無障礙。                                                 |
+|  5   | **Kbd**                  | `<aui-kbd>`                   |      Atom       | 鍵盤按鍵鍵帽微元件，等寬字體微立體邊框風格。                                                       |
+|  6   | **Input & Form Field**   | `<aui-input>`, `<aui-field>`  |      Atom       | 單行/多行等寬輸入框，整合標籤與右側快捷操作鈕。                                                    |
+|  7   | **Output Row**           | `<aui-output-row>`            |      Atom       | 結果輸出展示框，4px 左側語意指示條與安全換行防禦。                                                 |
+|  8   | **Tooltip**              | `<aui-tooltip>`               |     Overlay     | Shadcn 風格冷黑浮層氣泡，微縮放動態與全域定位。                                                    |
+|  9   | **Toast Notification**   | `<aui-toast>`, `ToastService` |     Overlay     | 右下角堆疊全域通知，5 種語意狀態與 TS 單例調用 API。                                               |
+|  10  | **Modal**                | `<aui-modal>`                 |     Overlay     | 通用彈窗外框容器（大/中/小尺寸），具備 Header/Body/Footer 插槽供自訂業務功能，似 Bootstrap Modal。 |
+|  11  | **Alert**                | `<aui-alert>`, `AlertService` |     Overlay     | 提示與確認彈窗（SweetAlert2 風格），專注於語意圖示、標題、訊息與確認/取消。                        |
+|  12  | **Card**                 | `<aui-card>`                  |    Molecule     | 卡片，自適應 Grid、Hover 微浮凸與 HOT 邊框。                                                       |
+|  13  | **Accordion**            | `<aui-accordion>`             |    Molecule     | 基於 `<details>` 封裝的收折說明與 FAQ 區塊。                                                       |
+|  14  | **FileUpload Dropzone**  | `<aui-dropzone>`              |    Molecule     | 虛線框拖放上傳區，Dragover 琥珀金背景與邊框染色提示。                                              |
+|  15  | **Favorite Toggle**      | `<aui-favorite-btn>`          |    Molecule     | 星號收藏按鈕，微縮放彈跳動態與實心琥珀金高亮。                                                     |
+|  16  | **Code View**            | `<aui-code-view>`             |    Molecule     | IDE 風格代碼檢視區，Sticky 黏性行號列與程式碼摺疊。                                                |
+|  17  | **Header**               | `<aui-header>`                |    Molecule     | 整合標籤、HOT 徽標、H1 標題、收藏鈕與簡述的頁首展示容器。                                          |
+|  18  | **Drawer**               | `<aui-drawer>`                |   Navigation    | 可收合抽屜側邊欄，支援側滑展開/收合、遮罩與背景捲動鎖定。                                          |
+|  19  | **Navbar**               | `<aui-navbar>`                |   Navigation    | 64px 獨立頂部導覽列，整合 Logo、搜尋按鈕、導覽選單與主題切換。                                     |
+|  20  | **Footer**               | `<aui-footer>`                |   Navigation    | 獨立通用頁尾，整合版權宣告、版本資訊、外部連結與次要選單。                                         |

@@ -227,6 +227,127 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
     expect(style.borderTopColor).to.equal('rgb(7, 8, 9)');
   });
 
+  it('reads its elevation from the --shadow-popover token', async () => {
+    const wrapper = await fixture<HTMLDivElement>(html`
+      <div style="--shadow-popover: 0 0 0 3px rgb(1, 2, 3);">
+        <aui-tooltip content="Elevated tooltip" open><button>Target</button></aui-tooltip>
+      </div>
+    `);
+    const el = wrapper.querySelector<AuiTooltip>('aui-tooltip')!;
+    const popup = el.shadowRoot!.querySelector<HTMLElement>('.tooltip__popup')!;
+    expect(getComputedStyle(popup).boxShadow).to.equal('rgb(1, 2, 3) 0px 0px 0px 3px');
+  });
+
+  describe('runtime trigger changes', () => {
+    it('re-binds listeners when trigger changes at runtime', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Tip" .delay=${0} .hideDelay=${0}>
+          <button>Target</button>
+        </aui-tooltip>
+      `);
+      const btn = el.querySelector('button') as HTMLButtonElement;
+
+      el.trigger = 'click';
+      await el.updateComplete;
+
+      // hover 已不在觸發方式中
+      btn.dispatchEvent(new MouseEvent('mouseenter'));
+      await new Promise((resolve) => setTimeout(resolve, 30));
+      expect(el.open).to.be.false;
+
+      // 新增的 click 觸發必須生效
+      setTimeout(() => btn.click());
+      await oneEvent(el, 'aui-after-show');
+      expect(el.open).to.be.true;
+    });
+  });
+
+  describe('Escape key handling', () => {
+    const pressEscape = () => {
+      const event = new KeyboardEvent('keydown', {
+        key: 'Escape',
+        bubbles: true,
+        cancelable: true,
+      });
+      document.dispatchEvent(event);
+      return event;
+    };
+
+    it('does not intercept Escape while closed', async () => {
+      await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Tip"><button>Target</button></aui-tooltip>
+      `);
+      expect(pressEscape().defaultPrevented).to.be.false;
+    });
+
+    it('ignores Escape already handled by another component', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Tip"><button>Target</button></aui-tooltip>
+      `);
+      setTimeout(() => el.show());
+      await oneEvent(el, 'aui-after-show');
+
+      const handledElsewhere = (event: KeyboardEvent) => event.preventDefault();
+      document.addEventListener('keydown', handledElsewhere, { capture: true });
+      try {
+        pressEscape();
+        await el.updateComplete;
+        expect(el.open).to.be.true;
+      } finally {
+        document.removeEventListener('keydown', handledElsewhere, { capture: true });
+      }
+    });
+
+    it('leaves manual-trigger tooltips under application control', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Tip" trigger="manual"><button>Target</button></aui-tooltip>
+      `);
+      setTimeout(() => el.show());
+      await oneEvent(el, 'aui-after-show');
+
+      expect(pressEscape().defaultPrevented).to.be.false;
+      await el.updateComplete;
+      expect(el.open).to.be.true;
+    });
+  });
+
+  describe('exit animation timing follows the CSS transition', () => {
+    it('finishes hiding immediately when the transition duration is 0', async () => {
+      const wrapper = await fixture<HTMLDivElement>(html`
+        <div style="--transition-base: 0s linear;">
+          <aui-tooltip content="Tip"><button>Target</button></aui-tooltip>
+        </div>
+      `);
+      const el = wrapper.querySelector('aui-tooltip') as AuiTooltip;
+      setTimeout(() => el.show());
+      await oneEvent(el, 'aui-after-show');
+
+      const start = performance.now();
+      setTimeout(() => el.hide());
+      await oneEvent(el, 'aui-after-hide');
+      expect(performance.now() - start).to.be.below(100);
+    });
+
+    it('waits for a longer transition before closing the popover', async () => {
+      const wrapper = await fixture<HTMLDivElement>(html`
+        <div style="--transition-base: 400ms linear;">
+          <aui-tooltip content="Tip"><button>Target</button></aui-tooltip>
+        </div>
+      `);
+      const el = wrapper.querySelector('aui-tooltip') as AuiTooltip;
+      const popup = el.shadowRoot!.querySelector<HTMLElement>('.tooltip__popup')!;
+      setTimeout(() => el.show());
+      await oneEvent(el, 'aui-after-show');
+
+      el.hide();
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      // 以前固定 160ms 就關閉 popover，會把 400ms 的退場動畫截斷
+      expect(popup.matches(':popover-open')).to.be.true;
+      await oneEvent(el, 'aui-after-hide');
+      expect(popup.matches(':popover-open')).to.be.false;
+    });
+  });
+
   describe('rapid open/close before the enter animation frame', () => {
     const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
     const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));

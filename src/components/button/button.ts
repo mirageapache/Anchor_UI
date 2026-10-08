@@ -31,6 +31,15 @@ export class AuiButton extends LitElement {
   };
 
   /**
+   * 宣告為 form-associated custom element：透過 ElementInternals 取得表單擁有者，
+   * 支援 `form="id"` 屬性指向外部表單（closest('form') 無法做到）
+   */
+  static formAssociated = true;
+
+  /** 不支援 ElementInternals 的環境（happy-dom、舊版瀏覽器）為 null，改以 DOM 查找表單 */
+  private readonly internals: ElementInternals | null;
+
+  /**
    * 語意層級變體
    */
   @property({ type: String, reflect: true })
@@ -68,8 +77,24 @@ export class AuiButton extends LitElement {
 
   constructor() {
     super();
+    this.internals = typeof this.attachInternals === 'function' ? this.attachInternals() : null;
     // 捕獲階段攔截點擊：當處於 disabled 或 loading 時徹底中斷冒泡與監聽
     this.addEventListener('click', this.handleHostClick, { capture: true });
+  }
+
+  /**
+   * 所屬的表單（包含以 `form` 屬性指定的外部表單）
+   */
+  get form(): HTMLFormElement | null {
+    if (this.internals) return this.internals.form;
+
+    const formId = this.getAttribute('form');
+    if (formId) {
+      const root = this.getRootNode() as Document | ShadowRoot;
+      const referenced = root.getElementById?.(formId);
+      return referenced instanceof HTMLFormElement ? referenced : null;
+    }
+    return this.closest('form');
   }
 
   private handleHostClick = (event: MouseEvent) => {
@@ -79,19 +104,15 @@ export class AuiButton extends LitElement {
       return;
     }
 
-    // 與周圍 Form 表單原生連動
+    // 與所屬 Form 表單原生連動
+    const form = this.form;
+    if (!form) return;
     if (this.type === 'submit') {
-      const form = this.closest('form');
-      if (form) {
-        event.preventDefault();
-        form.requestSubmit();
-      }
+      event.preventDefault();
+      form.requestSubmit();
     } else if (this.type === 'reset') {
-      const form = this.closest('form');
-      if (form) {
-        event.preventDefault();
-        form.reset();
-      }
+      event.preventDefault();
+      form.reset();
     }
   };
 
@@ -110,6 +131,8 @@ export class AuiButton extends LitElement {
   }
 
   override render() {
+    // loading 只以 aria-disabled 標示並由 handleHostClick 攔截點擊，不設原生 disabled：
+    // 否則聚焦中的按鈕進入 loading 時會失去焦點（焦點掉回 body）
     const isInactive = this.disabled || this.loading;
 
     return html`
@@ -123,7 +146,7 @@ export class AuiButton extends LitElement {
           'btn--loading': this.loading,
         })}
         type=${this.type}
-        ?disabled=${isInactive}
+        ?disabled=${this.disabled}
         aria-busy=${this.loading ? 'true' : 'false'}
         aria-disabled=${isInactive ? 'true' : 'false'}
       >
