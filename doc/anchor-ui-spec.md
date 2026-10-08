@@ -15,15 +15,16 @@
 
 ## 二、技術選型
 
-| 層級 | 技術 | 說明 |
-|---|---|---|
-| Design Tokens | 純 CSS Custom Properties | 完全框架無關，直接沿用 design-system.md 變數系統，任何專案都能單獨引用 |
-| 互動元件 | Web Component (以 **Lit** 實作) | 一份程式碼可在 Vue 3、Angular 與 React 等前端框架中共用 |
-| 打包工具 | Vite (library mode) | 產出符合 Web Component 的 ES Module + CSS，支援 tree-shaking |
-| 型別 | TypeScript | 元件 props/events 型別定義，跨框架使用時也有型別提示 |
-| 元件展示 | Storybook | 元件展示、文檔化與視覺回歸測試 |
+| 層級          | 技術                            | 說明                                                                   |
+| ------------- | ------------------------------- | ---------------------------------------------------------------------- |
+| Design Tokens | 純 CSS Custom Properties        | 完全框架無關，直接沿用 design-system.md 變數系統，任何專案都能單獨引用 |
+| 互動元件      | Web Component (以 **Lit** 實作) | 一份程式碼可在 Vue 3、Angular 與 React 等前端框架中共用                |
+| 打包工具      | Vite (library mode)             | 產出符合 Web Component 的 ES Module + CSS，支援 tree-shaking           |
+| 型別          | TypeScript                      | 元件 props/events 型別定義，跨框架使用時也有型別提示                   |
+| 元件展示      | Storybook                       | 元件展示、文檔化與視覺回歸測試                                         |
 
 **跨框架整合注意事項**
+
 - Vue 3：需在 `vite.config` 設定 `compilerOptions.isCustomElement` 排除自訂元素的編譯檢查。
 - Angular：需在對應 Module 加入 `CUSTOM_ELEMENTS_SCHEMA`，並留意 property vs attribute 綁定差異。
 
@@ -97,10 +98,10 @@ anchor-ui/
   - 透過 `yalc` 接入實際 Vue 3 / Angular 專案驗證屬性、事件與主題響應。
 
 - **Phase 2 — 高頻互動控制項、核心回饋與視覺回歸 (6 款元件)**
-  - 實作 Input & Field、Output Row、Segmented Control。
-  - 實作全域 Toast 通知服務（`ToastService`）。
-  - **實作獨立的 Modal（通用彈窗外框容器）與 Alert（提示與確認對話框服務）**。
-  - 導入視覺回歸測試（Visual Regression）與 Bundle 體積門禁。
+  - 工程防線先行：調整建置架構使 Tree-shaking 生效（個別元件入口），導入 Bundle 體積門禁與視覺回歸測試（Visual Regression），並建立共用浮層基礎模組。
+  - 實作 Input & Field、Output Row、Segmented Control，可參與原生表單並與 Vue 3 / Angular 表單機制雙向綁定。
+  - **實作獨立的 Modal（通用彈窗外框容器）與以 Modal 為基礎的 Alert（提示與確認對話框服務）**。
+  - 實作全域 Toast 通知服務（`ToastService`），於 Top Layer 顯示以確保 Modal 開啟時仍可見。
 
 - **Phase 3 — 業務複合型元件與自動化預覽 (6 款元件)**
   - 實作 Card、Accordion、FileUpload Dropzone、Favorite Toggle、Header、Kbd。
@@ -121,4 +122,3 @@ anchor-ui/
 - **公開發布/開源**：初期以組織內部私有套件形式維護，不對外公開發布。
 
 ---
-
