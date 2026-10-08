@@ -10,11 +10,39 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./button": {
+      "types": "./dist/components/button/index.d.ts",
+      "import": "./dist/components/button/index.js"
+    },
+    "./icon-button": {
+      "types": "./dist/components/icon-button/index.d.ts",
+      "import": "./dist/components/icon-button/index.js"
+    },
+    "./tag": {
+      "types": "./dist/components/tag/index.d.ts",
+      "import": "./dist/components/tag/index.js"
+    },
+    "./tooltip": {
+      "types": "./dist/components/tooltip/index.d.ts",
+      "import": "./dist/components/tooltip/index.js"
+    },
     "./styles.css": "./dist/styles.css",
     "./tokens.css": "./dist/tokens.css",
     "./tokens": "./src/tokens/index.scss",
     "./reset": "./src/base/_reset.scss"
   },
+  "sideEffects": [
+    "**/*.css",
+    "./dist/index.js",
+    "./dist/components/button/index.js",
+    "./dist/components/button/button.js",
+    "./dist/components/icon-button/index.js",
+    "./dist/components/icon-button/icon-button.js",
+    "./dist/components/tag/index.js",
+    "./dist/components/tag/tag.js",
+    "./dist/components/tooltip/index.js",
+    "./dist/components/tooltip/tooltip.js"
+  ],
   "files": [
     "dist",
     "src/tokens",
@@ -24,6 +52,7 @@
     "dev": "vite",
     "build": "tsc && vite build && pnpm build:tokens",
     "build:tokens": "sass src/tokens/index.scss dist/tokens.css --style=compressed --no-source-map",
+    "verify:package": "node scripts/verify-package.mjs",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "wtr",
@@ -72,6 +101,7 @@
     "@web/test-runner": "^1.0.0",
     "@web/test-runner-commands": "^1.0.1",
     "@web/test-runner-playwright": "^1.0.0",
+    "esbuild": "^0.25.12",
     "eslint": "^10.11.0",
     "eslint-plugin-lit": "^2.3.1",
     "husky": "^9.1.7",

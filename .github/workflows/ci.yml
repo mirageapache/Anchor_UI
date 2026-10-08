@@ -66,6 +66,10 @@ jobs:
       - name: Build Anchor UI library (JS + Tokens CSS)
         run: pnpm build
 
+      # TASK-201: 驗證 Tree-shaking（esbuild / Vite 消費端只引用單一元件）、exports / sideEffects 與發布內容
+      - name: Verify package (tree-shaking, exports, sideEffects)
+        run: pnpm verify:package
+
       - name: Build Storybook documentation
         run: pnpm build-storybook
 

@@ -23,13 +23,13 @@ Commits are enforced by commitlint (Conventional Commits; types: feat, fix, docs
 
 ## Architecture
 
-**Component layout** — each component is a folder `src/components/<name>/` with `<name>.ts` (LitElement class), `<name>.styles.ts` (`css` tagged template), `<name>.types.ts`, `index.ts` (re-exports class + types), `<name>.test.ts`, `<name>.a11y.test.ts`. A new component must also be exported from `src/components/index.ts` (which `src/index.ts` re-exports), and gets a story in `src/stories/`.
+**Component layout** — each component is a folder `src/components/<name>/` with `<name>.ts` (LitElement class), `<name>.styles.ts` (`css` tagged template), `<name>.types.ts`, `index.ts` (re-exports class + types), `<name>.test.ts`, `<name>.a11y.test.ts`. A new component must also be exported from `src/components/index.ts` (which `src/index.ts` re-exports), get its own `./<name>` entry in `package.json` `exports` plus its `index.js` and `<name>.js` (the module calling `customElements.define`) in `sideEffects`, and gets a story in `src/stories/`. `pnpm verify:package` (run in CI after build) fails if any of these are missing. Vite picks up the build entry automatically.
 
 **Tokens** — `src/tokens/*.scss` is the single source of truth (colors, typography, spacing, radius, motion). It is compiled two ways: into `dist/tokens.css` via `build:tokens` (sass), and also exposed as source SCSS through package exports (`./tokens`, `./reset`). Component styles reference tokens via `var(--space-lg, 24px)` with literal fallbacks; they never hardcode theme values.
 
 **Theming** — dark mode is driven by `data-theme="dark"` on `<html>`. `setTheme` / `getTheme` / `toggleTheme` in `src/index.ts` manage it and briefly add a `.theme-transitioning` class for smooth transitions.
 
-**Build** — Vite library mode, single ESM entry `src/index.ts`; `lit*` is externalized (consumers supply it); `@floating-ui/dom` is bundled-as-dependency. `__PKG_VERSION__` is injected from `package.json` via Vite `define` (declared in `src/env.d.ts`). `@` aliases `src/`.
+**Build** — Vite library mode, ESM-only with `preserveModules` (output mirrors `src/`): a full entry `src/index.ts` (registers every component) plus one entry per `src/components/*/index.ts`, exposed as `@anchor-ui/core/<name>` for tree-shakable on-demand imports. `lit*` and `@floating-ui/*` are externalized (`@floating-ui/dom` is a runtime dependency); test, story and `test-utils` files are excluded from the `.d.ts` output. `__PKG_VERSION__` is injected from `package.json` via Vite `define` (declared in `src/env.d.ts`). `@` aliases `src/`.
 
 **Tooltip** is the most involved component: native Popover API (top layer) + `@floating-ui/dom` (`computePosition`/`autoUpdate`/flip/shift/arrow), emits cancelable `aui-show`/`aui-hide` and `aui-after-show`/`aui-after-hide` events. Custom events are prefixed `aui-`.
 

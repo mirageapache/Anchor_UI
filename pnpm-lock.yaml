@@ -57,6 +57,9 @@ importers:
       '@web/test-runner-playwright':
         specifier: ^1.0.0
         version: 1.0.0(supports-color@10.2.2)
+      esbuild:
+        specifier: ^0.25.12
+        version: 0.25.12
       eslint:
         specifier: ^10.11.0
         version: 10.11.0(jiti@2.6.1)(supports-color@10.2.2)

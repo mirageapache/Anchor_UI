@@ -97,6 +97,32 @@ pnpm build
 pnpm build-storybook
 ```
 
+驗證建置產物（Tree-shaking、`exports` / `sideEffects` 設定與發布內容，需先 `pnpm build`）：
+
+```bash
+pnpm verify:package
+```
+
+### 4. 在專案中使用
+
+先載入 Design Tokens 與全域樣式，再選擇載入元件的方式：
+
+```ts
+import '@anchor-ui/core/tokens.css';
+import '@anchor-ui/core/styles.css';
+
+// 方式 A — 全量載入：一次註冊所有元件
+import '@anchor-ui/core';
+
+// 方式 B — 按需載入（推薦）：只註冊用到的元件，未引用的元件不會進入打包結果
+import '@anchor-ui/core/button';
+import '@anchor-ui/core/tooltip';
+```
+
+- 元件依賴會自動帶入，例如 `@anchor-ui/core/icon-button` 會一併註冊 `<aui-tooltip>`。
+- 型別可從全量入口或個別入口取得，例如 `import type { ButtonVariant } from '@anchor-ui/core/button'`。
+- `lit` 與 `@floating-ui/dom` 不打包進元件庫，由消費端的打包工具處理（`@floating-ui/dom` 隨套件相依自動安裝）。
+
 ---
 
 ## 常用命令 (Scripts)

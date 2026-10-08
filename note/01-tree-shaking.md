@@ -142,6 +142,17 @@ esbuild 的 `--metafile` 搭配 [Bundle Buddy](https://www.bundle-buddy.com/) �
 
 原因：只有單一入口 `dist/index.js`、元件載入即註冊（副作用）、沒有宣告 `sideEffects`、`exports` 只有 `"."`。TASK-201 就是要逐一解決這四點。
 
+### TASK-201 完成後（gzip、不含 `lit` 與 `@floating-ui/dom`）
+
+| 引用方式                               | 體積                        |
+| -------------------------------------- | --------------------------- |
+| `import '@anchor-ui/core/button'`      | **3.2 KB**（只含 Button）   |
+| `import '@anchor-ui/core/tooltip'`     | 4.6 KB                      |
+| `import '@anchor-ui/core/icon-button'` | 10.4 KB（含相依的 Tooltip） |
+| `import '@anchor-ui/core'`（全量）     | 14.1 KB                     |
+
+實作重點：Vite `preserveModules` 逐模組輸出、各元件自動成為個別入口、`exports` 新增 `./<name>`、`sideEffects` 列出入口與註冊元件的模組、`@floating-ui/dom` 改為 external。`pnpm verify:package`（`scripts/verify-package.mjs`）會以 esbuild 與 Vite 模擬消費端只引用單一元件，於 CI 中自動驗證。
+
 ## 8. 常見陷阱
 
 - **只做了多入口卻沒做 `exports`**：消費端無法 import 個別入口。
