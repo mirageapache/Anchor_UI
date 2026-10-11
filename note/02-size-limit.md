@@ -106,12 +106,35 @@ Phase 1 結束時的實測參考（gzip、不含 `lit`）：
 | Tooltip    | 11.1 KB | 含 `@floating-ui/dom`（TASK-201 改為 external 後會變小） |
 | IconButton | 16.8 KB | 含 Tooltip 與 floating-ui                                |
 
-## 7. 常見陷阱
+## 7. 在 Anchor UI 的實作（TASK-202）
+
+- 設定檔為 `.size-limit.mjs`（JS 設定可程式化產生檢查項目）：
+  - 自動為 `src/components/*` 的每個元件建立檢查，另含全量入口。
+  - 基準值寫在 `BASELINES`，預算由程式計算為 **基準 × 1.1**；新元件沒有基準時設定檔直接報錯，避免漏設。
+  - `gzip: true`、`ignore: ['lit']`；`@floating-ui/dom` 會隨套件安裝並由消費端打包，所以**計入**使用它的元件。
+- 指令：`pnpm size`（需先 `pnpm build`）。
+- CI 分成兩部分：
+  - **門禁**：放在既有的 `Build & Package Verification` job（已是分支保護的必要檢查），超出預算就無法合併，不需要另外修改 Ruleset。
+  - **PR 報告**：獨立的 `Size Report` job 使用 `andresz1/size-limit-action` 留言比較差異，僅供參考（步驟設為 `continue-on-error`）。
+    此 action 會在目標分支上也執行 size-limit，**目標分支尚未導入 size-limit 時（首次導入的 PR）無法比較而失敗**，屬預期情況。
+
+建立時的基準（gzip）：
+
+| 入口          | 基準     | 預算     |
+| ------------- | -------- | -------- |
+| 全量入口      | 20,838 B | 22,922 B |
+| `button`      | 3,189 B  | 3,508 B  |
+| `tag`         | 3,390 B  | 3,729 B  |
+| `tooltip`     | 10,807 B | 11,888 B |
+| `icon-button` | 16,704 B | 18,375 B |
+
+## 8. 常見陷阱
 
 - **壓縮演算法不一致**（見上方說明）。
 - **沒排除 peer 相依**：`lit` 由消費端提供，沒 `ignore` 會讓每個元件都多算一份 lit。
 - **只量全量入口**：全量入口的體積無法反映「按需載入」是否正常，要逐一量測個別入口，並用 `import` 選項驗證 tree-shaking。
 - **預算訂太寬**：門禁形同虛設；訂太緊：每個 PR 都在調預算。+10% 是個實用的起點。
+- **體積「變小」也可能是警訊**：size-limit 只會擋「變大」。Anchor UI 曾因建置設定錯誤，IconButton 從 16.7 KB 掉到 6.7 KB——原因是相依的 Tooltip 沒被打包進去（元件壞掉了）。體積異常下降時要追查原因；這類問題由 `pnpm verify:package` 的 Tree-shaking 檢查負責攔截。
 
 ## 參考資料
 

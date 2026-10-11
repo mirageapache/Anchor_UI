@@ -12,6 +12,7 @@ Package manager is pnpm (workspace includes `examples/*`); Node version in `.nvm
 
 - `pnpm storybook` — Storybook on :6006 (primary dev/preview surface); `pnpm dev` — plain Vite server
 - `pnpm build` — `tsc && vite build && pnpm build:tokens` → `dist/` (`index.js`, `.d.ts`, `styles.css`, `tokens.css`)
+- `pnpm verify:package` / `pnpm size` — run after build (CI does both in the build job): tree-shaking / `exports` / `sideEffects` / published-files checks, and size-limit budgets per entry (`.size-limit.mjs`: gzip, `lit` ignored, limit = baseline + 10%)
 - `pnpm typecheck`, `pnpm lint`, `pnpm stylelint`, `pnpm format:check` (these four are what CI runs before build; `:fix` / `format` variants exist)
 - `pnpm test` — web-test-runner (Playwright Chromium) over `src/components/**/*.test.ts`
   - single file: `pnpm test --files src/components/button/button.test.ts` (or `pnpm wtr "<glob>"`)
@@ -23,7 +24,7 @@ Commits are enforced by commitlint (Conventional Commits; types: feat, fix, docs
 
 ## Architecture
 
-**Component layout** — each component is a folder `src/components/<name>/` with `<name>.ts` (LitElement class), `<name>.styles.ts` (`css` tagged template), `<name>.types.ts`, `index.ts` (re-exports class + types), `<name>.test.ts`, `<name>.a11y.test.ts`. A new component must also be exported from `src/components/index.ts` (which `src/index.ts` re-exports), get its own `./<name>` entry in `package.json` `exports` plus its `index.js` and `<name>.js` (the module calling `customElements.define`) in `sideEffects`, and gets a story in `src/stories/`. `pnpm verify:package` (run in CI after build) fails if any of these are missing. Vite picks up the build entry automatically.
+**Component layout** — each component is a folder `src/components/<name>/` with `<name>.ts` (LitElement class), `<name>.styles.ts` (`css` tagged template), `<name>.types.ts`, `index.ts` (re-exports class + types), `<name>.test.ts`, `<name>.a11y.test.ts`. A new component must also be exported from `src/components/index.ts` (which `src/index.ts` re-exports), get its own `./<name>` entry in `package.json` `exports` plus its `dist/components/<name>/index.js` and `<name>.js` (the module calling `customElements.define`) in `sideEffects`, a size baseline in `.size-limit.mjs` `BASELINES`, and gets a story in `src/stories/`. `pnpm verify:package` and `pnpm size` fail if any of these are missing. Vite picks up the build entry automatically. Keep `"./src/**/*.ts"` in `sideEffects`: the field also applies to the library's own build, and without it bare registration imports such as `import '../tooltip/index.js'` get tree-shaken out of `dist/`.
 
 **Tokens** — `src/tokens/*.scss` is the single source of truth (colors, typography, spacing, radius, motion). It is compiled two ways: into `dist/tokens.css` via `build:tokens` (sass), and also exposed as source SCSS through package exports (`./tokens`, `./reset`). Component styles reference tokens via `var(--space-lg, 24px)` with literal fallbacks; they never hardcode theme values.
 

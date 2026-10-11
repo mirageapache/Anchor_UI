@@ -158,6 +158,7 @@ esbuild 的 `--metafile` 搭配 [Bundle Buddy](https://www.bundle-buddy.com/) �
 - **只做了多入口卻沒做 `exports`**：消費端無法 import 個別入口。
 - **`sideEffects: false` 一刀切**：會讓元件的註冊與 CSS 被刪掉，元件變成「未知元素」。
 - **入口之間互相 import 全量入口**：例如元件內部 `import '../../index.js'`，會把全部元件又帶回來。
+- **`sideEffects` 也會作用於套件「自身」的建置**：只列 `dist` 路徑時，建置工具會把 `src` 模組視為無副作用，元件之間僅為註冊而寫的 `import '../tooltip/index.js'` 會在建置時被刪除（Anchor UI 曾因此讓 `@anchor-ui/core/icon-button` 不再註冊 `<aui-tooltip>`）。解法是在 `sideEffects` 加入 `"./src/**/*.ts"`；`src` 未被發布，對消費端沒有影響。**修改 `sideEffects` 後務必重新建置再驗證。**
 - **共用程式碼被重複打包**：多入口時，被多個元件共用的程式（如 Spinner）應拆成共用 chunk，而不是每個入口各複製一份。
 
 ## 參考資料

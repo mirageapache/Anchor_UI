@@ -70,8 +70,45 @@ jobs:
       - name: Verify package (tree-shaking, exports, sideEffects)
         run: pnpm verify:package
 
+      # TASK-202: 各元件入口的體積不得超過預算（基準 +10%，見 .size-limit.mjs），超出即 CI 失敗
+      - name: Check bundle size budgets (size-limit)
+        run: pnpm size
+
       - name: Build Storybook documentation
         run: pnpm build-storybook
+
+  size-report:
+    name: Size Report (PR comment)
+    # TASK-202: 於 PR 留言比較與目標分支的體積差異。僅供參考，體積門禁由 build job 的 pnpm size 負責。
+    # 目標分支尚無 size-limit 設定時（例如首次導入的 PR）無法比較，故此步驟失敗不影響 CI 結果。
+    if: github.event_name == 'pull_request'
+    needs: lint-and-typecheck
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.26.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Report size changes
+        uses: andresz1/size-limit-action@v1.8.0
+        continue-on-error: true
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          package_manager: pnpm
+          build_script: build
 
   test:
     name: Unit, a11y, Coverage & Framework integration

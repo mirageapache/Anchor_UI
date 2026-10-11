@@ -51,6 +51,10 @@ export default defineConfig({
     rollupOptions: {
       // lit 由消費端提供；@floating-ui/dom 列於 dependencies，交由消費端打包以避免重複
       external: [/^lit/, /^@floating-ui\//],
+      // 注意：package.json 的 sideEffects 也會作用於本身建置（且優先於 treeshake.moduleSideEffects）。
+      // 被視為無副作用的模組中，僅為註冊元件的 import（如 icon-button 的 `import '../tooltip/index.js'`）
+      // 會在建置時被移除，因此 sideEffects 須包含 "./src/**/*.ts"，讓本身建置不因此刪減任何程式。
+      // （src/components 不在發布的 files 中，此路徑對消費端沒有影響；pnpm verify:package 會檢查此情況）
       output: {
         // 保留原始碼的模組結構逐檔輸出（dist/components/button/button.js…），
         // 消費端打包工具才能以模組為單位 Tree-shaking，且 JS 與 .d.ts 路徑一致

@@ -127,21 +127,23 @@ import '@anchor-ui/core/tooltip';
 
 ## 常用命令 (Scripts)
 
-| 指令                   | 說明                                                                 |
-| ---------------------- | -------------------------------------------------------------------- |
-| `pnpm build`           | 編譯專案產物 (`dist/index.js`, `dist/index.d.ts`, `dist/styles.css`) |
-| `pnpm storybook`       | 啟動 Storybook 開發環境 (預設 port: 6006)                            |
-| `pnpm build-storybook` | 建置 Storybook 靜態部署產物至 `storybook-static/`                    |
-| `pnpm typecheck`       | 執行 TypeScript 靜態型別檢驗 (`tsc --noEmit`)                        |
-| `pnpm lint`            | 執行 ESLint 檢查 TypeScript 與 Lit 語法                              |
-| `pnpm lint:fix`        | 自動修復 ESLint 可修復錯誤                                           |
-| `pnpm stylelint`       | 執行 Stylelint 檢查 SCSS 變數與樣式規範                              |
-| `pnpm stylelint:fix`   | 自動修復 Stylelint 樣式問題                                          |
-| `pnpm format:check`    | 檢查程式碼排版格式 (Prettier)                                        |
-| `pnpm format`          | 自動格式化所有代碼 (Prettier)                                        |
-| `pnpm yalc:publish`    | 建置並發布至本機 yalc store                                          |
-| `pnpm yalc:push`       | 建置並推送更新至所有已 `yalc add` 的專案                             |
-| `pnpm dev:yalc`        | 監聽 `src/`，變更時自動建置並 `yalc push`                            |
+| 指令                   | 說明                                                                                         |
+| ---------------------- | -------------------------------------------------------------------------------------------- |
+| `pnpm build`           | 編譯專案產物 (`dist/index.js`, `dist/index.d.ts`, `dist/styles.css`)                         |
+| `pnpm verify:package`  | 驗證建置產物的 Tree-shaking、`exports` / `sideEffects` 與發布內容（需先 build）              |
+| `pnpm size`            | 以 size-limit 檢查各元件入口的 gzip 體積是否超出預算（需先 build，設定見 `.size-limit.mjs`） |
+| `pnpm storybook`       | 啟動 Storybook 開發環境 (預設 port: 6006)                                                    |
+| `pnpm build-storybook` | 建置 Storybook 靜態部署產物至 `storybook-static/`                                            |
+| `pnpm typecheck`       | 執行 TypeScript 靜態型別檢驗 (`tsc --noEmit`)                                                |
+| `pnpm lint`            | 執行 ESLint 檢查 TypeScript 與 Lit 語法                                                      |
+| `pnpm lint:fix`        | 自動修復 ESLint 可修復錯誤                                                                   |
+| `pnpm stylelint`       | 執行 Stylelint 檢查 SCSS 變數與樣式規範                                                      |
+| `pnpm stylelint:fix`   | 自動修復 Stylelint 樣式問題                                                                  |
+| `pnpm format:check`    | 檢查程式碼排版格式 (Prettier)                                                                |
+| `pnpm format`          | 自動格式化所有代碼 (Prettier)                                                                |
+| `pnpm yalc:publish`    | 建置並發布至本機 yalc store                                                                  |
+| `pnpm yalc:push`       | 建置並推送更新至所有已 `yalc add` 的專案                                                     |
+| `pnpm dev:yalc`        | 監聽 `src/`，變更時自動建置並 `yalc push`                                                    |
 
 ---
 
