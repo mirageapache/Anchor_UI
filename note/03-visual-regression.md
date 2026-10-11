@@ -102,7 +102,29 @@ pnpm wtr --update-visual-baseline
 - 每個元件涵蓋**所有變體 × 淺色／深色主題**。
 - 互動狀態（hover、focus、open）視需要補拍；需要穩定觸發的狀態才拍，例如用 `open` 屬性開啟 Tooltip，而不是模擬滑鼠移入。
 
-## 8. 常見陷阱
+## 8. 在 Anchor UI 的實作（TASK-203）
+
+| 項目     | 作法                                                                                                                                     |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| 測試檔   | `src/components/<name>/<name>.visual.test.ts`，預設的 `pnpm test` 不包含                                                                 |
+| 共用設定 | `src/test-utils/visual.ts`：載入 tokens 與字型（`@fontsource/inter`、`@fontsource/jetbrains-mono`）、凍結動畫、`snapshot()` 截圖         |
+| 設定檔   | `web-test-runner.visual.config.mjs`：固定視窗 1024×768、`deviceScaleFactor: 1`、`reducedMotion: 'reduce'`；**非 Linux 環境直接拒絕執行** |
+| 本機執行 | `pnpm test:visual:docker`（比對）、`pnpm test:visual:docker:update`（更新基準圖），映像版本自動取自已安裝的 playwright                   |
+| CI       | `Visual Regression` job 在相同映像的 container 中執行，失敗時上傳 `visual-regression-diffs` artifact                                     |
+| 基準圖   | `screenshots/chromium/baseline/`（18 張，約 136 KB）；`failed/` 已加入 `.gitignore`                                                      |
+
+### 實作時踩到的兩個坑
+
+1. **pixelmatch 預設的單一像素容許值（`threshold: 0.1`）太寬鬆。**
+   以 YIQ 色差計算，`#047857 → #059669` 這種肉眼明顯不同的綠色（差值 274）都低於門檻（352），會被當成「相同像素」——
+   修改 token 顏色的突變測試因此完全沒被抓到。改為 `diffOptions: { threshold: 0.01 }` 後，連 `#0f4c81 → #0f4f86` 的細微調整都能抓到；
+   截圖在固定容器中逐位元一致，嚴格的容許值不會造成偶發失敗。
+2. **減少動畫不代表動畫停止。** Spinner 在 `prefers-reduced-motion` 下只是轉得比較慢，截圖時角度不同。
+   截圖前以 `document.getAnimations()`（包含 Shadow DOM 內的動畫）全部暫停並歸零。
+
+> 另外注意：在容器中執行會重新建置 `dist/tokens.css`；若突變測試後只還原原始碼而沒重新建置，本機的其他測試會讀到被修改過的 token。
+
+## 9. 常見陷阱
 
 - 本機與 CI 環境不同 → 大量假差異（見第 5 節）。
 - 門檻設太嚴（0 像素）→ 反鋸齒的微小差異就失敗；設太寬 → 抓不到真正的問題。0.1% 是常見起點。

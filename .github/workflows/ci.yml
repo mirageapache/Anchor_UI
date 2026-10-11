@@ -110,6 +110,47 @@ jobs:
           package_manager: pnpm
           build_script: build
 
+  visual:
+    name: Visual Regression
+    # TASK-203: 於 Playwright 官方映像中截圖比對（版本須與 package.json 的 playwright 一致），
+    # 與本機 pnpm test:visual:docker 使用相同環境，避免作業系統渲染差異造成假差異。
+    needs: lint-and-typecheck
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.26.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build design tokens (visual tests load dist/tokens.css)
+        run: pnpm build:tokens
+
+      - name: Run visual regression tests
+        run: pnpm test:visual
+
+      - name: Upload failed screenshots and diffs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-regression-diffs
+          path: screenshots/chromium/failed/
+          retention-days: 14
+
   test:
     name: Unit, a11y, Coverage & Framework integration
     # TASK-110: a11y 測試需讀取 dist/tokens.css，因此須先 build；同樣在 lint 通過後才執行。

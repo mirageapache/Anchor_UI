@@ -18,6 +18,7 @@ Package manager is pnpm (workspace includes `examples/*`); Node version in `.nvm
   - single file: `pnpm test --files src/components/button/button.test.ts` (or `pnpm wtr "<glob>"`)
   - `pnpm test:watch`, `pnpm test:coverage` (thresholds: 85% statements/functions/lines, 75% branches)
   - `pnpm test:a11y` — only `*.a11y.test.ts` (axe-core via `@open-wc/testing`'s `to.be.accessible()`)
+  - `pnpm test:visual:docker` / `pnpm test:visual:docker:update` — visual regression (`*.visual.test.ts`, excluded from `pnpm test`) inside the official Playwright Docker image; baselines live in `screenshots/chromium/baseline/` and must only be generated there (the visual config refuses to run outside Linux). Requires Docker. Shared setup (fonts via `@fontsource`, tokens, animation freezing) is `src/test-utils/visual.ts`; a new component should get a `<name>.visual.test.ts` covering its variants in both themes.
 - `pnpm test:vue` / `pnpm test:angular` — integration tests in `examples/vue3` and `examples/angular` (vitest + happy-dom) that consume the library via `workspace:*`
 
 Commits are enforced by commitlint (Conventional Commits; types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert) and Husky + lint-staged on pre-commit.

@@ -39,7 +39,8 @@ function axNodePlugin() {
 }
 
 export default {
-  files: 'src/components/**/*.test.ts',
+  // 視覺回歸測試（*.visual.test.ts）只在固定的 Linux 容器中執行，見 web-test-runner.visual.config.mjs
+  files: ['src/components/**/*.test.ts', '!src/components/**/*.visual.test.ts'],
   nodeResolve: true,
   plugins: [
     esbuildPlugin({
