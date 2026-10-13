@@ -1,0 +1,73 @@
+name: Release
+
+# TASK-205: 推送 v* tag 時，驗證版號與產物後建立 GitHub Release，並附上 npm pack 產出的 tarball。
+# Phase 4 導入 Changesets 前，測試專案以此 tarball（或 yalc）安裝；流程見 doc/anchor-ui-release-guide.md。
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+  checks: read
+
+# 同一個 tag 不可同時執行兩次發布（例如重複推送或手動重跑）
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Verify and publish GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 40 # 含最多 20 分鐘的 CI 等待
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 需要完整歷史以確認 tag 位於 main 上
+
+      - name: Ensure the tag points to a commit on main
+        run: |
+          git fetch origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::tag ${GITHUB_REF_NAME} 指向的 commit 不在 main 上；版本必須從 main 發布"
+            exit 1
+          fi
+
+      # 必要檢查清單取自 main 的 Ruleset（與合併所需的檢查相同）；CI 仍在執行時等待，任一失敗即中止發布
+      - name: Wait for required CI checks on main to pass
+        run: node scripts/wait-for-ci.mjs --branch main --timeout 20
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        # 版本取自 package.json 的 packageManager 欄位（唯一來源）
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 建置 → verify:package → size → 版號與 tag 一致性 → npm pack
+      - name: Build, verify and pack tarball
+        run: pnpm release:pack
+
+      - name: Create GitHub Release with tarball
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          flags="--generate-notes --verify-tag"
+          # 預覽版：建置資訊（+ 之後）以外的部分含 -（-alpha、-beta…）；例如 1.0.0+build-5 是正式版
+          case "${TAG%%+*}" in *-*) flags="$flags --prerelease" ;; esac
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            # 重跑時 Release 已存在（例如上次在上傳 tarball 時失敗）：只覆蓋上傳 tarball，不重新建立
+            gh release upload "$TAG" release/*.tgz --clobber
+          else
+            gh release create "$TAG" release/*.tgz --title "$TAG" $flags
+          fi
