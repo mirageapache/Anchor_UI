@@ -68,6 +68,18 @@ describe('internal/scroll-lock', () => {
     expect(document.body.getBoundingClientRect().width).to.equal(widthBefore);
   });
 
+  for (const gutter of ['stable', 'stable both-edges'] as const) {
+    it(`does not compensate twice when the page uses scrollbar-gutter: ${gutter}`, () => {
+      // scrollbar-gutter: stable 會在 overflow: hidden 時保留捲軸空間，不需要（也不可以）再補 padding
+      html.style.scrollbarGutter = gutter;
+      const widthBefore = document.body.getBoundingClientRect().width;
+      const release = lockScroll();
+      expect(document.body.getBoundingClientRect().width).to.equal(widthBefore);
+      release();
+      expect(document.body.getBoundingClientRect().width).to.equal(widthBefore);
+    });
+  }
+
   it('restores the inline styles that were present before locking', () => {
     html.style.overflow = 'clip';
     html.style.paddingRight = '3px';

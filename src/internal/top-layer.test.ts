@@ -178,4 +178,135 @@ describe('internal/top-layer', () => {
       expect(viewport.parentElement).to.equal(home);
     });
   });
+
+  describe('raisePopover with nested popovers (#4)', () => {
+    const fill = 'position: fixed; inset: 0; margin: 0; width: 200px; height: 200px;';
+
+    for (const childType of ['auto', 'manual'] as const) {
+      it(`keeps an open ${childType} child popover open and above its parent`, () => {
+        const parent = document.createElement('div');
+        parent.popover = 'manual';
+        parent.style.cssText = fill;
+        const child = document.createElement('div');
+        child.popover = childType;
+        child.style.cssText = 'position: fixed; inset: 0; margin: 0; width: 50px; height: 50px;';
+        parent.appendChild(child);
+        document.body.appendChild(parent);
+        parent.showPopover();
+        child.showPopover();
+
+        raisePopover(parent);
+
+        expect(parent.matches(':popover-open')).to.be.true;
+        expect(child.matches(':popover-open'), 'child popover stays open').to.be.true;
+        expect(document.elementFromPoint(10, 10), 'child stays above parent').to.equal(child);
+      });
+    }
+
+    it('keeps an open popover inside Shadow DOM (e.g. an open aui-tooltip) above the parent', () => {
+      const parent = document.createElement('div');
+      parent.popover = 'manual';
+      parent.style.cssText = fill;
+      const host = document.createElement('div');
+      const inner = document.createElement('div');
+      inner.popover = 'manual';
+      inner.style.cssText = 'position: fixed; inset: 0; margin: 0; width: 50px; height: 50px;';
+      host.attachShadow({ mode: 'open' }).appendChild(inner);
+      parent.appendChild(host);
+      document.body.appendChild(parent);
+      parent.showPopover();
+      inner.showPopover();
+
+      raisePopover(parent);
+
+      expect(inner.matches(':popover-open')).to.be.true;
+      expect(host.shadowRoot!.elementFromPoint(10, 10)).to.equal(inner);
+    });
+  });
+
+  describe('followTopModal edge cases', () => {
+    it('falls back to <body> without throwing when the original parent is removed (#2)', () => {
+      const home = document.createElement('section');
+      document.body.appendChild(home);
+      const first = createViewport();
+      const second = createViewport();
+      home.append(first.viewport, second.viewport);
+      first.viewport.showPopover();
+      second.viewport.showPopover();
+      const stopFirst = followTopModal(first.viewport);
+      const stopSecond = followTopModal(second.viewport);
+      cleanups.push(stopFirst, stopSecond);
+
+      const { dialog, container } = createModal();
+      dialog.showModal();
+      const pop = pushModalLayer(container);
+      home.remove(); // 例如框架切換頁面時拆掉原本的區塊
+
+      dialog.close();
+      expect(() => pop()).to.not.throw();
+      for (const { viewport } of [first, second]) {
+        expect(viewport.parentElement, 'every follower is moved back').to.equal(document.body);
+        expect(viewport.matches(':popover-open')).to.be.true;
+      }
+    });
+
+    it('returns to where the element was inserted after following started (#3)', () => {
+      const viewport = document.createElement('div');
+      viewport.popover = 'manual';
+      cleanups.push(followTopModal(viewport)); // 尚未插入頁面就開始跟隨
+
+      const home = document.createElement('section');
+      document.body.appendChild(home);
+      home.appendChild(viewport);
+      viewport.showPopover();
+
+      const { dialog, container } = createModal();
+      dialog.showModal();
+      const pop = pushModalLayer(container);
+      expect(viewport.parentElement).to.equal(container);
+
+      dialog.close();
+      pop();
+      expect(viewport.parentElement, 'not stuck inside the closed dialog').to.equal(home);
+      expect(viewport.matches(':popover-open')).to.be.true;
+      home.remove();
+    });
+
+    it('keeps notifying other followers when one of them throws', () => {
+      const { viewport: good } = createViewport();
+      cleanups.push(followTopModal(good));
+      // reportError 會觸發 window 的 error 事件，測試框架會當成未捕捉的錯誤，因此暫時替換以收集錯誤
+      const errors: unknown[] = [];
+      const originalReportError = globalThis.reportError;
+      globalThis.reportError = (error: unknown) => errors.push(error);
+      // 以自訂的會拋錯元素模擬未知的失敗（登記完成後才開始拋錯，模擬 modal 開啟時才發生的錯誤）
+      const broken = document.createElement('div');
+      document.body.appendChild(broken);
+      let failing = false;
+      const originalMatches = broken.matches.bind(broken);
+      Object.defineProperty(broken, 'matches', {
+        value: (selector: string) => {
+          if (failing) throw new Error('boom');
+          return originalMatches(selector);
+        },
+      });
+      const stopBroken = followTopModal(broken);
+      failing = true;
+      cleanups.push(() => {
+        failing = false;
+        stopBroken();
+      });
+
+      const { dialog, container } = createModal();
+      dialog.showModal();
+      try {
+        cleanups.push(pushModalLayer(container));
+        expect(good.parentElement, 'healthy follower still moved').to.equal(container);
+        expect(errors.length, 'error is reported, not swallowed').to.be.greaterThan(0);
+      } finally {
+        failing = false; // 之後的清理（移除 modal 層）不再模擬錯誤
+        globalThis.reportError = originalReportError;
+      }
+    });
+  });
 });

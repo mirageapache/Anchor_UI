@@ -6,7 +6,7 @@
 //
 // 更新基準：刻意的體積變化（例如新增功能）請在 PR 中說明理由，
 // 並以 `pnpm size --json` 的實測值更新下方 BASELINES。新元件首次合併時須補上基準。
-import { existsSync, readdirSync } from 'node:fs';
+import { listComponents } from './scripts/components.mjs';
 
 /** 各入口的體積基準（bytes，gzip；TASK-202 建立於 2026-10-09） */
 const BASELINES = {
@@ -19,9 +19,7 @@ const BASELINES = {
 
 const TOLERANCE = 0.1;
 
-const components = readdirSync('src/components', { withFileTypes: true })
-  .filter((d) => d.isDirectory() && existsSync(`src/components/${d.name}/index.ts`))
-  .map((d) => d.name);
+const components = listComponents(import.meta.dirname);
 
 const missing = components.filter((name) => !(name in BASELINES));
 if (missing.length) {
@@ -30,7 +28,8 @@ if (missing.length) {
   );
 }
 
-const check = (name, path, baseline) => ({
+/** 產生一筆 size-limit 檢查設定 */
+const sizeEntry = (name, path, baseline) => ({
   name,
   path,
   gzip: true,
@@ -39,8 +38,8 @@ const check = (name, path, baseline) => ({
 });
 
 export default [
-  check('@anchor-ui/core（全量入口）', 'dist/index.js', BASELINES.index),
+  sizeEntry('@anchor-ui/core（全量入口）', 'dist/index.js', BASELINES.index),
   ...components.map((name) =>
-    check(`@anchor-ui/core/${name}`, `dist/components/${name}/index.js`, BASELINES[name]),
+    sizeEntry(`@anchor-ui/core/${name}`, `dist/components/${name}/index.js`, BASELINES[name]),
   ),
 ];

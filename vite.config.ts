@@ -1,7 +1,8 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 import dts from 'vite-plugin-dts';
-import { existsSync, readdirSync, readFileSync } from 'fs';
+import { readFileSync } from 'fs';
+import { listComponents } from './scripts/components.mjs';
 
 // L-01: Read version from package.json at build time so VERSION constant in
 // index.ts is always in sync without manual updates.
@@ -9,11 +10,11 @@ const pkg = JSON.parse(readFileSync('./package.json', 'utf-8')) as { version: st
 
 // TASK-201: 每個元件資料夾（具 index.ts 者）自動成為一個個別入口，
 // 產出 dist/components/<name>/index.js，供消費端按需引用（@anchor-ui/core/<name>）。
-const componentsDir = resolve(import.meta.dirname, 'src/components');
 const componentEntries = Object.fromEntries(
-  readdirSync(componentsDir, { withFileTypes: true })
-    .filter((d) => d.isDirectory() && existsSync(resolve(componentsDir, d.name, 'index.ts')))
-    .map((d) => [`components/${d.name}/index`, resolve(componentsDir, d.name, 'index.ts')]),
+  listComponents(import.meta.dirname).map((name) => [
+    `components/${name}/index`,
+    resolve(import.meta.dirname, 'src/components', name, 'index.ts'),
+  ]),
 );
 
 export default defineConfig({
@@ -25,7 +26,8 @@ export default defineConfig({
       insertTypesEntry: true,
       include: ['src/**/*.ts'],
       // 測試、stories 與測試工具不屬於發布內容
-      exclude: ['src/**/*.test.ts', 'src/stories/**', 'src/test-utils/**'],
+      // src/internal 為不對外的共用模組，元件的公開型別不引用它們，不發布其型別
+      exclude: ['src/**/*.test.ts', 'src/stories/**', 'src/test-utils/**', 'src/internal/**'],
     }),
   ],
   resolve: {

@@ -52,8 +52,9 @@ git push origin v0.2.0-beta
 推送 `v*` tag 後，`.github/workflows/release.yml` 會自動：
 
 1. 確認 tag 指向的 commit 位於 `main` 上。
-2. 執行 `pnpm release:pack`：建置 → `verify:package` → `size` → 版號與 tag 一致性檢查 → `npm pack`。
-3. 建立 GitHub Release 並附上 tarball；版號含 `-`（`-alpha`、`-beta`）時標記為預覽版。
+2. 等待該 commit 在 `main` 上的必要 CI 檢查全部通過（清單取自 `main` 的 Ruleset，與合併所需的檢查相同；最多等 20 分鐘，任一失敗即中止發布）。
+3. 執行 `pnpm release:pack`：建置 → `verify:package` → `size` → 版號與 tag 一致性檢查 → `npm pack`。
+4. 建立 GitHub Release 並附上 tarball；版號含 `-`（`-alpha`、`-beta`）時標記為預覽版。
 
 > 本機可先執行 `pnpm release:pack` 預演，tarball 會產生在 `release/`（不納入版控）。
 

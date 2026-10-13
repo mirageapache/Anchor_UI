@@ -27,8 +27,10 @@ export function lockScroll(): () => void {
   if (state.count === 0) {
     // 須在隱藏捲軸前量測捲軸寬度
     const scrollbarWidth = window.innerWidth - html.clientWidth;
+    // 頁面已用 scrollbar-gutter: stable 保留捲軸空間時，overflow: hidden 後空間仍在，不可再補 padding
+    const gutterReserved = getComputedStyle(html).scrollbarGutter.includes('stable');
     state.saved = { overflow: html.style.overflow, paddingRight: html.style.paddingRight };
-    if (scrollbarWidth > 0) {
+    if (scrollbarWidth > 0 && !gutterReserved) {
       const paddingRight = parseFloat(getComputedStyle(html).paddingRight) || 0;
       html.style.paddingRight = `${paddingRight + scrollbarWidth}px`;
     }

@@ -9,15 +9,17 @@ on:
 jobs:
   lint-and-typecheck:
     name: Lint, Stylelint & Typecheck
+    timeout-minutes: 10
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 需要既有 tag 以檢查版號一致性
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 11.26.0
+        # 版本取自 package.json 的 packageManager 欄位（唯一來源）
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -40,8 +42,17 @@ jobs:
       - name: Run TypeScript typecheck
         run: pnpm typecheck
 
+      # 檢查 Playwright 容器映像與套件版本一致、版本皆為精確版本（避免視覺回歸環境分歧）
+      - name: Check tool versions are in sync
+        run: pnpm check:versions
+
+      # package.json 版號為合法 SemVer，且每個既有 v* tag 所指 commit 的版號都與 tag 一致
+      - name: Check release versions and existing tags
+        run: pnpm release:verify --all-tags
+
   build:
     name: Build & Package Verification
+    timeout-minutes: 15
     # Fix C-03: build must not run when lint-and-typecheck fails.
     needs: lint-and-typecheck
     runs-on: ubuntu-latest
@@ -51,8 +62,7 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 11.26.0
+        # 版本取自 package.json 的 packageManager 欄位（唯一來源）
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -79,8 +89,9 @@ jobs:
 
   size-report:
     name: Size Report (PR comment)
+    timeout-minutes: 20
     # TASK-202: 於 PR 留言比較與目標分支的體積差異。僅供參考，體積門禁由 build job 的 pnpm size 負責。
-    # 目標分支尚無 size-limit 設定時（例如首次導入的 PR）無法比較，故此步驟失敗不影響 CI 結果。
+    # 目標分支已導入 size-limit 時，報告失敗會讓此 job 失敗（不再默默略過）。
     if: github.event_name == 'pull_request'
     needs: lint-and-typecheck
     runs-on: ubuntu-latest
@@ -93,8 +104,7 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 11.26.0
+        # 版本取自 package.json 的 packageManager 欄位（唯一來源）
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -102,9 +112,27 @@ jobs:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
 
+      # 目標分支尚未導入 size-limit 時（例如首次導入的 PR）無法比較，此時才容許報告失敗並提出警告
+      - name: Check whether the base branch has size-limit configured
+        id: base
+        run: |
+          git fetch --depth=1 origin "$BASE_REF"
+          if git cat-file -e FETCH_HEAD:.size-limit.mjs 2>/dev/null; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::目標分支 $BASE_REF 尚未導入 size-limit，本次無法比較體積差異（體積門禁仍由 build job 把關）"
+          fi
+        env:
+          BASE_REF: ${{ github.base_ref }}
+
+      - name: Warn that fork PRs cannot receive the size comment
+        if: github.event.pull_request.head.repo.fork
+        run: echo "::warning::來自 fork 的 PR 沒有留言權限，不會出現體積差異留言（體積門禁仍由 build job 把關）"
+
       - name: Report size changes
         uses: andresz1/size-limit-action@v1.8.0
-        continue-on-error: true
+        continue-on-error: ${{ steps.base.outputs.configured != 'true' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           package_manager: pnpm
@@ -112,6 +140,7 @@ jobs:
 
   visual:
     name: Visual Regression
+    timeout-minutes: 15
     # TASK-203: 於 Playwright 官方映像中截圖比對（版本須與 package.json 的 playwright 一致），
     # 與本機 pnpm test:visual:docker 使用相同環境，避免作業系統渲染差異造成假差異。
     needs: lint-and-typecheck
@@ -125,8 +154,7 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 11.26.0
+        # 版本取自 package.json 的 packageManager 欄位（唯一來源）
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -148,11 +176,31 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: visual-regression-diffs
-          path: screenshots/chromium/failed/
+          path: screenshots/Chromium/failed/
+          retention-days: 14
+
+      # PR 更新了基準圖時，與目標分支比較並產生 before / after / diff 供審查（並列於 job summary）
+      - name: Report baseline changes against the target branch
+        id: baseline
+        if: github.event_name == 'pull_request'
+        run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+          git fetch --depth=1 origin "$BASE_REF"
+          node scripts/visual-baseline-diff.mjs --base FETCH_HEAD
+        env:
+          BASE_REF: ${{ github.base_ref }}
+
+      - name: Upload baseline change images for review
+        if: steps.baseline.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-baseline-changes
+          path: screenshots/Chromium/changes/
           retention-days: 14
 
   test:
     name: Unit, a11y, Coverage & Framework integration
+    timeout-minutes: 20
     # TASK-110: a11y 測試需讀取 dist/tokens.css，因此須先 build；同樣在 lint 通過後才執行。
     # Vue / Angular 整合測試透過 workspace 消費建置後的 dist/，同樣依賴 build。
     needs: lint-and-typecheck
@@ -163,8 +211,7 @@ jobs:
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 11.26.0
+        # 版本取自 package.json 的 packageManager 欄位（唯一來源）
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

@@ -4,6 +4,9 @@
 //
 // - 映像版本取自已安裝的 playwright 套件，避免版本不一致。
 // - 容器內的 node_modules 與 pnpm store 使用具名 volume，不會覆寫本機（Windows / macOS）的 node_modules。
+// - 容器以 root 執行；在 Linux 主機上，結束前會把寫入的 dist/ 與 screenshots/ 改回主機使用者擁有，
+//   避免之後在主機上建置時出現權限錯誤（Windows / macOS 的 Docker Desktop 不受影響）。
+// - 更新基準圖後，於主機上執行 scripts/visual-baseline-diff.mjs 列出變更並產生差異圖供審查。
 import { spawnSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createRequire } from 'node:module';
@@ -17,9 +20,11 @@ const playwrightVersion = JSON.parse(
   readFileSync(require.resolve('playwright/package.json', { paths: [root] }), 'utf-8'),
 ).version;
 const image = `mcr.microsoft.com/playwright:v${playwrightVersion}-noble`;
-const PNPM_VERSION = '11.26.0'; // 與 .github/workflows/ci.yml 一致
+const pkg = JSON.parse(readFileSync(resolve(root, 'package.json'), 'utf-8'));
+// pnpm 版本取自 package.json 的 packageManager 欄位（與 CI 相同來源）
+const PNPM_VERSION = pkg.packageManager.replace(/^pnpm@/, '');
 
-const inner = [
+const steps = [
   `npm install -g pnpm@${PNPM_VERSION} --silent`,
   'pnpm config set store-dir /pnpm-store',
   // 只安裝根套件的相依，避免在掛載的 examples/ 中寫入 Linux 版 node_modules
@@ -27,6 +32,13 @@ const inner = [
   'pnpm build:tokens',
   `pnpm test:visual${update ? ':update' : ''}`,
 ].join(' && ');
+
+// Linux 主機：保留測試結果的結束碼，再把容器（root）寫入的檔案改回主機使用者
+const hostUser =
+  process.platform === 'linux' && process.getuid ? `${process.getuid()}:${process.getgid()}` : null;
+const containerCommand = hostUser
+  ? `${steps}; status=$?; chown -R ${hostUser} dist screenshots 2>/dev/null; exit $status`
+  : steps;
 
 console.log(`[visual] 使用映像 ${image}${update ? '（更新基準圖）' : ''}`);
 const result = spawnSync(
@@ -48,8 +60,13 @@ const result = spawnSync(
     image,
     'bash',
     '-c',
-    inner,
+    containerCommand,
   ],
   { stdio: 'inherit' },
 );
+
+if (update && result.status === 0) {
+  // 列出這次更新改了哪些基準圖，並產生 before / after / diff 供提交前檢視
+  spawnSync('node', [resolve(root, 'scripts/visual-baseline-diff.mjs')], { stdio: 'inherit' });
+}
 process.exit(result.status ?? 1);

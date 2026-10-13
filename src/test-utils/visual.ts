@@ -1,4 +1,7 @@
+import { fixture } from '@open-wc/testing';
 import { visualDiff } from '@web/test-runner-visual-regression';
+import type { TemplateResult } from 'lit';
+import { setTheme, type Theme } from '../theme.js';
 
 /**
  * 視覺回歸測試的共用環境設定（TASK-203）。
@@ -62,10 +65,9 @@ export function prepareVisualEnvironment(): Promise<void> {
   return prepared;
 }
 
-/** 切換主題（與 setTheme() 相同：操作 <html data-theme>） */
-export function setVisualTheme(theme: 'light' | 'dark'): void {
-  if (theme === 'dark') document.documentElement.setAttribute('data-theme', 'dark');
-  else document.documentElement.removeAttribute('data-theme');
+/** 切換主題：使用元件庫的 setTheme()，並略過過渡效果以免截到切換中的畫面 */
+export function setVisualTheme(theme: Theme): void {
+  setTheme(theme, { transition: false });
 }
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
@@ -88,4 +90,35 @@ export async function snapshot(element: Element, name: string): Promise<void> {
   freezeAnimations();
   await nextFrame();
   await visualDiff(element, name);
+}
+
+export interface VisualCase {
+  /** 基準圖名稱（不含主題後綴），例如 button-variants → button-variants-light.png */
+  name: string;
+  /** 截圖範圍：通常為 <div class="visual-frame"> 包住的元件 */
+  render: () => TemplateResult;
+  /** 截圖前的準備（例如開啟 Tooltip、觸發回饋狀態） */
+  setup?: (frame: HTMLElement) => Promise<void> | void;
+}
+
+/**
+ * 宣告一組視覺回歸測試：每個案例都會在淺色與深色主題下各截一張圖並與基準圖比對。
+ * 共用的環境準備（字型、tokens、動畫凍結）與主題還原都在此處理。
+ */
+export function describeVisual(title: string, cases: VisualCase[]): void {
+  describe(title, () => {
+    before(prepareVisualEnvironment);
+    afterEach(() => setVisualTheme('light'));
+
+    for (const theme of ['light', 'dark'] as const) {
+      for (const visualCase of cases) {
+        it(`${visualCase.name} (${theme})`, async () => {
+          setVisualTheme(theme);
+          const frame = await fixture<HTMLElement>(visualCase.render());
+          await visualCase.setup?.(frame);
+          await snapshot(frame, `${visualCase.name}-${theme}`);
+        });
+      }
+    }
+  });
 }

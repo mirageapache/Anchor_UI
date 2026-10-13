@@ -8,11 +8,18 @@ on:
 
 permissions:
   contents: write
+  checks: read
+
+# 同一個 tag 不可同時執行兩次發布（例如重複推送或手動重跑）
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release:
     name: Verify and publish GitHub Release
     runs-on: ubuntu-latest
+    timeout-minutes: 40 # 含最多 20 分鐘的 CI 等待
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,10 +34,15 @@ jobs:
             exit 1
           fi
 
+      # 必要檢查清單取自 main 的 Ruleset（與合併所需的檢查相同）；CI 仍在執行時等待，任一失敗即中止發布
+      - name: Wait for required CI checks on main to pass
+        run: node scripts/wait-for-ci.mjs --branch main --timeout 20
+        env:
+          GH_TOKEN: ${{ github.token }}
+
       - name: Install pnpm
         uses: pnpm/action-setup@v4
-        with:
-          version: 11.26.0
+        # 版本取自 package.json 的 packageManager 欄位（唯一來源）
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -51,6 +63,11 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           flags="--generate-notes --verify-tag"
-          # 含 - 的版號（-alpha、-beta…）標記為預覽版
-          case "$TAG" in *-*) flags="$flags --prerelease" ;; esac
-          gh release create "$TAG" release/*.tgz --title "$TAG" $flags
+          # 預覽版：建置資訊（+ 之後）以外的部分含 -（-alpha、-beta…）；例如 1.0.0+build-5 是正式版
+          case "${TAG%%+*}" in *-*) flags="$flags --prerelease" ;; esac
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            # 重跑時 Release 已存在（例如上次在上傳 tarball 時失敗）：只覆蓋上傳 tarball，不重新建立
+            gh release upload "$TAG" release/*.tgz --clobber
+          else
+            gh release create "$TAG" release/*.tgz --title "$TAG" $flags
+          fi

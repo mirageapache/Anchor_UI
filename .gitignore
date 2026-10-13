@@ -33,6 +33,8 @@ yalc.lock
 
 # 視覺回歸測試：只提交基準圖，失敗截圖與差異圖不納入版控
 screenshots/*/failed/
+# 更新基準圖時產生的 before / after / diff 審查用圖片（scripts/visual-baseline-diff.mjs）
+screenshots/*/changes/
 
 # 發布用 tarball（pnpm release:pack 產出，由 GitHub Release 交付，不納入版控）
 release/

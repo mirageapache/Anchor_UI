@@ -93,6 +93,7 @@ pnpm wtr --update-visual-baseline
 
 1. 基準圖（PNG）提交到 repo。元件截圖通常只有幾 KB；數量多到影響 repo 大小時再考慮 Git LFS。
 2. **刻意修改外觀時**：在 Docker 容器中執行更新指令，把新的基準圖隨 PR 一起提交。
+   Anchor UI 的 `pnpm test:visual:docker:update` 會在更新後列出變更的基準圖，並於 `screenshots/Chromium/changes/` 產生 before／after／diff；CI 也會在 PR 上與目標分支比較並上傳 `visual-baseline-changes` artifact。
 3. **審查**：GitHub 的 PR 頁面可以直接比對前後圖片，審查者確認變化是刻意的。
 4. **非刻意的差異**：CI 失敗並保留 failed / diff 圖（建議以 artifact 上傳），開發者下載查看哪裡被改壞。
 
@@ -111,7 +112,7 @@ pnpm wtr --update-visual-baseline
 | 設定檔   | `web-test-runner.visual.config.mjs`：固定視窗 1024×768、`deviceScaleFactor: 1`、`reducedMotion: 'reduce'`；**非 Linux 環境直接拒絕執行** |
 | 本機執行 | `pnpm test:visual:docker`（比對）、`pnpm test:visual:docker:update`（更新基準圖），映像版本自動取自已安裝的 playwright                   |
 | CI       | `Visual Regression` job 在相同映像的 container 中執行，失敗時上傳 `visual-regression-diffs` artifact                                     |
-| 基準圖   | `screenshots/chromium/baseline/`（18 張，約 136 KB）；`failed/` 已加入 `.gitignore`                                                      |
+| 基準圖   | `screenshots/Chromium/baseline/`（18 張，約 136 KB）；`failed/` 已加入 `.gitignore`                                                      |
 
 ### 實作時踩到的兩個坑
 

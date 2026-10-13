@@ -43,6 +43,7 @@ export default {
   files: [
     'src/components/**/*.test.ts',
     'src/internal/**/*.test.ts',
+    'src/*.test.ts',
     '!src/components/**/*.visual.test.ts',
   ],
   nodeResolve: true,
@@ -77,7 +78,7 @@ export default {
     reportDir: 'coverage',
     // TASK-110: lcov 供 Codecov 上傳，text-summary 顯示於 CI 日誌
     reporters: ['lcov', 'text-summary'],
-    include: ['src/components/**/*.ts', 'src/internal/**/*.ts'],
+    include: ['src/components/**/*.ts', 'src/internal/**/*.ts', 'src/theme.ts'],
     exclude: [
       'src/components/**/*.test.ts',
       'src/components/**/*.types.ts',

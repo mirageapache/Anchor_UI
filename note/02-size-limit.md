@@ -117,6 +117,7 @@ Phase 1 結束時的實測參考（gzip、不含 `lit`）：
   - **門禁**：放在既有的 `Build & Package Verification` job（已是分支保護的必要檢查），超出預算就無法合併，不需要另外修改 Ruleset。
   - **PR 報告**：獨立的 `Size Report` job 使用 `andresz1/size-limit-action` 留言比較差異，僅供參考（步驟設為 `continue-on-error`）。
     此 action 會在目標分支上也執行 size-limit，**目標分支尚未導入 size-limit 時（首次導入的 PR）無法比較而失敗**，屬預期情況。
+  - 只有在「目標分支尚未導入 size-limit」時才容許報告失敗（並在 CI 顯示警告）；目標分支已導入後，報告失敗會讓 job 失敗，不再默默略過。fork PR 沒有留言權限，同樣會顯示警告。
 
 建立時的基準（gzip）：
 

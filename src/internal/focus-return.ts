@@ -9,8 +9,8 @@
  */
 
 /** 穿透 Shadow DOM，取得實際聚焦的元素 */
-export function getDeepActiveElement(root: Document | ShadowRoot = document): Element | null {
-  let active = root.activeElement;
+export function getDeepActiveElement(): Element | null {
+  let active = document.activeElement;
   while (active?.shadowRoot?.activeElement) {
     active = active.shadowRoot.activeElement;
   }

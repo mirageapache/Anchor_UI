@@ -127,27 +127,68 @@ import '@anchor-ui/core/tooltip';
 
 ## 常用命令 (Scripts)
 
-| 指令                             | 說明                                                                                         |
-| -------------------------------- | -------------------------------------------------------------------------------------------- |
-| `pnpm build`                     | 編譯專案產物 (`dist/index.js`, `dist/index.d.ts`, `dist/styles.css`)                         |
-| `pnpm verify:package`            | 驗證建置產物的 Tree-shaking、`exports` / `sideEffects` 與發布內容（需先 build）              |
-| `pnpm size`                      | 以 size-limit 檢查各元件入口的 gzip 體積是否超出預算（需先 build，設定見 `.size-limit.mjs`） |
-| `pnpm test:visual:docker`        | 在 Playwright 官方 Docker 映像中執行視覺回歸測試（淺色／深色主題截圖比對）                   |
-| `pnpm release:verify`            | 檢查版號是否為合法 SemVer；加上 `--tag v<版號>` 時檢查與 tag 一致                            |
-| `pnpm release:pack`              | 發布預演：建置 → 套件驗證 → 體積 → 版號檢查 → 產出 tarball 至 `release/`                     |
-| `pnpm test:visual:docker:update` | 同上，但更新基準圖（`screenshots/chromium/baseline/`），刻意修改外觀時使用                   |
-| `pnpm storybook`                 | 啟動 Storybook 開發環境 (預設 port: 6006)                                                    |
-| `pnpm build-storybook`           | 建置 Storybook 靜態部署產物至 `storybook-static/`                                            |
-| `pnpm typecheck`                 | 執行 TypeScript 靜態型別檢驗 (`tsc --noEmit`)                                                |
-| `pnpm lint`                      | 執行 ESLint 檢查 TypeScript 與 Lit 語法                                                      |
-| `pnpm lint:fix`                  | 自動修復 ESLint 可修復錯誤                                                                   |
-| `pnpm stylelint`                 | 執行 Stylelint 檢查 SCSS 變數與樣式規範                                                      |
-| `pnpm stylelint:fix`             | 自動修復 Stylelint 樣式問題                                                                  |
-| `pnpm format:check`              | 檢查程式碼排版格式 (Prettier)                                                                |
-| `pnpm format`                    | 自動格式化所有代碼 (Prettier)                                                                |
-| `pnpm yalc:publish`              | 建置並發布至本機 yalc store                                                                  |
-| `pnpm yalc:push`                 | 建置並推送更新至所有已 `yalc add` 的專案                                                     |
-| `pnpm dev:yalc`                  | 監聽 `src/`，變更時自動建置並 `yalc push`                                                    |
+**建置與產物檢查**
+
+| 指令                  | 說明                                                                                                               |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `pnpm build`          | 編譯至 `dist/`：全量入口 `index.js`、各元件入口 `components/<name>/index.js`、型別定義、`styles.css`、`tokens.css` |
+| `pnpm verify:package` | 驗證建置產物的 `exports`／`sideEffects`、型別宣告、Tree-shaking 與發布內容（需先 build）                           |
+| `pnpm size`           | 以 size-limit 檢查各元件入口的 gzip 體積是否超出預算（需先 build，設定見 `.size-limit.mjs`）                       |
+| `pnpm sync:package`   | 依 `src/components` 重新產生 `package.json` 中元件的 `exports` 與 `sideEffects`（新增或移除元件後執行）            |
+| `pnpm check:versions` | 檢查 Playwright 映像與套件版本、pnpm 版本（`packageManager`）是否一致                                              |
+
+**測試**
+
+| 指令                                  | 說明                                                                                                      |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `pnpm test`                           | 元件與共用模組的單元、無障礙測試（`src/components`、`src/internal`；不含視覺回歸）                        |
+| `pnpm test:coverage`                  | 同上並產生覆蓋率報告（門檻：statements／functions／lines 85%、branches 75%）                              |
+| `pnpm test:a11y`                      | 只執行 `*.a11y.test.ts` 的 axe-core 無障礙檢測（需先 build）                                              |
+| `pnpm test:visual:docker`             | 在 Playwright 官方 Docker 映像中執行視覺回歸測試（淺色／深色主題截圖比對）                                |
+| `pnpm test:visual:docker:update`      | 同上，但更新基準圖（`screenshots/Chromium/baseline/`），並列出變更、產生 before／after／diff 供提交前檢視 |
+| `pnpm test:vue` / `pnpm test:angular` | Vue 3 / Angular 範例專案的整合測試（需先 build）                                                          |
+
+**發布**
+
+| 指令                  | 說明                                                                                      |
+| --------------------- | ----------------------------------------------------------------------------------------- |
+| `pnpm release:verify` | 檢查版號是否為合法 SemVer；`--tag v<版號>` 檢查與 tag 一致，`--all-tags` 檢查所有既有 tag |
+| `pnpm release:pack`   | 發布預演：建置 → 套件驗證 → 體積 → 版號檢查 → 產出 tarball 至 `release/`                  |
+
+**開發與程式碼品質**
+
+| 指令                                    | 說明                                                 |
+| --------------------------------------- | ---------------------------------------------------- |
+| `pnpm storybook`                        | 啟動 Storybook 開發環境 (預設 port: 6006)            |
+| `pnpm build-storybook`                  | 建置 Storybook 靜態部署產物至 `storybook-static/`    |
+| `pnpm typecheck`                        | 執行 TypeScript 靜態型別檢驗 (`tsc --noEmit`)        |
+| `pnpm lint` / `pnpm lint:fix`           | 執行 ESLint 檢查（及自動修復）TypeScript 與 Lit 語法 |
+| `pnpm stylelint` / `pnpm stylelint:fix` | 執行 Stylelint 檢查（及自動修復）SCSS 變數與樣式規範 |
+| `pnpm format:check` / `pnpm format`     | 檢查（及自動格式化）程式碼排版 (Prettier)            |
+| `pnpm yalc:publish`                     | 建置並發布至本機 yalc store                          |
+| `pnpm yalc:push`                        | 建置並推送更新至所有已 `yalc add` 的專案             |
+| `pnpm dev:yalc`                         | 監聽 `src/`，變更時自動建置並 `yalc push`            |
+
+-------------------------------- | -------------------------------------------------------------------------------------------- |
+| `pnpm build` | 編譯專案產物 (`dist/index.js`, `dist/index.d.ts`, `dist/styles.css`) |
+| `pnpm verify:package` | 驗證建置產物的 Tree-shaking、`exports` / `sideEffects` 與發布內容（需先 build） |
+| `pnpm size` | 以 size-limit 檢查各元件入口的 gzip 體積是否超出預算（需先 build，設定見 `.size-limit.mjs`） |
+| `pnpm test:visual:docker` | 在 Playwright 官方 Docker 映像中執行視覺回歸測試（淺色／深色主題截圖比對） |
+| `pnpm release:verify` | 檢查版號是否為合法 SemVer；加上 `--tag v<版號>` 時檢查與 tag 一致 |
+| `pnpm release:pack` | 發布預演：建置 → 套件驗證 → 體積 → 版號檢查 → 產出 tarball 至 `release/` |
+| `pnpm test:visual:docker:update` | 同上，但更新基準圖（`screenshots/Chromium/baseline/`），刻意修改外觀時使用 |
+| `pnpm storybook` | 啟動 Storybook 開發環境 (預設 port: 6006) |
+| `pnpm build-storybook` | 建置 Storybook 靜態部署產物至 `storybook-static/` |
+| `pnpm typecheck` | 執行 TypeScript 靜態型別檢驗 (`tsc --noEmit`) |
+| `pnpm lint` | 執行 ESLint 檢查 TypeScript 與 Lit 語法 |
+| `pnpm lint:fix` | 自動修復 ESLint 可修復錯誤 |
+| `pnpm stylelint` | 執行 Stylelint 檢查 SCSS 變數與樣式規範 |
+| `pnpm stylelint:fix` | 自動修復 Stylelint 樣式問題 |
+| `pnpm format:check` | 檢查程式碼排版格式 (Prettier) |
+| `pnpm format` | 自動格式化所有代碼 (Prettier) |
+| `pnpm yalc:publish` | 建置並發布至本機 yalc store |
+| `pnpm yalc:push` | 建置並推送更新至所有已 `yalc add` 的專案 |
+| `pnpm dev:yalc` | 監聽 `src/`，變更時自動建置並 `yalc push` |
 
 ---
 
