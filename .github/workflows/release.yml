@@ -1,0 +1,56 @@
+name: Release
+
+# TASK-205: 推送 v* tag 時，驗證版號與產物後建立 GitHub Release，並附上 npm pack 產出的 tarball。
+# Phase 4 導入 Changesets 前，測試專案以此 tarball（或 yalc）安裝；流程見 doc/anchor-ui-release-guide.md。
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Verify and publish GitHub Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 需要完整歷史以確認 tag 位於 main 上
+
+      - name: Ensure the tag points to a commit on main
+        run: |
+          git fetch origin main
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::tag ${GITHUB_REF_NAME} 指向的 commit 不在 main 上；版本必須從 main 發布"
+            exit 1
+          fi
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.26.0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 建置 → verify:package → size → 版號與 tag 一致性 → npm pack
+      - name: Build, verify and pack tarball
+        run: pnpm release:pack
+
+      - name: Create GitHub Release with tarball
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          flags="--generate-notes --verify-tag"
+          # 含 - 的版號（-alpha、-beta…）標記為預覽版
+          case "$TAG" in *-*) flags="$flags --prerelease" ;; esac
+          gh release create "$TAG" release/*.tgz --title "$TAG" $flags

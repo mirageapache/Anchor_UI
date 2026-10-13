@@ -21,6 +21,8 @@ Package manager is pnpm (workspace includes `examples/*`); Node version in `.nvm
   - `pnpm test:visual:docker` / `pnpm test:visual:docker:update` — visual regression (`*.visual.test.ts`, excluded from `pnpm test`) inside the official Playwright Docker image; baselines live in `screenshots/chromium/baseline/` and must only be generated there (the visual config refuses to run outside Linux). Requires Docker. Shared setup (fonts via `@fontsource`, tokens, animation freezing) is `src/test-utils/visual.ts`; a new component should get a `<name>.visual.test.ts` covering its variants in both themes.
 - `pnpm test:vue` / `pnpm test:angular` — integration tests in `examples/vue3` and `examples/angular` (vitest + happy-dom) that consume the library via `workspace:*`
 
+Releases follow `doc/anchor-ui-release-guide.md`: `package.json` `version` is the last released milestone and only changes in a release PR from `main` (`release/v<version>`, version bump only); after merging, an annotated `v<version>` tag on the merge commit triggers `.github/workflows/release.yml` (checks the tag is on `main`, runs `pnpm release:pack` incl. `scripts/verify-release.mjs` tag/version check, creates a GitHub Release with the tarball, prerelease when the version contains `-`); then merge `main` back into `develop`.
+
 Commits are enforced by commitlint (Conventional Commits; types: feat, fix, docs, style, refactor, perf, test, build, ci, chore, revert) and Husky + lint-staged on pre-commit.
 
 ## Architecture

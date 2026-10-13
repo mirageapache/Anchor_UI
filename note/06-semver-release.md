@@ -86,7 +86,21 @@ npm pack --dry-run       # 只列出會包含哪些檔案，不產出檔案
 - [ ] 以 tarball 安裝到 Vue 3 / Angular 範例專案，生產建置成功。
 - [ ] CHANGELOG（Phase 4 起由 Changesets 自動產生）記錄了這次的變更。
 
-## 7. Phase 4 之後：Changesets
+## 7. 在 Anchor UI 的實作（TASK-205）
+
+- **v0.1.0-alpha 的補記方式**：Phase 1 完成時 `package.json` 仍為 `0.0.1`。為了讓「tag 指向的程式碼就是 Phase 1」且「該 commit 的版號與 tag 一致」，
+  從 `main` 開 release PR（PR #2）只修改版號，合併後在合併 commit（`d4ea1dd`）建立 tag，再把 `main` 合併回 `develop`。
+  - 若直接在 Phase 1 的 commit 打 tag，版號會對不上；若在 `develop` 改版號打 tag，tag 會包含 Phase 2 進行中的內容——兩者都不理想。
+- **自動化**：推送 `v*` tag 後由 `.github/workflows/release.yml` 檢查 tag 位於 `main`、執行 `pnpm release:pack`（含 `scripts/verify-release.mjs` 的版號與 tag 一致性檢查），並建立附有 tarball 的 GitHub Release。
+- **v0.1.0-alpha 是手動發布的**：該 tag 指向的 commit 還沒有 `release.yml`，因此由人工在乾淨的 worktree 中建置、`npm pack` 並建立 Release。自 v0.2.0-beta 起改由 workflow 自動處理。
+- 完整流程見 [`doc/anchor-ui-release-guide.md`](../doc/anchor-ui-release-guide.md)。
+
+### 發布時踩到的坑
+
+- **Windows 路徑長度**：在暫存資料夾深處建立 worktree 建置時，Vite 因路徑超過 260 字元無法解析 `#module-sync-enabled` 而失敗；改到短路徑後成功。
+- **建置失敗時 `npm pack` 照樣產出 tarball**：當時差點發布一個沒有完整建置產物的 tarball。手動打包務必確認建置成功；`pnpm release:pack` 以 `&&` 串接可避免這個問題。
+
+## 8. Phase 4 之後：Changesets
 
 [Changesets](https://github.com/changesets/changesets) 把「這次變更屬於 MAJOR / MINOR / PATCH」記錄在 PR 中，合併後自動：
 

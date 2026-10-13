@@ -33,3 +33,6 @@ yalc.lock
 
 # 視覺回歸測試：只提交基準圖，失敗截圖與差異圖不納入版控
 screenshots/*/failed/
+
+# 發布用 tarball（pnpm release:pack 產出，由 GitHub Release 交付，不納入版控）
+release/

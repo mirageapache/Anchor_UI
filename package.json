@@ -55,6 +55,8 @@
     "build:tokens": "sass src/tokens/index.scss dist/tokens.css --style=compressed --no-source-map",
     "verify:package": "node scripts/verify-package.mjs",
     "size": "size-limit",
+    "release:verify": "node scripts/verify-release.mjs",
+    "release:pack": "pnpm build && pnpm verify:package && pnpm size && pnpm release:verify && node -e \"require('node:fs').mkdirSync('release', { recursive: true })\" && npm pack --ignore-scripts --pack-destination release",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "wtr",
