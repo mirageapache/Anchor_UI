@@ -1,6 +1,6 @@
 {
   "name": "@anchor-ui/core",
-  "version": "0.0.1",
+  "version": "0.1.0-alpha",
   "description": "Anchor UI - framework-agnostic Web Component library with modern Slate-Navy aesthetic",
   "type": "module",
   "types": "./dist/index.d.ts",
