@@ -35,7 +35,9 @@ Commits are enforced by commitlint (Conventional Commits; types: feat, fix, docs
 
 **Tooltip** is the most involved component: native Popover API (top layer) + `@floating-ui/dom` (`computePosition`/`autoUpdate`/flip/shift/arrow), emits cancelable `aui-show`/`aui-hide` and `aui-after-show`/`aui-after-hide` events. Custom events are prefixed `aui-`.
 
-**Tests** — run in real Chromium via web-test-runner with esbuild TS transform. A11y tests load `/dist/tokens.css` in a `<link>` so contrast checks use real tokens — **run `pnpm build` first** or color-contrast results will be wrong/missing.
+**Shared internals** — `src/internal/` holds non-exported helpers shared across components: `spinner`, `inactive-click`, and the overlay foundation for Modal/Alert/Toast/Drawer — `scroll-lock` (nested ref-count + scrollbar compensation), `focus-return` (deep `activeElement` through shadow roots), `top-layer` (`raisePopover`, a modal layer stack, and `followTopModal` which moves overlays such as the Toast viewport into the topmost modal's subtree, because a modal `<dialog>` makes everything outside it inert even when it is visually above). Page-global state lives on `globalThis` via `sharedState()` so multiple library copies agree. Tests sit next to them (`src/internal/*.test.ts`).
+
+**Tests** — run in real Chromium via web-test-runner with esbuild TS transform (Playwright's default `--hide-scrollbars` is disabled so scrollbar-dependent behaviour can be tested). A11y tests load `/dist/tokens.css` in a `<link>` so contrast checks use real tokens — **run `pnpm build` first** or color-contrast results will be wrong/missing.
 
 **Examples** — `examples/vue3` and `examples/angular` verify the custom elements work inside host frameworks (property/event binding); they depend on the built `dist/`.
 

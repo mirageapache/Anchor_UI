@@ -90,7 +90,7 @@ release(); // 關閉時
 
 ```ts
 /** 穿透 Shadow DOM，取得實際聚焦的元素 */
-export function deepActiveElement(): Element | null {
+export function getDeepActiveElement(): Element | null {
   let el = document.activeElement;
   while (el?.shadowRoot?.activeElement) {
     el = el.shadowRoot.activeElement;
@@ -100,7 +100,7 @@ export function deepActiveElement(): Element | null {
 
 /** 開啟浮層時呼叫；回傳「還原焦點」函式 */
 export function rememberFocus(): () => void {
-  const previous = deepActiveElement() as HTMLElement | null;
+  const previous = getDeepActiveElement() as HTMLElement | null;
   return () => {
     // 觸發元素可能已被移除（例如清單項目被刪除），此時不還原
     if (previous?.isConnected) previous.focus();
@@ -120,10 +120,21 @@ export function rememberFocus(): () => void {
 - 使用 `<dialog>.showModal()` 時，對話框以外的內容會自動變成 inert，**不需要自己寫焦點循環的程式**。
 - 若浮層不是 modal dialog（例如自行實作的抽屜），可以對主要內容加上 `inert` 屬性達到相同效果。
 
-## 5. 完成的樣子
+## 5. 在 Anchor UI 的實作（TASK-204）
 
-- `src/internal/` 下有 `scroll-lock`、`focus-return`（以及 Top Layer 相關工具），各自有單元測試，涵蓋：巢狀開啟計數、重複解除、觸發元素位於 Shadow DOM 內、觸發元素已被移除。
-- Modal、Alert、Toast 與 Phase 4 的 Drawer 直接使用這些模組，不重複實作。
+| 模組                           | 匯出                                                                           | 說明                                                                                               |
+| ------------------------------ | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| `src/internal/scroll-lock.ts`  | `lockScroll()`、`isScrollLocked()`                                             | 巢狀計數、捲軸補償、還原鎖定前的 inline 樣式；解除函式可重複呼叫                                   |
+| `src/internal/focus-return.ts` | `getDeepActiveElement()`、`rememberFocus()`                                    | 穿透多層 Shadow DOM；觸發元素已移除或原本無焦點時不處理                                            |
+| `src/internal/top-layer.ts`    | `raisePopover()`、`pushModalLayer()`、`getTopModalLayer()`、`followTopModal()` | 見 [04-top-layer.md](./04-top-layer.md) 第 6 節                                                    |
+| `src/internal/shared-state.ts` | `sharedState()`                                                                | 計數與堆疊存放在 `globalThis[Symbol.for('anchor-ui.<key>')]`，微前端載入多份元件庫時共用同一份狀態 |
+
+使用者：Modal（TASK-210）、Alert（TASK-211）、Toast（TASK-212）與 Phase 4 的 Drawer。
+
+### 測試時踩到的坑：headless 瀏覽器預設沒有捲軸
+
+Playwright 啟動 headless Chromium 時預設帶 `--hide-scrollbars`，捲軸寬度為 0，「捲軸補償」的測試因此**不論有沒有補償都會通過**（以突變測試發現）。
+解法：測試設定加上 `ignoreDefaultArgs: ['--hide-scrollbars']`，測試中以 `html::-webkit-scrollbar { width: 17px }` 固定捲軸寬度，並先斷言捲軸寬度確實為 17px 再驗證——前提不成立時測試會明確失敗，而不是默默通過。
 
 ## 參考資料
 

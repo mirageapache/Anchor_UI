@@ -40,7 +40,11 @@ function axNodePlugin() {
 
 export default {
   // 視覺回歸測試（*.visual.test.ts）只在固定的 Linux 容器中執行，見 web-test-runner.visual.config.mjs
-  files: ['src/components/**/*.test.ts', '!src/components/**/*.visual.test.ts'],
+  files: [
+    'src/components/**/*.test.ts',
+    'src/internal/**/*.test.ts',
+    '!src/components/**/*.visual.test.ts',
+  ],
   nodeResolve: true,
   plugins: [
     esbuildPlugin({
@@ -56,6 +60,8 @@ export default {
       launchOptions: {
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        // Playwright 預設以 --hide-scrollbars 隱藏捲軸；保留捲軸才能驗證背景捲動鎖定的捲軸寬度補償
+        ignoreDefaultArgs: ['--hide-scrollbars'],
       },
     }),
   ],

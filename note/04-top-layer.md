@@ -84,6 +84,21 @@ Toast 容器若是 dialog 以外的 popover，Modal 開啟期間的通知會「�
 | Modal / Alert     | `<dialog>.showModal()`：取得 Top Layer、背景 inert、ESC（`cancel` 事件）、`::backdrop` |
 | Toast             | `popover="manual"`；新通知時重新提升；**Modal 開啟時移入 modal 子樹**（見第 4 節）     |
 
+### 實作：`src/internal/top-layer.ts`（TASK-204）
+
+```ts
+// Modal 開啟時登記容器（必須位於 dialog 的 flat tree 子樹內），關閉時呼叫回傳的函式
+const pop = pushModalLayer(modalHost);
+
+// Toast Viewport：之後自動在「最上層 modal 的容器」與原位置之間移動
+const stop = followTopModal(viewport, { slot: 'overlay' });
+```
+
+- 移動時瀏覽器會關閉 popover，`followTopModal` 會在移動後重新開啟（並因此位於 Top Layer 最上層）。
+- 巢狀 modal 會跟隨最上層；全部關閉後回到原位置。
+- 已在 Chromium 驗證：Shadow DOM 中的 `<dialog>` 透過**具名 slot** 收容 light DOM 子元素，該元素位於 dialog 的 flat tree 子樹內，不會被 inert——這是 `<aui-modal>` 預計採用的作法。
+- `raisePopover(el)`：把已開啟的 popover 重新提升到最上層（先 hide 再 show）。
+
 ## 7. 常見陷阱
 
 - 以為放到 Top Layer 最上面就能互動——見第 4 節。
