@@ -82,6 +82,12 @@ export function raisePopover(element: HTMLElement): void {
 }
 
 /**
+ * `<aui-modal>` 在 dialog 內提供給外部浮層的具名 slot。
+ * 跟隨 modal 的浮層（如 Toast Viewport）以 `followTopModal(el, { slot: MODAL_OVERLAY_SLOT })` 移入。
+ */
+export const MODAL_OVERLAY_SLOT = 'overlay';
+
+/**
  * 登記一個已開啟的 modal 層，回傳移除函式（可重複呼叫）。
  *
  * **須在 `dialog.showModal()` 之後呼叫**：跟隨中的浮層會在登記時重新進入 Top Layer，

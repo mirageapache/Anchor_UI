@@ -10,7 +10,7 @@ import { listComponents } from './scripts/components.mjs';
 
 /** 各入口的體積基準（bytes，gzip；TASK-202 建立於 2026-10-09） */
 const BASELINES = {
-  index: 26976, // TASK-206～208 加入 Input、Field、Output 與 Segmented（原 20838）
+  index: 29790, // TASK-206～210 加入 Input、Field、Output、Segmented 與 Modal（原 20838）
   button: 3189,
   'icon-button': 16704, // 含相依的 Tooltip 與 @floating-ui/dom
   tag: 3390,
@@ -19,6 +19,7 @@ const BASELINES = {
   field: 18058, // 含相依的 Icon Button、Tooltip 與 @floating-ui/dom
   output: 2431,
   segmented: 3722,
+  modal: 4296,
 };
 
 const TOLERANCE = 0.1;

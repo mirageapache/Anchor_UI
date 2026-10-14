@@ -6,3 +6,4 @@ export * from './input/index.js';
 export * from './field/index.js';
 export * from './output/index.js';
 export * from './segmented/index.js';
+export * from './modal/index.js';

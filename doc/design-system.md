@@ -108,6 +108,9 @@
   --color-tooltip-text: #f8fafc; // Slate-50 (WCAG AAA)
   --color-tooltip-border: rgb(255 255 255 / 14%);
 
+  /* Backdrop (模態浮層遮罩：Modal、Alert、Drawer) */
+  --color-backdrop: rgb(15 23 42 / 65%); // Slate-900 65%
+
   /* ─── 語意與狀態色完整系統 (Semantic Status & Actions) ─── */
 
   /* 1. Danger (Red): 錯誤、刪除、危險操作 */
@@ -208,6 +211,9 @@
   --color-tooltip-bg: #1e293b; // Slate-800
   --color-tooltip-text: #f8fafc; // Slate-50 (WCAG AAA)
   --color-tooltip-border: rgb(255 255 255 / 18%);
+
+  /* Backdrop (深色頁面上需更深的遮罩才能與浮層區隔) */
+  --color-backdrop: rgb(2 6 23 / 75%); // Slate-950 75%
 
   /* ─── 語意與狀態色 (Dark Mode: 提升亮度確保清晰度與對比度) ─── */
 
@@ -384,6 +390,7 @@
   /* Elevation (陰影層級) */
   --shadow-sm: 0 1px 3px rgb(0 0 0 / 8%); // 互動元件懸停微抬升（Tag、Icon Button）
   --shadow-popover: 0 4px 12px rgb(0 0 0 / 28%); // 浮層氣泡（Tooltip）
+  --shadow-modal: 0 25px 50px -12px rgb(0 0 0 / 35%); // 模態對話框（Modal、Alert）
 }
 ```
 

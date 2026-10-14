@@ -27,6 +27,10 @@
       "types": "./dist/components/input/index.d.ts",
       "import": "./dist/components/input/index.js"
     },
+    "./modal": {
+      "types": "./dist/components/modal/index.d.ts",
+      "import": "./dist/components/modal/index.js"
+    },
     "./output": {
       "types": "./dist/components/output/index.d.ts",
       "import": "./dist/components/output/index.js"
@@ -59,6 +63,8 @@
     "./dist/components/icon-button/icon-button.js",
     "./dist/components/input/index.js",
     "./dist/components/input/input.js",
+    "./dist/components/modal/index.js",
+    "./dist/components/modal/modal.js",
     "./dist/components/output/index.js",
     "./dist/components/output/output.js",
     "./dist/components/segmented/index.js",

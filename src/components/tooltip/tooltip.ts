@@ -11,6 +11,7 @@ import {
   type Placement,
 } from '@floating-ui/dom';
 import { tooltipStyles } from './tooltip.styles.js';
+import { transitionTimeMs } from '../../internal/transition.js';
 import type { TooltipPlacement, TooltipTrigger } from './tooltip.types.js';
 
 let tooltipIdCounter = 0;
@@ -463,23 +464,7 @@ export class AuiTooltip extends LitElement {
         this.stopAutoUpdate();
         this.dispatchEvent(new CustomEvent('aui-after-hide', { bubbles: true, composed: true }));
       }
-    }, this.getTransitionTimeMs());
-  }
-
-  /**
-   * 浮層 transition 的最長「時長 + 延遲」（毫秒）。
-   * 由 --transition-base token 或 prefers-reduced-motion 決定，取代寫死的動畫時間。
-   */
-  private getTransitionTimeMs(): number {
-    const style = getComputedStyle(this.popupElement);
-    const toMs = (value: string): number => {
-      const amount = parseFloat(value);
-      if (Number.isNaN(amount)) return 0;
-      return value.trim().endsWith('ms') ? amount : amount * 1000;
-    };
-    const durations = style.transitionDuration.split(',').map(toMs);
-    const delays = style.transitionDelay.split(',').map(toMs);
-    return Math.max(0, ...durations.map((duration, i) => duration + delays[i % delays.length]));
+    }, transitionTimeMs(this.popupElement));
   }
 
   /**

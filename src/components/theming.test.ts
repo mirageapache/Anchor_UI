@@ -81,6 +81,13 @@ const cases: Case[] = [
     property: 'backgroundColor',
     token: '--color-brand-600',
   },
+  {
+    tag: 'aui-modal',
+    template: html`<aui-modal heading="Modal">Body</aui-modal>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.modal__panel')!,
+    property: 'backgroundColor',
+    token: '--color-base',
+  },
 ];
 
 /** 以探針元素把 token 值正規化為瀏覽器計算後的色值 */
@@ -125,7 +132,7 @@ describe('Phase 1 acceptance: Shadow DOM encapsulation & theming', () => {
         const hostile = document.createElement('style');
         hostile.textContent = `
           button, span, div, input, .btn, .btn--primary, .tag, .tag--brand, .tooltip__popup,
-          .icon-btn, .icon-btn--ghost, .control, .field__label, .output, .output--error, .segmented, .option {
+          .icon-btn, .icon-btn--ghost, .control, .field__label, .output, .output--error, .segmented, .option, .modal__panel {
             color: rgb(255, 0, 0) !important;
             background-color: rgb(255, 0, 0) !important;
           }
