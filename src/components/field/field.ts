@@ -6,12 +6,13 @@ import { fieldStyles } from './field.styles.js';
 import type { AuiIconButton } from '../icon-button/icon-button.js';
 import type { AuiInput } from '../input/input.js';
 import type { AuiOutput } from '../output/output.js';
+import type { AuiSegmented } from '../segmented/segmented.js';
 import '../icon-button/index.js';
 
 /** 可置於欄位內、接收標題與描述的控制項 */
-type FieldControl = AuiInput | AuiOutput;
+type FieldControl = AuiInput | AuiOutput | AuiSegmented;
 
-const CONTROL_TAGS = new Set(['aui-input', 'aui-output']);
+const CONTROL_TAGS = new Set(['aui-input', 'aui-output', 'aui-segmented']);
 
 const isInput = (control: FieldControl | null): control is AuiInput =>
   control?.localName === 'aui-input';
@@ -20,15 +21,15 @@ const isInput = (control: FieldControl | null): control is AuiInput =>
  * Anchor UI — Field 元件 (`<aui-field>`)
  *
  * 表單欄位容器：上方標題列（左側標題、右側快捷複製／清除按鈕），下方為控制項與次要描述。
- * 控制項為直接子層的 `<aui-input>` 或 `<aui-output>`：標題與描述會傳入控制項，
+ * 控制項為直接子層的 `<aui-input>`、`<aui-output>` 或 `<aui-segmented>`：標題與描述會傳入控制項，
  * 由其在自身 Shadow DOM 內完成無障礙關聯（IDREF 無法跨 Shadow DOM 邊界）；
- * 畫面上的標題與描述因此對輔助科技隱藏，避免重複朗讀。點擊標題會聚焦輸入框。
+ * 畫面上的標題與描述因此對輔助科技隱藏，避免重複朗讀。點擊標題會聚焦控制項。
  *
- * 欄位只註冊自己渲染的 `<aui-icon-button>`；控制項請另行載入（`@anchor-ui/core/input`、`@anchor-ui/core/output`）。
+ * 欄位只註冊自己渲染的 `<aui-icon-button>`；控制項請另行載入（`@anchor-ui/core/input`、`@anchor-ui/core/output`、`@anchor-ui/core/segmented`）。
  *
  * @element aui-field
  *
- * @slot - 欄位控制項，須為直接子層的 `<aui-input>` 或 `<aui-output>`
+ * @slot - 欄位控制項，須為直接子層的 `<aui-input>`、`<aui-output>` 或 `<aui-segmented>`
  * @slot actions - 標題列右側的自訂操作鈕（排在內建複製／清除鈕之前）
  *
  * @csspart head - 標題列容器

@@ -204,6 +204,14 @@ describe('AuiInput (<aui-input>)', () => {
       expect(new FormData(form).get('token')).to.equal('abc123');
     });
 
+    it('submits an empty value when never edited (like a native input)', async () => {
+      const form = await fixture<HTMLFormElement>(html`
+        <form><aui-input name="untouched"></aui-input></form>
+      `);
+      expect(new FormData(form).has('untouched')).to.be.true;
+      expect(new FormData(form).get('untouched')).to.equal('');
+    });
+
     it('updates the form value synchronously, before host input listeners run', async () => {
       const form = await fixture<HTMLFormElement>(html`
         <form><aui-input name="q"></aui-input></form>

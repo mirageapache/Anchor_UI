@@ -31,6 +31,10 @@
       "types": "./dist/components/output/index.d.ts",
       "import": "./dist/components/output/index.js"
     },
+    "./segmented": {
+      "types": "./dist/components/segmented/index.d.ts",
+      "import": "./dist/components/segmented/index.js"
+    },
     "./tag": {
       "types": "./dist/components/tag/index.d.ts",
       "import": "./dist/components/tag/index.js"
@@ -57,6 +61,8 @@
     "./dist/components/input/input.js",
     "./dist/components/output/index.js",
     "./dist/components/output/output.js",
+    "./dist/components/segmented/index.js",
+    "./dist/components/segmented/segmented.js",
     "./dist/components/tag/index.js",
     "./dist/components/tag/tag.js",
     "./dist/components/tooltip/index.js",

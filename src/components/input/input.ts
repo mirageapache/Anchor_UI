@@ -4,7 +4,7 @@ import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { live } from 'lit/directives/live.js';
 import { inputStyles } from './input.styles.js';
-import { findFormOwner } from '../../internal/form-owner.js';
+import { FormControlController } from '../../internal/form-control.js';
 import type { InputType } from './input.types.js';
 
 /**
@@ -35,14 +35,13 @@ export class AuiInput extends LitElement {
   /** 宣告為 form-associated custom element，透過 ElementInternals 參與表單 */
   static formAssociated = true;
 
-  /** 不支援 ElementInternals 的環境（happy-dom、舊版瀏覽器）為 null，改以隱藏 input 參與表單 */
-  private readonly internals: ElementInternals | null;
+  /** 表單參與（ElementInternals 或隱藏 input 退回方案） */
+  private readonly formControl = new FormControlController(this, () => this.formResetCallback());
 
-  /** 退回方案：放在 light DOM、隨表單提交的隱藏 input */
-  private fallbackInput: HTMLInputElement | null = null;
-
-  /** 退回方案：監聽 reset 事件的表單 */
-  private fallbackForm: HTMLFormElement | null = null;
+  /** 不支援 ElementInternals 的環境（happy-dom、舊版瀏覽器）為 null */
+  private get internals(): ElementInternals | null {
+    return this.formControl.internals;
+  }
 
   private currentValue = '';
 
@@ -170,30 +169,11 @@ export class AuiInput extends LitElement {
   @property({ type: String })
   autocomplete?: string;
 
-  constructor() {
-    super();
-    this.internals = typeof this.attachInternals === 'function' ? this.attachInternals() : null;
-  }
-
-  override connectedCallback(): void {
-    super.connectedCallback();
-    if (!this.internals) {
-      this.fallbackForm = findFormOwner(this);
-      this.fallbackForm?.addEventListener('reset', this.handleFallbackReset);
-    }
-  }
-
-  override disconnectedCallback(): void {
-    super.disconnectedCallback();
-    this.fallbackForm?.removeEventListener('reset', this.handleFallbackReset);
-    this.fallbackForm = null;
-  }
-
   /**
    * 所屬的表單（包含以 `form` 屬性指定的外部表單）
    */
   get form(): HTMLFormElement | null {
-    return this.internals ? this.internals.form : findFormOwner(this);
+    return this.formControl.form;
   }
 
   /**
@@ -274,7 +254,7 @@ export class AuiInput extends LitElement {
   private applyValue(next: string): void {
     const previous = this.currentValue;
     this.currentValue = String(next ?? '');
-    this.internals?.setFormValue(this.currentValue);
+    this.formControl.setValue(this.currentValue);
     this.requestUpdate('value', previous);
   }
 
@@ -290,29 +270,6 @@ export class AuiInput extends LitElement {
       this.internals.setValidity(control.validity, control.validationMessage, control);
     }
   }
-
-  /** 退回方案：以 light DOM 的隱藏 input 帶出 name / value */
-  private syncFallbackInput(): void {
-    if (this.internals) return;
-    if (!this.name) {
-      this.fallbackInput?.remove();
-      this.fallbackInput = null;
-      return;
-    }
-    const input = (this.fallbackInput ??= document.createElement('input'));
-    input.type = 'hidden';
-    input.name = this.name;
-    input.value = this.value;
-    input.disabled = this.disabled;
-    const formId = this.getAttribute('form');
-    if (formId) input.setAttribute('form', formId);
-    else input.removeAttribute('form');
-    if (input.parentNode !== this) this.append(input);
-  }
-
-  private handleFallbackReset = () => {
-    this.formResetCallback();
-  };
 
   private handleInput = (event: Event) => {
     this.value = (event.target as HTMLInputElement | HTMLTextAreaElement).value;
@@ -334,7 +291,6 @@ export class AuiInput extends LitElement {
 
   override updated(): void {
     this.syncValidity();
-    this.syncFallbackInput();
   }
 
   override render() {

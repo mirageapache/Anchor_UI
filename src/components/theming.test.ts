@@ -70,6 +70,17 @@ const cases: Case[] = [
     property: 'backgroundColor',
     token: '--color-output-bg',
   },
+  {
+    tag: 'aui-segmented',
+    template: html`<aui-segmented
+      label="Mode"
+      .options=${[{ value: 'a', label: 'A' }]}
+      value="a"
+    ></aui-segmented>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.option')!,
+    property: 'backgroundColor',
+    token: '--color-brand-600',
+  },
 ];
 
 /** 以探針元素把 token 值正規化為瀏覽器計算後的色值 */
@@ -114,7 +125,7 @@ describe('Phase 1 acceptance: Shadow DOM encapsulation & theming', () => {
         const hostile = document.createElement('style');
         hostile.textContent = `
           button, span, div, input, .btn, .btn--primary, .tag, .tag--brand, .tooltip__popup,
-          .icon-btn, .icon-btn--ghost, .control, .field__label, .output, .output--error {
+          .icon-btn, .icon-btn--ghost, .control, .field__label, .output, .output--error, .segmented, .option {
             color: rgb(255, 0, 0) !important;
             background-color: rgb(255, 0, 0) !important;
           }

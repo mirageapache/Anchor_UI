@@ -3,6 +3,7 @@ import { html } from 'lit';
 import '../components/field/index.js';
 import '../components/input/index.js';
 import '../components/output/index.js';
+import '../components/segmented/index.js';
 import '../components/button/index.js';
 
 interface FieldStoryArgs {
@@ -124,7 +125,7 @@ export const InputToOutput: Story = {
     const convert = (event: Event) => {
       const root = (event.target as HTMLElement).closest('.demo')!;
       const input = root.querySelector('aui-input')!;
-      const mode = root.querySelector<HTMLSelectElement>('select')!.value;
+      const mode = root.querySelector('aui-segmented')!.value;
       const output = root.querySelector('aui-output')!;
       if (!input.value) {
         output.value = '';
@@ -145,10 +146,15 @@ export const InputToOutput: Story = {
         @input=${convert}
         @change=${convert}
       >
-        <select aria-label="轉換模式" style="align-self: flex-start;">
-          <option value="encode">編碼</option>
-          <option value="decode">解碼</option>
-        </select>
+        <aui-field label="Mode">
+          <aui-segmented
+            .options=${[
+              { value: 'encode', label: '編碼' },
+              { value: 'decode', label: '解碼' },
+            ]}
+            value="encode"
+          ></aui-segmented>
+        </aui-field>
         <aui-field label="Input" clearable>
           <aui-input multiline placeholder="輸入文字…"></aui-input>
         </aui-field>
