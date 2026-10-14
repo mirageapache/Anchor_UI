@@ -25,7 +25,7 @@
   - [4.3 圖示操作鈕 (Icon Buttons: Copy & Download)](#43-圖示操作鈕-icon-buttons)
   - [4.4 標籤系統 (Category Tags & Badges)](#44-標籤系統-category-tags--badges)
   - [4.5 輸入框與表單欄位 (Inputs & Field Layouts)](#45-輸入框與表單欄位-inputs--field-layouts)
-  - [4.6 輸出框與程式碼檢視 (Output Rows & Code View)](#46-輸出框與程式碼檢視-output-rows--code-view)
+  - [4.6 輸出框與程式碼檢視 (Output & Code View)](#46-輸出框與程式碼檢視-output--code-view)
 - [五、複合型與浮層元件規範 (Molecules, Organisms & Overlays)](#五複合型與浮層元件規範-molecules-organisms--overlays)
   - [5.1 卡片 (Card & Responsive Grid)](#51-卡片-card)
   - [5.2 拖放檔案上傳區 (Dropzone)](#52-拖放檔案上傳區-dropzone)
@@ -92,6 +92,7 @@
   --color-output-bg: #f0fdf4; // 成功輸出框淺綠底色 (Emerald-50)
   --color-output-placeholder: var(--color-text-muted);
   --color-error-bg: #fef2f2; // 錯誤輸出框淺紅底色 (Red-50)
+  --color-warning-bg: #fffbeb; // 警告輸出框淺琥珀底色 (Amber-50)
 
   /* Text (文字階層) */
   --color-text-primary: #0f172a; // 主標題、內文、輸入文字 (Slate-900)
@@ -196,6 +197,7 @@
   --color-output-bg: #064e3b; // 深翠綠底色
   --color-output-placeholder: #6ee7b7; // Emerald-300: 清晰翠綠提示 (WCAG AA 6.38:1)
   --color-error-bg: #450a0a; // 深紅底色
+  --color-warning-bg: #451a03; // 深琥珀底色 (Amber-950)
 
   /* Text */
   --color-text-primary: #f8fafc; // Slate-50
@@ -848,14 +850,14 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
 
 ---
 
-### 4.6 輸出框與程式碼檢視 (Output Rows & Code View)
+### 4.6 輸出框與程式碼檢視 (Output & Code View)
 
-#### 1. 單行/區塊結果列 (`.output-row`)
+#### 1. 單行/區塊結果輸出框 (`.output`)
 
 帶有 4px 左側語意邊條，成功為翠綠、錯誤為珊瑚紅：
 
 ```scss
-.output-row {
+.output {
   display: flex;
   align-items: center;
   min-height: 3.5rem;
@@ -864,6 +866,12 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
   border: 1px solid var(--color-success-border);
   border-left: 4px solid var(--color-success);
   border-radius: var(--radius-md);
+
+  &.is-warning {
+    background: var(--color-warning-bg);
+    border-color: var(--color-warning-border);
+    border-left-color: var(--color-warning);
+  }
 
   &.is-error {
     background: var(--color-error-bg);
@@ -880,7 +888,11 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
   line-height: var(--leading-normal);
   color: var(--color-success-text);
   white-space: pre-wrap;
-  word-break: break-all;
+  overflow-wrap: anywhere; // 優先於空白處換行，過長的 Hash／Base64／URL 才從中斷開
+
+  .is-warning & {
+    color: var(--color-warning-text);
+  }
 
   .is-error & {
     color: var(--color-danger-text);
@@ -1795,8 +1807,9 @@ packages/ui/ (或獨立 repo)
 │   │   ├── tag/                 # <aui-tag>
 │   │   ├── segmented/           # <aui-segmented>
 │   │   ├── kbd/                 # <aui-kbd>
-│   │   ├── input/               # <aui-input>, <aui-field>
-│   │   ├── output-row/          # <aui-output-row>
+│   │   ├── input/               # <aui-input>
+│   │   ├── field/               # <aui-field>
+│   │   ├── output/              # <aui-output>
 │   │   ├── tooltip/             # <aui-tooltip>
 │   │   ├── toast/               # <aui-toast>, ToastService
 │   │   ├── modal/               # <aui-modal> (通用彈窗外框容器)

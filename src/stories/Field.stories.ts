@@ -1,6 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/web-components';
 import { html } from 'lit';
 import '../components/field/index.js';
+import '../components/input/index.js';
+import '../components/output/index.js';
 import '../components/button/index.js';
 
 interface FieldStoryArgs {
@@ -96,15 +98,62 @@ export const CustomActions: Story = {
   render: () => {
     const generate = (event: Event) => {
       const field = (event.target as HTMLElement).closest('aui-field')!;
-      const input = field.querySelector('aui-input')!;
-      input.value = crypto.randomUUID();
-      input.dispatchEvent(new Event('input', { bubbles: true, composed: true }));
+      field.querySelector('aui-output')!.value = crypto.randomUUID();
     };
     return html`
       <div style="max-width: 480px;">
         <aui-field label="UUID" copyable>
           <aui-button slot="actions" size="sm" variant="ghost" @click=${generate}>產生</aui-button>
-          <aui-input readonly></aui-input>
+          <aui-output placeholder="按下「產生」建立 UUID"></aui-output>
+        </aui-field>
+      </div>
+    `;
+  },
+};
+
+export const InputToOutput: Story = {
+  name: 'Input → Output',
+  render: () => {
+    /** 以 UTF-8 進行 Base64 編碼 */
+    const encode = (text: string) => btoa(String.fromCharCode(...new TextEncoder().encode(text)));
+    /** 解碼失敗時顯示錯誤狀態 */
+    const decode = (text: string) => {
+      const bytes = Uint8Array.from(atob(text.trim()), (char) => char.charCodeAt(0));
+      return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    };
+    const convert = (event: Event) => {
+      const root = (event.target as HTMLElement).closest('.demo')!;
+      const input = root.querySelector('aui-input')!;
+      const mode = root.querySelector<HTMLSelectElement>('select')!.value;
+      const output = root.querySelector('aui-output')!;
+      if (!input.value) {
+        output.value = '';
+        return;
+      }
+      try {
+        output.value = mode === 'encode' ? encode(input.value) : decode(input.value);
+        output.status = 'success';
+      } catch {
+        output.value = '無效的 Base64 輸入';
+        output.status = 'error';
+      }
+    };
+    return html`
+      <div
+        class="demo"
+        style="display: flex; flex-direction: column; gap: 16px; max-width: 480px;"
+        @input=${convert}
+        @change=${convert}
+      >
+        <select aria-label="轉換模式" style="align-self: flex-start;">
+          <option value="encode">編碼</option>
+          <option value="decode">解碼</option>
+        </select>
+        <aui-field label="Input" clearable>
+          <aui-input multiline placeholder="輸入文字…"></aui-input>
+        </aui-field>
+        <aui-field label="Output" description="Base64 轉換結果" copyable>
+          <aui-output placeholder="結果會顯示在這裡"></aui-output>
         </aui-field>
       </div>
     `;

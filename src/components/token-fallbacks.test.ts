@@ -4,6 +4,7 @@ import { AuiButton } from './button/button.js';
 import { AuiField } from './field/field.js';
 import { AuiIconButton } from './icon-button/icon-button.js';
 import { AuiInput } from './input/input.js';
+import { AuiOutput } from './output/output.js';
 import { AuiTag } from './tag/tag.js';
 import { AuiTooltip } from './tooltip/tooltip.js';
 
@@ -101,6 +102,7 @@ describe('Design token fallbacks', () => {
     'aui-tooltip': AuiTooltip,
     'aui-input': AuiInput,
     'aui-field': AuiField,
+    'aui-output': AuiOutput,
   };
 
   for (const [tagName, ctor] of Object.entries(components)) {

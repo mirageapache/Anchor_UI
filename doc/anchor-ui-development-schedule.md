@@ -37,7 +37,7 @@
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
 │ Phase 2: 高頻互動控制項、核心回饋與視覺回歸 (Form Controls, Core Feedback & Visual QA)  │
 │ ├── 工程先行: Tree-shaking 建置架構 ──▶ size-limit 體積門禁 ──▶ 視覺回歸 ──▶ 浮層模組   │
-│ ├── 表單元件: [Input & Field] ──▶ [Output Row] ──▶ [Segmented Control] ──▶ 跨框架表單   │
+│ ├── 表單元件: [Input & Field] ──▶ [Output] ──▶ [Segmented Control] ──▶ 跨框架表單       │
 │ └── 浮層回饋: [Modal] ──▶ [Alert (基於 Modal)] ──▶ [Toast (Top Layer)]                  │
 └───────────────────────────────────────────┬─────────────────────────────────────────────┘
                                             │ 依賴輸入與操作原子
@@ -171,7 +171,7 @@
 | **TASK-204** | 工程 | **共用浮層基礎模組 (`src/internal/`)** [✅]                     | 供 Modal、Alert 與 Phase 4 Drawer 共用：<br>1. 背景捲動鎖定：支援巢狀開啟的計數，並補償捲軸寬度避免版面跳動。<br>2. 焦點返還：記錄開啟時實際聚焦的元素（穿透 Shadow DOM 逐層取得 `activeElement`），關閉後還原。<br>3. Top Layer 工具：堆疊順序（重新提升至最上層），以及 modal 開啟期間將浮層（如 Toast Viewport）移入最上層 modal 子樹、關閉後移回，避開 modal 造成的 inert 邊界。                                                                                                                                               |
 | **TASK-205** | 工程 | 版本與發布產物規範 [✅]                                         | 補記 Phase 1 里程碑 `v0.1.0-alpha` 並建立 Git Tag；Phase 2 結束時更新為 `v0.2.0-beta`。Phase 4 導入 Changesets 前，以 yalc 與 `npm pack` 產出之 tarball 交付測試專案。                                                                                                                                                                                                                                                                                                                                                             |
 | **TASK-206** | 元件 | `Input & Field` 元件 (`<aui-input>`, `<aui-field>`) [✅]        | 支援單行／多行等寬輸入；Focus 雙層光環；整合 Field 標題列（Label + 右側快捷複製／清除按鈕，沿用 `<aui-icon-button>`）。<br>**表單參與**：form-associated（`ElementInternals.setFormValue`、`required` 驗證、`formResetCallback`、`formDisabledCallback`），不支援時退回隱藏 input。<br>**標題關聯**：`<aui-field>` 將標題與描述傳入 `<aui-input>`，由 input 於自身 Shadow DOM 內完成 label／描述關聯。                                                                                                                             |
-| **TASK-207** | 元件 | `Output Row` 元件 (`<aui-output-row>`)                          | 結果展示列；左側 4px 垂直語意邊條（綠色成功／紅色錯誤）；等寬字體與長文字換行溢位防護；成功／錯誤狀態除顏色外亦以文字或 `role` 傳達。                                                                                                                                                                                                                                                                                                                                                                                              |
+| **TASK-207** | 元件 | `Output` 元件 (`<aui-output>`) [✅]                             | 結果輸出框；左側 4px 垂直語意邊條（綠色成功／琥珀警告／紅色錯誤）；等寬字體與長文字換行溢位防護；成功／警告／錯誤狀態除顏色外亦以文字或 `role` 傳達。                                                                                                                                                                                                                                                                                                                                                                              |
 | **TASK-208** | 元件 | `Segmented Control` 元件 (`<aui-segmented>`)                    | 膠囊軌道單選切換器；選中項高亮背景過渡；採 radiogroup 模式（roving tabindex：Tab 僅停留在選中項，左右方向鍵／Home／End 巡覽並自動選取）；form-associated，於 host 分派 `input` 與 `change`。                                                                                                                                                                                                                                                                                                                                       |
 | **TASK-209** | 整合 | 表單元件跨框架整合測試                                          | 於 `examples/vue3` 與 `examples/angular` 驗證：Vue 3 `v-model`（`input` 事件時讀取 host 的 `value`）與 Angular `ngModel` / `formControl`（搭配 `ngDefaultControl`）雙向同步；一併補驗 Phase 1 TASK-108 遺留的表單事件綁定（原規劃之 `(auiChange)` 改以原生 `(change)` 驗證）。                                                                                                                                                                                                                                                     |
 | **TASK-210** | 元件 | `Modal` 通用彈窗外框容器 (`<aui-modal>`)                        | 以原生 `<dialog>.showModal()` 實作（Top Layer、背景 inert、`::backdrop` 模糊遮罩）；大中小三種尺寸規格（sm/md/lg）；Header/Body/Footer 插槽；ESC 與點擊遮罩關閉（可配置）；使用 TASK-204 的捲動鎖定與焦點返還；分派可取消的 `aui-show` / `aui-hide` 與 `aui-after-show` / `aui-after-hide` 事件。                                                                                                                                                                                                                                  |
@@ -182,7 +182,7 @@
 
 #### 交付成果 (Deliverables)
 
-- 6 款高頻互動元件（Input & Field、Output Row、Segmented Control、Modal、Alert、Toast）與全域回饋單例服務（`ToastService`、`AlertService`）。
+- 6 款高頻互動元件（Input & Field、Output、Segmented Control、Modal、Alert、Toast）與全域回饋單例服務（`ToastService`、`AlertService`）。
 - 共用浮層基礎模組（捲動鎖定、焦點返還、Top Layer 堆疊）。
 - 支援個別元件入口與 Tree-shaking 的建置產物。
 - 雙主題截圖快照比對測試機制。
@@ -205,7 +205,7 @@
 - [ ] 表單元件可參與原生 `<form>`：提交時帶出 `name` / `value`、`required` 未填時阻擋提交、`form.reset()` 還原初始值、`<fieldset disabled>` 時一併停用。
 - [ ] `<aui-field>` 的標題與描述可被讀出為輸入框的無障礙名稱與描述（以瀏覽器實際計算的無障礙樹驗證）。
 - [ ] Segmented Control 可用方向鍵、Home、End 巡覽並選取，Tab 僅停留在選中項。
-- [ ] Output Row 長文字安全換行、無橫向溢位，成功／錯誤狀態不只依賴顏色傳達。
+- [ ] Output 長文字安全換行、無橫向溢位，成功／警告／錯誤狀態不只依賴顏色傳達。
 
 **浮層與回饋**
 

@@ -4,3 +4,4 @@ export * from './tooltip/index.js';
 export * from './icon-button/index.js';
 export * from './input/index.js';
 export * from './field/index.js';
+export * from './output/index.js';

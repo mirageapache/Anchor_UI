@@ -1,6 +1,8 @@
 import { expect, fixture, html } from '@open-wc/testing';
 import { getAxNode } from '../../test-utils/ax.js';
 import './index.js';
+import '../input/index.js';
+import '../output/index.js';
 import type { AuiField } from './field.js';
 import type { AuiInput } from '../input/input.js';
 
@@ -102,6 +104,25 @@ describe('AuiField Accessibility (<aui-field>)', () => {
       expect((await getAxNode(actionButton(field, 'clear-button'))).name).to.equal(
         '清除 Access token',
       );
+    });
+  });
+
+  describe('with <aui-output>', () => {
+    it('reads the field label and description as the output region name and description', async () => {
+      const field = await fixture<AuiField>(html`
+        <aui-field label="Encoded" description="Base64 of the input" copyable>
+          <aui-output value="SGk="></aui-output>
+        </aui-field>
+      `);
+      await settle(field);
+      const output = field.querySelector('aui-output')!;
+      await output.updateComplete;
+      const region = output.shadowRoot!.querySelector<HTMLElement>('[part="base"]')!;
+      const node = await getAxNode(region);
+      expect(node.role).to.equal('status');
+      expect(node.name).to.equal('Encoded');
+      expect(node.description).to.equal('Base64 of the input');
+      await expect(field).to.be.accessible();
     });
   });
 });

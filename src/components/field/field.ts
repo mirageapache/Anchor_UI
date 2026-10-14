@@ -5,20 +5,30 @@ import { ifDefined } from 'lit/directives/if-defined.js';
 import { fieldStyles } from './field.styles.js';
 import type { AuiIconButton } from '../icon-button/icon-button.js';
 import type { AuiInput } from '../input/input.js';
+import type { AuiOutput } from '../output/output.js';
 import '../icon-button/index.js';
-import '../input/index.js';
+
+/** 可置於欄位內、接收標題與描述的控制項 */
+type FieldControl = AuiInput | AuiOutput;
+
+const CONTROL_TAGS = new Set(['aui-input', 'aui-output']);
+
+const isInput = (control: FieldControl | null): control is AuiInput =>
+  control?.localName === 'aui-input';
 
 /**
  * Anchor UI — Field 元件 (`<aui-field>`)
  *
- * 表單欄位容器：上方標題列（左側標題、右側快捷複製／清除按鈕），下方為輸入框與次要描述。
- * 標題與描述會傳入直接子層的 `<aui-input>`，由 input 在自身 Shadow DOM 內完成無障礙關聯
- * （IDREF 無法跨 Shadow DOM 邊界）；畫面上的標題與描述因此對輔助科技隱藏，避免重複朗讀。
- * 點擊標題會聚焦輸入框。
+ * 表單欄位容器：上方標題列（左側標題、右側快捷複製／清除按鈕），下方為控制項與次要描述。
+ * 控制項為直接子層的 `<aui-input>` 或 `<aui-output>`：標題與描述會傳入控制項，
+ * 由其在自身 Shadow DOM 內完成無障礙關聯（IDREF 無法跨 Shadow DOM 邊界）；
+ * 畫面上的標題與描述因此對輔助科技隱藏，避免重複朗讀。點擊標題會聚焦輸入框。
+ *
+ * 欄位只註冊自己渲染的 `<aui-icon-button>`；控制項請另行載入（`@anchor-ui/core/input`、`@anchor-ui/core/output`）。
  *
  * @element aui-field
  *
- * @slot - 欄位輸入框，須為直接子層的 `<aui-input>`
+ * @slot - 欄位控制項，須為直接子層的 `<aui-input>` 或 `<aui-output>`
  * @slot actions - 標題列右側的自訂操作鈕（排在內建複製／清除鈕之前）
  *
  * @csspart head - 標題列容器
@@ -28,56 +38,57 @@ import '../input/index.js';
  * @csspart clear-button - 內建清除鈕（`<aui-icon-button>`）
  * @csspart description - 次要描述文字
  *
- * @fires aui-copy - 複製鈕成功複製輸入框內容時觸發（來自內建 `<aui-icon-button>`）
- * @fires aui-copy-error - 複製失敗或輸入框為空時觸發（來自內建 `<aui-icon-button>`）
+ * @fires aui-copy - 複製鈕成功複製控制項內容時觸發（來自內建 `<aui-icon-button>`）
+ * @fires aui-copy-error - 複製失敗或控制項為空時觸發（來自內建 `<aui-icon-button>`）
  */
 export class AuiField extends LitElement {
   static override styles = fieldStyles;
 
   /**
-   * 欄位標題（同時作為輸入框的無障礙名稱）
+   * 欄位標題（同時作為控制項的無障礙名稱）
    */
   @property({ type: String })
   label = '';
 
   /**
-   * 次要描述（同時作為輸入框的無障礙描述）
+   * 次要描述（同時作為控制項的無障礙描述）
    */
   @property({ type: String })
   description = '';
 
   /**
-   * 是否顯示複製鈕（複製輸入框目前的值）
+   * 是否顯示複製鈕（複製控制項目前的值）
    */
   @property({ type: Boolean, reflect: true })
   copyable = false;
 
   /**
-   * 是否顯示清除鈕（清空輸入框並分派 input / change；輸入框停用或唯讀時停用）
+   * 是否顯示清除鈕（清空輸入框並分派 input / change）；
+   * 輸入框停用、唯讀，或控制項不是 `<aui-input>` 時停用
    */
   @property({ type: Boolean, reflect: true })
   clearable = false;
 
-  /** 目前關聯的輸入框 */
+  /** 目前關聯的控制項 */
   @state()
-  private control: AuiInput | null = null;
+  private control: FieldControl | null = null;
 
-  /** 輸入框是否停用或唯讀（決定清除鈕是否可用） */
+  /** 清除鈕是否停用 */
   @state()
-  private controlLocked = false;
+  private clearDisabled = true;
 
   @state()
   private hasSlottedActions = false;
 
   /** 觀察輸入框的 disabled / readonly 屬性，同步清除鈕狀態 */
-  private readonly controlObserver = new MutationObserver(() => this.syncControlLocked());
+  private readonly controlObserver = new MutationObserver(() => this.syncClearDisabled());
 
   override connectedCallback(): void {
     super.connectedCallback();
     if (this.control) {
       this.observeControl(this.control);
       // 斷開期間的屬性變化不會被觀察到，重新連接時補同步一次
-      this.syncControlLocked();
+      this.syncClearDisabled();
     }
   }
 
@@ -86,24 +97,25 @@ export class AuiField extends LitElement {
     this.controlObserver.disconnect();
   }
 
-  private observeControl(control: AuiInput): void {
+  private observeControl(control: FieldControl): void {
     this.controlObserver.observe(control, {
       attributes: true,
       attributeFilter: ['disabled', 'readonly'],
     });
   }
 
-  private syncControlLocked(): void {
+  private syncClearDisabled(): void {
     const control = this.control;
-    this.controlLocked = Boolean(control && (control.disabled || control.readOnly));
+    this.clearDisabled = !isInput(control) || control.disabled || control.readOnly;
   }
 
-  /** 從預設 slot 的元素中找出輸入框並建立關聯 */
+  /** 從預設 slot 的元素中找出控制項並建立關聯 */
   private linkControl(candidates: Element[]): void {
-    const next = candidates.find((el): el is AuiInput => el.localName === 'aui-input') ?? null;
+    const next =
+      candidates.find((el): el is FieldControl => CONTROL_TAGS.has(el.localName)) ?? null;
     if (next === this.control) return;
 
-    // 輸入框移出欄位時，撤回由欄位帶入的標題與描述
+    // 控制項移出欄位時，撤回由欄位帶入的標題與描述
     const previous = this.control;
     if (previous) {
       if (previous.label === this.label) previous.label = '';
@@ -113,7 +125,7 @@ export class AuiField extends LitElement {
     this.controlObserver.disconnect();
     this.control = next;
     if (next) this.observeControl(next);
-    this.syncControlLocked();
+    this.syncClearDisabled();
   }
 
   private handleDefaultSlotChange = (event: Event) => {
@@ -138,7 +150,7 @@ export class AuiField extends LitElement {
     this.control?.focus();
   };
 
-  /** 於點擊當下讀取輸入框的值，避免以程式設定 value 後複製到舊內容 */
+  /** 於點擊當下讀取控制項的值，避免以程式設定 value 後複製到舊內容 */
   private handleCopy = (event: Event) => {
     const button = event.currentTarget as AuiIconButton;
     button.copyValue = this.control?.value ?? '';
@@ -147,7 +159,7 @@ export class AuiField extends LitElement {
 
   private handleClear = () => {
     const control = this.control;
-    if (!control) return;
+    if (!isInput(control)) return;
     control.clear();
     control.focus();
   };
@@ -161,7 +173,7 @@ export class AuiField extends LitElement {
   }
 
   override render() {
-    // 只有在標題與描述確實已傳入輸入框時，才對輔助科技隱藏畫面上的文字
+    // 只有在標題與描述確實已傳入控制項時，才對輔助科技隱藏畫面上的文字
     const hiddenFromAt = this.control ? 'true' : undefined;
     const hasHead =
       Boolean(this.label) || this.copyable || this.clearable || this.hasSlottedActions;
@@ -206,7 +218,7 @@ export class AuiField extends LitElement {
                     preset="close"
                     tooltip="清除"
                     label=${`清除${target}`}
-                    ?disabled=${this.controlLocked}
+                    ?disabled=${this.clearDisabled}
                     @click=${this.handleClear}
                   ></aui-icon-button>
                 `

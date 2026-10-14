@@ -26,7 +26,7 @@ const toPosix = (path) => path.split('\\').join('/');
  */
 const ALLOWED_COMPONENT_DEPS = {
   'icon-button': ['tooltip'],
-  field: ['icon-button', 'input'],
+  field: ['icon-button'],
 };
 
 // ── 共用工具 ──
@@ -132,15 +132,19 @@ function allowedClosure(name, seen = new Set()) {
   return seen;
 }
 
-/** 原始碼中實際以相對路徑引用的其他元件（只看直接相依） */
+/**
+ * 原始碼中以相對路徑引用的其他元件（只看直接相依）。
+ * `import type` / `export type` 在編譯後會被移除，不構成執行期相依，不列入。
+ */
 function sourceComponentImports(name) {
   const dir = join(root, 'src/components', name);
   const deps = new Set();
+  const statement = /\b(?:import|export)\s+(type\s+)?(?:[\w*{}\s,]+?\s+from\s+)?'\.\.\/([\w-]+)\//g;
   for (const file of readdirSync(dir)) {
     if (!file.endsWith('.ts') || file.includes('.test.')) continue;
     const source = readFileSync(join(dir, file), 'utf-8');
-    for (const [, dep] of source.matchAll(/(?:from|import)\s+'\.\.\/([\w-]+)\//g)) {
-      if (components.includes(dep) && dep !== name) deps.add(dep);
+    for (const [, typeOnly, dep] of source.matchAll(statement)) {
+      if (!typeOnly && components.includes(dep) && dep !== name) deps.add(dep);
     }
   }
   return deps;

@@ -1,8 +1,11 @@
 import { expect, fixture, html, oneEvent } from '@open-wc/testing';
 import './index.js';
+import '../input/index.js';
+import '../output/index.js';
 import type { AuiField } from './field.js';
 import type { AuiInput } from '../input/input.js';
 import type { AuiIconButton } from '../icon-button/icon-button.js';
+import type { AuiOutput } from '../output/output.js';
 
 const part = <T extends Element = HTMLElement>(field: AuiField, name: string) =>
   field.shadowRoot!.querySelector<T>(`[part~="${name}"]`);
@@ -243,6 +246,47 @@ describe('AuiField (<aui-field>)', () => {
       input.disabled = false;
       await settle(field);
       expect(part<AuiIconButton>(field, 'clear-button')!.disabled).to.be.false;
+    });
+  });
+
+  describe('with <aui-output>', () => {
+    it('passes label and description to the output', async () => {
+      const field = await fixture<AuiField>(html`
+        <aui-field label="Result" description="Base64"
+          ><aui-output value="QQ=="></aui-output
+        ></aui-field>
+      `);
+      await settle(field);
+      const output = field.querySelector<AuiOutput>('aui-output')!;
+      expect(output.label).to.equal('Result');
+      expect(output.description).to.equal('Base64');
+      expect(part(field, 'label')!.getAttribute('aria-hidden')).to.equal('true');
+    });
+
+    it('copies the output value', async () => {
+      const field = await fixture<AuiField>(html`
+        <aui-field label="Result" copyable><aui-output value="initial"></aui-output></aui-field>
+      `);
+      await settle(field);
+      const output = field.querySelector<AuiOutput>('aui-output')!;
+      await withClipboard(async (written) => {
+        output.value = 'computed result';
+        const copied = oneEvent(field, 'aui-copy');
+        part<AuiIconButton>(field, 'copy-button')!.click();
+        await copied;
+        expect(written).to.deep.equal(['computed result']);
+      });
+    });
+
+    it('disables the clear button, since an output cannot be cleared by the user', async () => {
+      const field = await fixture<AuiField>(html`
+        <aui-field clearable><aui-output value="keep"></aui-output></aui-field>
+      `);
+      await settle(field);
+      const button = part<AuiIconButton>(field, 'clear-button')!;
+      expect(button.disabled).to.be.true;
+      button.click();
+      expect(field.querySelector<AuiOutput>('aui-output')!.value).to.equal('keep');
     });
   });
 });

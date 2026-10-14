@@ -27,6 +27,10 @@
       "types": "./dist/components/input/index.d.ts",
       "import": "./dist/components/input/index.js"
     },
+    "./output": {
+      "types": "./dist/components/output/index.d.ts",
+      "import": "./dist/components/output/index.js"
+    },
     "./tag": {
       "types": "./dist/components/tag/index.d.ts",
       "import": "./dist/components/tag/index.js"
@@ -51,6 +55,8 @@
     "./dist/components/icon-button/icon-button.js",
     "./dist/components/input/index.js",
     "./dist/components/input/input.js",
+    "./dist/components/output/index.js",
+    "./dist/components/output/output.js",
     "./dist/components/tag/index.js",
     "./dist/components/tag/tag.js",
     "./dist/components/tooltip/index.js",
