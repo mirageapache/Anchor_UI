@@ -43,7 +43,7 @@ Commits are enforced by commitlint (Conventional Commits; types: feat, fix, docs
 
 **Tests** — run in real Chromium via web-test-runner with esbuild TS transform (Playwright's default `--hide-scrollbars` is disabled so scrollbar-dependent behaviour can be tested). A11y tests load `/dist/tokens.css` in a `<link>` so contrast checks use real tokens — **run `pnpm build` first** or color-contrast results will be wrong/missing.
 
-**Examples** — `examples/vue3` and `examples/angular` verify the custom elements work inside host frameworks (property/event binding); they depend on the built `dist/`.
+**Examples** — `examples/vue3` and `examples/angular` verify the custom elements work inside host frameworks (property/event binding, and two-way form binding: Vue `v-model` works as-is, Angular needs `ngDefaultControl` on `[(ngModel)]` / `[formControl]`); they depend on the built `dist/`. They run on happy-dom, which has two gaps: it does not retarget events from shadow roots to the host (so IME-composition and `blur` behaviour that frameworks read from `event.target` is covered by the Chromium "framework binding contract" tests in `src/components/input/input.test.ts` instead), and zone.js cannot wrap its `MutationObserver` (its methods are non-enumerable), which `examples/angular/src/test-setup-happy-dom.ts` fixes before zone.js loads. Simulate typing by setting the inner `.control` value and dispatching a composed `input` event. Each example also has `tests/entries.spec.ts`, which imports only per-component entries (`@anchor-ui/core/field`, `/input`) and asserts which tags end up registered; it relies on Vitest's per-file isolation (a fresh environment and `customElements` registry per test file), so keep that isolation enabled.
 
 ## Conventions
 

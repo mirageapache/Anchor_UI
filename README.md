@@ -123,6 +123,24 @@ import '@anchor-ui/core/tooltip';
 - 型別可從全量入口或個別入口取得，例如 `import type { ButtonVariant } from '@anchor-ui/core/button'`。
 - `lit` 與 `@floating-ui/dom` 不打包進元件庫，由消費端的打包工具處理（`@floating-ui/dom` 隨套件相依自動安裝）。
 
+### 5. 在 Vue / Angular 中綁定表單元件
+
+`<aui-input>` 與 `<aui-segmented>` 會在 host 上分派原生 `input` / `change`（觸發時 `value` 已更新），可直接使用框架的雙向綁定：
+
+```html
+<!-- Vue 3：於 vite.config 以 compilerOptions.isCustomElement 排除 aui- 前綴後即可使用 v-model（含 .lazy 與輸入法組字） -->
+<aui-input v-model="text"></aui-input>
+<aui-segmented v-model="mode" :options="modes"></aui-segmented>
+
+<!-- Angular：自訂元素需加上 ngDefaultControl，才會套用內建的 DefaultValueAccessor -->
+<aui-input name="text" [(ngModel)]="text" ngDefaultControl required></aui-input>
+<aui-segmented [formControl]="mode" [options]="modes" ngDefaultControl></aui-segmented>
+```
+
+- Angular 的驗證器（如 `required`）、touched 狀態與 `control.disable()` 皆可運作；其他事件請直接綁定原生 `(change)` 或 `aui-` 前綴的自訂事件。
+- 與原生 `<input>` 相同，同一個元素不可同時設定 `value` 屬性與 `v-model`。
+- 以 Vitest + happy-dom 測試 Angular 時，zone.js 無法正確包裝 happy-dom 的 `MutationObserver`，需在 zone.js 之前載入修正（參考 `examples/angular/src/test-setup-happy-dom.ts`）。happy-dom 也不會把 Shadow DOM 內的事件 retarget 到 host，輸入法組字這類依賴 `event.target` 的行為請在真實瀏覽器驗證。
+
 ---
 
 ## 常用命令 (Scripts)

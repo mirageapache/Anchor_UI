@@ -191,6 +191,91 @@ describe('AuiInput (<aui-input>)', () => {
     });
   });
 
+  describe('framework binding contract (Vue v-model / Angular DefaultValueAccessor)', () => {
+    /**
+     * 依 Vue vModelText 與 Angular DefaultValueAccessor 的演算法，在 host 上綁定 model：
+     * 讀取 event.target.value、輸入法組字期間忽略 input、compositionend 時對 event.target 重新分派 input。
+     * 這依賴瀏覽器把 Shadow DOM 內的事件 retarget 到 host（happy-dom 不支援，因此於此以真實 Chromium 驗證）。
+     */
+    function bindModel(el: AuiInput): { model: string } {
+      const state = { model: el.value };
+      type Composing = EventTarget & { composing?: boolean; value: string };
+      el.addEventListener('compositionstart', (event) => {
+        (event.target as Composing).composing = true;
+      });
+      el.addEventListener('compositionend', (event) => {
+        const target = event.target as Composing;
+        if (!target.composing) return;
+        target.composing = false;
+        target.dispatchEvent(new Event('input'));
+      });
+      el.addEventListener('input', (event) => {
+        const target = event.target as Composing;
+        if (target.composing) return;
+        state.model = target.value;
+      });
+      return state;
+    }
+
+    it('retargets input and composition events to the host', async () => {
+      const el = await fixture<AuiInput>(html`<aui-input></aui-input>`);
+      const targets: Array<EventTarget | null> = [];
+      for (const type of ['compositionstart', 'input', 'compositionend']) {
+        el.addEventListener(type, (event) => targets.push(event.target));
+      }
+      const control = controlOf(el);
+      control.dispatchEvent(
+        new CompositionEvent('compositionstart', { bubbles: true, composed: true }),
+      );
+      control.value = 'x';
+      control.dispatchEvent(new InputEvent('input', { bubbles: true, composed: true }));
+      control.dispatchEvent(
+        new CompositionEvent('compositionend', { bubbles: true, composed: true }),
+      );
+      expect(targets).to.have.length(3);
+      expect(targets.every((target) => target === el)).to.be.true;
+    });
+
+    it('fires blur on the host when focus leaves (Angular touched state)', async () => {
+      const wrapper = await fixture<HTMLDivElement>(
+        html`<div><aui-input></aui-input><button>next</button></div>`,
+      );
+      const el = wrapper.querySelector<AuiInput>('aui-input')!;
+      const targets: Array<EventTarget | null> = [];
+      el.addEventListener('blur', (event) => targets.push(event.target));
+
+      el.focus();
+      wrapper.querySelector('button')!.focus();
+      expect(targets).to.deep.equal([el]);
+    });
+
+    it('lets a framework model wait for IME composition to finish', async () => {
+      const el = await fixture<AuiInput>(html`<aui-input value="Hello"></aui-input>`);
+      const binding = bindModel(el);
+      const control = controlOf(el);
+      const compose = (text: string) => {
+        control.value = text;
+        control.dispatchEvent(
+          new InputEvent('input', { bubbles: true, composed: true, isComposing: true }),
+        );
+      };
+
+      control.dispatchEvent(
+        new CompositionEvent('compositionstart', { bubbles: true, composed: true }),
+      );
+      compose('ㄋ');
+      compose('ㄋㄧˇ');
+      compose('你');
+      expect(binding.model, 'not synced while composing').to.equal('Hello');
+      expect(el.value, 'the element itself follows every input').to.equal('你');
+
+      control.dispatchEvent(
+        new CompositionEvent('compositionend', { bubbles: true, composed: true }),
+      );
+      expect(binding.model).to.equal('你');
+    });
+  });
+
   describe('form participation (ElementInternals)', () => {
     it('submits its name and value with the form', async () => {
       const form = await fixture<HTMLFormElement>(html`

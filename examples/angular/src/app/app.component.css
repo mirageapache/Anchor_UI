@@ -174,3 +174,14 @@
 :host-context([data-theme='dark']) .feedback-highlight {
   color: var(--color-brand-500);
 }
+
+.controls-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.controls-form aui-button {
+  align-self: flex-start;
+}
