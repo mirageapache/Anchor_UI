@@ -10,11 +10,13 @@ import { listComponents } from './scripts/components.mjs';
 
 /** 各入口的體積基準（bytes，gzip；TASK-202 建立於 2026-10-09） */
 const BASELINES = {
-  index: 20838,
+  index: 23957, // TASK-206 加入 Input 與 Field（原 20838）
   button: 3189,
   'icon-button': 16704, // 含相依的 Tooltip 與 @floating-ui/dom
   tag: 3390,
   tooltip: 10807, // 含 @floating-ui/dom（約 6 KB）
+  input: 3085,
+  field: 19798, // 含相依的 Input、Icon Button、Tooltip 與 @floating-ui/dom
 };
 
 const TOLERANCE = 0.1;

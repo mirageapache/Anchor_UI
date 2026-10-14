@@ -26,6 +26,7 @@ const toPosix = (path) => path.split('\\').join('/');
  */
 const ALLOWED_COMPONENT_DEPS = {
   'icon-button': ['tooltip'],
+  field: ['icon-button', 'input'],
 };
 
 // ── 共用工具 ──

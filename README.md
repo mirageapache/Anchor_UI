@@ -119,7 +119,7 @@ import '@anchor-ui/core/button';
 import '@anchor-ui/core/tooltip';
 ```
 
-- 元件依賴會自動帶入，例如 `@anchor-ui/core/icon-button` 會一併註冊 `<aui-tooltip>`。
+- 元件依賴會自動帶入，例如 `@anchor-ui/core/icon-button` 會一併註冊 `<aui-tooltip>`，`@anchor-ui/core/field` 會一併註冊 `<aui-input>` 與 `<aui-icon-button>`。
 - 型別可從全量入口或個別入口取得，例如 `import type { ButtonVariant } from '@anchor-ui/core/button'`。
 - `lit` 與 `@floating-ui/dom` 不打包進元件庫，由消費端的打包工具處理（`@floating-ui/dom` 隨套件相依自動安裝）。
 

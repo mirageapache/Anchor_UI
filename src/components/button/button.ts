@@ -2,6 +2,7 @@ import { LitElement, html, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { buttonStyles } from './button.styles.js';
+import { findFormOwner } from '../../internal/form-owner.js';
 import { interceptInactiveClick } from '../../internal/inactive-click.js';
 import { spinnerIcon, spinnerStyles } from '../../internal/spinner.js';
 import type { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
@@ -88,15 +89,7 @@ export class AuiButton extends LitElement {
    * 所屬的表單（包含以 `form` 屬性指定的外部表單）
    */
   get form(): HTMLFormElement | null {
-    if (this.internals) return this.internals.form;
-
-    const formId = this.getAttribute('form');
-    if (formId) {
-      const root = this.getRootNode() as Document | ShadowRoot;
-      const referenced = root.getElementById?.(formId);
-      return referenced instanceof HTMLFormElement ? referenced : null;
-    }
-    return this.closest('form');
+    return this.internals ? this.internals.form : findFormOwner(this);
   }
 
   private handleHostClick = (event: MouseEvent) => {

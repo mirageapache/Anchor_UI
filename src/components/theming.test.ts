@@ -6,7 +6,7 @@ import './index.js';
 /**
  * Phase 1 驗收條件：
  * 「元件內部樣式受 Shadow DOM 保護，同時能正常讀取外部全域 CSS Custom Properties（主題變數切換正常）」
- * 以四個元件逐一驗證：外部樣式不滲入、內部樣式不外洩、可由外部 token 覆寫、data-theme 切換生效。
+ * 以各元件逐一驗證（Phase 2 起新增的元件一併納入）：外部樣式不滲入、內部樣式不外洩、可由外部 token 覆寫、data-theme 切換生效。
  * 需先執行 pnpm build 產生 dist/tokens.css。
  */
 
@@ -46,6 +46,20 @@ const cases: Case[] = [
     tag: 'aui-icon-button',
     template: html`<aui-icon-button preset="copy" variant="ghost"></aui-icon-button>`,
     inner: (host) => host.shadowRoot!.querySelector('button')!,
+    property: 'color',
+    token: '--color-text-secondary',
+  },
+  {
+    tag: 'aui-input',
+    template: html`<aui-input label="Value"></aui-input>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.control')!,
+    property: 'backgroundColor',
+    token: '--color-base',
+  },
+  {
+    tag: 'aui-field',
+    template: html`<aui-field label="Field"><aui-input></aui-input></aui-field>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.field__label')!,
     property: 'color',
     token: '--color-text-secondary',
   },
@@ -92,8 +106,8 @@ describe('Phase 1 acceptance: Shadow DOM encapsulation & theming', () => {
       it('is not affected by page styles targeting its internal class names and elements', async () => {
         const hostile = document.createElement('style');
         hostile.textContent = `
-          button, span, div, .btn, .btn--primary, .tag, .tag--brand, .tooltip__popup,
-          .icon-btn, .icon-btn--ghost {
+          button, span, div, input, .btn, .btn--primary, .tag, .tag--brand, .tooltip__popup,
+          .icon-btn, .icon-btn--ghost, .control, .field__label {
             color: rgb(255, 0, 0) !important;
             background-color: rgb(255, 0, 0) !important;
           }
