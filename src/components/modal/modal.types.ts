@@ -8,6 +8,11 @@
 export type ModalSize = 'sm' | 'md' | 'lg';
 
 /**
+ * 對話框角色：一般對話框，或需要使用者立即回應的警示對話框（如 Alert 的確認）
+ */
+export type ModalRole = 'dialog' | 'alertdialog';
+
+/**
  * 關閉原因
  * - `escape`：按下 ESC（或瀏覽器的返回手勢等關閉要求）
  * - `backdrop`：點擊遮罩

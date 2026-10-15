@@ -7,7 +7,7 @@ import { rememberFocus } from '../../internal/focus-return.js';
 import { lockScroll } from '../../internal/scroll-lock.js';
 import { MODAL_OVERLAY_SLOT, pushModalLayer } from '../../internal/top-layer.js';
 import { transitionTimeMs } from '../../internal/transition.js';
-import type { ModalCloseReason, ModalHideDetail, ModalSize } from './modal.types.js';
+import type { ModalCloseReason, ModalHideDetail, ModalRole, ModalSize } from './modal.types.js';
 
 /** 預設為 true 的布林屬性：只有字串 "false" 視為 false（例如 close-on-escape="false"） */
 const defaultTrue = {
@@ -82,6 +82,18 @@ export class AuiModal extends LitElement {
   label = '';
 
   /**
+   * 無障礙描述（僅供螢幕閱讀器，不顯示）：內容位於其他 Shadow DOM、無法以 IDREF 關聯時使用（例如 Alert 的訊息）
+   */
+  @property({ type: String })
+  description = '';
+
+  /**
+   * 對話框角色；需要使用者立即回應的確認對話框使用 `alertdialog`
+   */
+  @property({ type: String, attribute: 'dialog-role' })
+  dialogRole: ModalRole = 'dialog';
+
+  /**
    * 是否允許按 ESC 關閉（HTML 中以 `close-on-escape="false"` 停用）。
    * 依瀏覽器規範，攔下 ESC 需要使用者互動：連續按 ESC 而期間沒有任何點擊或輸入時，
    * 瀏覽器仍會強制關閉（防止頁面困住使用者），此時 `aui-hide` 不可取消、原因為 `escape`。
@@ -119,9 +131,6 @@ export class AuiModal extends LitElement {
 
   /** 下一次關閉的原因（由觸發關閉的操作設定） */
   private pendingReason: ModalCloseReason = 'api';
-
-  /** 由元件自行呼叫 dialog.close() 時為 true，用於區分瀏覽器強制關閉 */
-  private closingInternally = false;
 
   /** 本次點擊是否從遮罩開始按下（避免從面板內拖曳到遮罩放開時誤關閉） */
   private pointerDownOnBackdrop = false;
@@ -200,7 +209,7 @@ export class AuiModal extends LitElement {
       this.dialog.showModal();
       // 須在 showModal() 之後登記（見 pushModalLayer 說明）
       this.popLayer = pushModalLayer(this);
-      this.applyInitialFocus();
+      this.applyInitialFocus(transitionId);
     }
 
     requestAnimationFrame(() => {
@@ -235,9 +244,7 @@ export class AuiModal extends LitElement {
     void this.updateComplete.then(() => {
       window.setTimeout(() => {
         if (transitionId !== this.transitionId) return;
-        this.closingInternally = true;
         this.dialog.close();
-        this.closingInternally = false;
         this.releaseResources({ restoreFocus: true });
         this.dispatchAfterHide(reason);
       }, transitionTimeMs(this.panel));
@@ -245,11 +252,25 @@ export class AuiModal extends LitElement {
   }
 
   /** 初始焦點：內容中帶 autofocus 的元素（不含巢狀 modal 內的），否則為面板本身 */
-  private applyInitialFocus(): void {
+  private applyInitialFocus(transitionId: number): void {
     const autofocus = [...this.querySelectorAll<HTMLElement>('[autofocus]')].find(
       (element) => element.closest('aui-modal') === this,
     );
-    (autofocus ?? this.panel).focus();
+    if (!autofocus) {
+      this.panel.focus();
+      return;
+    }
+    autofocus.focus();
+
+    // 自訂元素（如 <aui-button>）若與 modal 同時建立並開啟，首次渲染前內部還沒有可聚焦的元素：
+    // 先聚焦面板讓焦點進入對話框，渲染完成後再移到目標
+    const pending = (autofocus as Partial<{ updateComplete: Promise<unknown> }>).updateComplete;
+    if (pending && !autofocus.matches(':focus-within')) {
+      this.panel.focus();
+      void pending.then(() => {
+        if (transitionId === this.transitionId && this.isShown) autofocus.focus();
+      });
+    }
   }
 
   /** 依開啟時的相反順序釋放：先移除 modal 層，再解除捲動鎖定與返還焦點 */
@@ -279,9 +300,12 @@ export class AuiModal extends LitElement {
   /**
    * 瀏覽器自行關閉 dialog：例如沒有使用者互動時，Chrome 的關閉要求防濫用機制會忽略 cancel 的
    * preventDefault() 並直接關閉。此時無法取消，只同步狀態並釋放資源。
+   *
+   * 注意 close 事件是在 dialog.close() 之後才以 task 非同步分派：元件自行關閉後若已立即重新開啟，
+   * 收到的會是過期的事件，因此以 dialog 當下是否仍開啟判斷，而非呼叫 close() 時的旗標。
    */
   private handleNativeClose = () => {
-    if (this.closingInternally || (!this.isShown && !this.open)) return;
+    if (this.dialog.open || (!this.isShown && !this.open)) return;
     this.transitionId++;
     const wasShown = this.isShown;
     this.isShown = false;
@@ -331,6 +355,8 @@ export class AuiModal extends LitElement {
         class=${classMap({ modal: true, 'modal--visible': this.isVisible })}
         aria-labelledby=${ifDefined(this.heading ? 'title' : undefined)}
         aria-label=${ifDefined(ariaLabel)}
+        aria-describedby=${ifDefined(this.description ? 'description' : undefined)}
+        role=${ifDefined(this.dialogRole === 'alertdialog' ? 'alertdialog' : undefined)}
         @cancel=${this.handleCancel}
         @close=${this.handleNativeClose}
         @pointerdown=${this.handlePointerDown}
@@ -385,6 +411,11 @@ export class AuiModal extends LitElement {
           </div>
         </div>
         <slot name=${MODAL_OVERLAY_SLOT}></slot>
+        ${
+          this.description
+            ? html`<span id="description" class="sr-only">${this.description}</span>`
+            : nothing
+        }
       </dialog>
     `;
   }

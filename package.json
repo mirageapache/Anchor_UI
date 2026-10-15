@@ -11,6 +11,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./alert": {
+      "types": "./dist/components/alert/index.d.ts",
+      "import": "./dist/components/alert/index.js"
+    },
     "./button": {
       "types": "./dist/components/button/index.d.ts",
       "import": "./dist/components/button/index.js"
@@ -55,6 +59,8 @@
   "sideEffects": [
     "**/*.css",
     "./dist/index.js",
+    "./dist/components/alert/index.js",
+    "./dist/components/alert/alert.js",
     "./dist/components/button/index.js",
     "./dist/components/button/button.js",
     "./dist/components/field/index.js",

@@ -7,3 +7,4 @@ export * from './field/index.js';
 export * from './output/index.js';
 export * from './segmented/index.js';
 export * from './modal/index.js';
+export * from './alert/index.js';

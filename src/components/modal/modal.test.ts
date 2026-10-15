@@ -267,6 +267,20 @@ describe('AuiModal (<aui-modal>)', () => {
       expect(getTopModalLayer()).to.be.null;
     });
 
+    it('can be reopened right after closing (the native close event arrives later)', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Reopen at once"></aui-modal>`);
+      await openModal(el);
+      await closeWith(el, () => el.hide());
+      // close 事件以 task 非同步分派，會在重新開啟之後才抵達，不可被誤判為瀏覽器強制關閉
+      await openModal(el);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(el.open).to.be.true;
+      expect(dialogOf(el).open).to.be.true;
+      expect(isScrollLocked()).to.be.true;
+      await closeWith(el, () => el.hide());
+      expect(isScrollLocked()).to.be.false;
+    });
+
     it('releases the scroll lock and modal layer when removed while open', async () => {
       const el = await fixture<AuiModal>(html`<aui-modal heading="Removed"></aui-modal>`);
       await openModal(el);
@@ -390,6 +404,24 @@ describe('AuiModal (<aui-modal>)', () => {
       await openModal(el);
       expect(document.activeElement).to.equal(el.querySelector('#name'));
       await closeWith(el, () => el.hide());
+    });
+
+    it('focuses an [autofocus] custom element that renders after the modal opens', async () => {
+      // 與 AlertService 相同：元素建立後立即開啟，<aui-button> 尚未完成首次渲染
+      const el = document.createElement('aui-modal');
+      el.heading = 'Created and opened at once';
+      el.innerHTML = '<aui-button autofocus>OK</aui-button>';
+      el.open = true;
+      const shown = oneEvent(el, 'aui-after-show');
+      document.body.appendChild(el);
+      try {
+        await shown;
+        const inner = el.querySelector('aui-button')!.shadowRoot!.querySelector('button');
+        expect(getDeepActiveElement() === inner, 'focus is on the inner <button>').to.be.true;
+        await closeWith(el, () => el.hide());
+      } finally {
+        el.remove();
+      }
     });
 
     it('focuses the panel when there is no [autofocus] element', async () => {

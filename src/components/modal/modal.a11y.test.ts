@@ -95,6 +95,21 @@ describe('AuiModal Accessibility (<aui-modal>)', () => {
       await closeModal(el);
     });
 
+    it('supports a description and the alertdialog role', async () => {
+      const el = await fixture<AuiModal>(html`
+        <aui-modal
+          heading="Confirm"
+          description="Read me first"
+          dialog-role="alertdialog"
+        ></aui-modal>
+      `);
+      await openModal(el);
+      const node = await getAxNode(dialogOf(el));
+      expect(node.role).to.equal('alertdialog');
+      expect(node.description).to.equal('Read me first');
+      await closeModal(el);
+    });
+
     it('names the close button', async () => {
       const el = await fixture<AuiModal>(fullModal());
       await openModal(el);
