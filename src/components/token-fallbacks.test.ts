@@ -9,6 +9,7 @@ import { AuiModal } from './modal/modal.js';
 import { AuiOutput } from './output/output.js';
 import { AuiSegmented } from './segmented/segmented.js';
 import { AuiTag } from './tag/tag.js';
+import { AuiToast } from './toast/toast.js';
 import { AuiTooltip } from './tooltip/tooltip.js';
 
 /**
@@ -109,6 +110,7 @@ describe('Design token fallbacks', () => {
     'aui-segmented': AuiSegmented,
     'aui-modal': AuiModal,
     'aui-alert': AuiAlert,
+    'aui-toast': AuiToast,
   };
 
   for (const [tagName, ctor] of Object.entries(components)) {

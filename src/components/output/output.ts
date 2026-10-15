@@ -1,65 +1,13 @@
-import { LitElement, html, nothing, type TemplateResult } from 'lit';
+import { LitElement, html, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { outputStyles } from './output.styles.js';
 import type { OutputStatus } from './output.types.js';
+import { STATUS_ICONS, STATUS_TEXT } from '../../internal/status-icons.js';
 
-/** 各狀態的圖示與螢幕閱讀器前綴文字：狀態不只依賴顏色傳達 */
-const STATUS: Record<OutputStatus, { text: string; icon: TemplateResult }> = {
-  success: {
-    text: '成功',
-    icon: html`
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <circle cx="12" cy="12" r="10"></circle>
-        <polyline points="16 9 10.5 15 8 12.5"></polyline>
-      </svg>
-    `,
-  },
-  warning: {
-    text: '警告',
-    icon: html`
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <path
-          d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-        ></path>
-        <line x1="12" y1="9" x2="12" y2="13"></line>
-        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-      </svg>
-    `,
-  },
-  error: {
-    text: '錯誤',
-    icon: html`
-      <svg
-        viewBox="0 0 24 24"
-        fill="none"
-        stroke="currentColor"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <circle cx="12" cy="12" r="10"></circle>
-        <line x1="15" y1="9" x2="9" y2="15"></line>
-        <line x1="9" y1="9" x2="15" y2="15"></line>
-      </svg>
-    `,
-  },
-};
+/** 有效的狀態；其他值（例如 HTML 屬性寫錯）視為 success */
+const OUTPUT_STATUSES = new Set<OutputStatus>(['success', 'warning', 'error']);
 
 /**
  * Anchor UI — Output 元件 (`<aui-output>`)
@@ -113,7 +61,7 @@ export class AuiOutput extends LitElement {
 
   override render() {
     const hasValue = this.value !== '';
-    const status = STATUS[this.status] ? this.status : 'success';
+    const status: OutputStatus = OUTPUT_STATUSES.has(this.status) ? this.status : 'success';
 
     return html`
       <div
@@ -132,9 +80,9 @@ export class AuiOutput extends LitElement {
             hasValue
               ? html`
                   <span part="icon" class="output__icon" aria-hidden="true">
-                    ${STATUS[status].icon}
+                    ${STATUS_ICONS[status]}
                   </span>
-                  <span class="sr-only">${STATUS[status].text}：</span>
+                  <span class="sr-only">${STATUS_TEXT[status]}：</span>
                 `
               : nothing
           }

@@ -47,6 +47,10 @@
       "types": "./dist/components/tag/index.d.ts",
       "import": "./dist/components/tag/index.js"
     },
+    "./toast": {
+      "types": "./dist/components/toast/index.d.ts",
+      "import": "./dist/components/toast/index.js"
+    },
     "./tooltip": {
       "types": "./dist/components/tooltip/index.d.ts",
       "import": "./dist/components/tooltip/index.js"
@@ -77,6 +81,8 @@
     "./dist/components/segmented/segmented.js",
     "./dist/components/tag/index.js",
     "./dist/components/tag/tag.js",
+    "./dist/components/toast/index.js",
+    "./dist/components/toast/toast.js",
     "./dist/components/tooltip/index.js",
     "./dist/components/tooltip/tooltip.js",
     "./src/**/*.ts"
