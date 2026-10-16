@@ -265,6 +265,32 @@ describe('AuiButton (<aui-button>)', () => {
     });
   });
 
+  it('submits and resets even when form controls clobber form.reset / form.requestSubmit', async () => {
+    // 表單控制項的 id／name 會成為 form 的同名屬性，蓋過 form.reset() 等方法（DOM clobbering）
+    let submitted = 0;
+    let resets = 0;
+    const form = await fixture<HTMLFormElement>(html`
+      <form
+        @submit=${(event: Event) => {
+          event.preventDefault();
+          submitted++;
+        }}
+        @reset=${() => resets++}
+      >
+        <input name="requestSubmit" />
+        <aui-button id="reset" type="reset">Reset</aui-button>
+        <aui-button id="submit" type="submit">Submit</aui-button>
+      </form>
+    `);
+    expect(typeof form.reset, 'form.reset is clobbered').to.not.equal('function');
+    expect(typeof form.requestSubmit, 'form.requestSubmit is clobbered').to.not.equal('function');
+
+    form.querySelector<AuiButton>('#reset')!.click();
+    form.querySelector<AuiButton>('#submit')!.click();
+    expect(resets).to.equal(1);
+    expect(submitted).to.equal(1);
+  });
+
   it('is form-associated and exposes its form owner', async () => {
     const form = await fixture<HTMLFormElement>(html`
       <form><aui-button type="submit">Submit</aui-button></form>

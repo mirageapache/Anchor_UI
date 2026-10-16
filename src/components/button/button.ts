@@ -95,15 +95,17 @@ export class AuiButton extends LitElement {
   private handleHostClick = (event: MouseEvent) => {
     if (interceptInactiveClick(event, this.disabled || this.loading)) return;
 
-    // 與所屬 Form 表單原生連動
+    // 與所屬 Form 表單原生連動。
+    // 以 HTMLFormElement.prototype 呼叫：表單內 id／name 為 "reset"、"submit" 的控制項（包含這顆按鈕本身）
+    // 會以同名屬性蓋過 form.reset 等方法（DOM clobbering）
     const form = this.form;
     if (!form) return;
     if (this.type === 'submit') {
       event.preventDefault();
-      form.requestSubmit();
+      HTMLFormElement.prototype.requestSubmit.call(form);
     } else if (this.type === 'reset') {
       event.preventDefault();
-      form.reset();
+      HTMLFormElement.prototype.reset.call(form);
     }
   };
 

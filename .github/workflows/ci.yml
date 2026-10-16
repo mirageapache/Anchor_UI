@@ -84,9 +84,6 @@ jobs:
       - name: Check bundle size budgets (size-limit)
         run: pnpm size
 
-      - name: Build Storybook documentation
-        run: pnpm build-storybook
-
   size-report:
     name: Size Report (PR comment)
     timeout-minutes: 20
@@ -137,6 +134,39 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           package_manager: pnpm
           build_script: build
+
+  storybook:
+    name: Storybook Interaction Tests
+    timeout-minutes: 15
+    # TASK-213: 建置 Storybook，並以 Storybook Test Runner 執行所有 story（渲染冒煙測試）與 play function 互動情境。
+    # 與 Visual Regression 相同，於 Playwright 官方映像中執行：瀏覽器已預先安裝，版本與 package.json 的 playwright 一致。
+    needs: lint-and-typecheck
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        # 版本取自 package.json 的 packageManager 欄位（唯一來源）
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build Storybook
+        run: pnpm build-storybook
+
+      - name: Run Storybook interaction tests (play functions)
+        run: pnpm test:storybook
 
   visual:
     name: Visual Regression
