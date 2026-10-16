@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [main]
 
+# TASK-214：同一個 PR 推送新 commit 時取消仍在執行的舊 run，讓最新一次不必排隊等候（main 的 push 不取消）
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   lint-and-typecheck:
     name: Lint, Stylelint & Typecheck
@@ -13,16 +18,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0 # 需要既有 tag 以檢查版號一致性
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         # 版本取自 package.json 的 packageManager 欄位（唯一來源）
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7.0.0
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -46,6 +51,10 @@ jobs:
       - name: Check tool versions are in sync
         run: pnpm check:versions
 
+      # TASK-214：workflow 只有推上 GitHub 才會實際執行，以 actionlint 先檢查語法、job 相依、運算式與 shell 腳本
+      - name: Lint GitHub Actions workflows (actionlint)
+        run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7
+
       # package.json 版號為合法 SemVer，且每個既有 v* tag 所指 commit 的版號都與 tag 一致
       - name: Check release versions and existing tags
         run: pnpm release:verify --all-tags
@@ -58,14 +67,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         # 版本取自 package.json 的 packageManager 欄位（唯一來源）
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7.0.0
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -97,14 +106,14 @@ jobs:
       pull-requests: write
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         # 版本取自 package.json 的 packageManager 欄位（唯一來源）
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7.0.0
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -147,14 +156,14 @@ jobs:
       options: --ipc=host
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         # 版本取自 package.json 的 packageManager 欄位（唯一來源）
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7.0.0
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -180,14 +189,14 @@ jobs:
       options: --ipc=host
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         # 版本取自 package.json 的 packageManager 欄位（唯一來源）
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7.0.0
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -203,7 +212,7 @@ jobs:
 
       - name: Upload failed screenshots and diffs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: visual-regression-diffs
           path: screenshots/Chromium/failed/
@@ -222,7 +231,7 @@ jobs:
 
       - name: Upload baseline change images for review
         if: steps.baseline.outputs.changed == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: visual-baseline-changes
           path: screenshots/Chromium/changes/
@@ -237,14 +246,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         # 版本取自 package.json 的 packageManager 欄位（唯一來源）
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7.0.0
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'
@@ -269,16 +278,48 @@ jobs:
       - name: Run Angular integration tests
         run: pnpm test:angular
 
+      # TASK-214：範例專案的型別檢查與正式建置（Vue SFC 編譯、Angular AOT 模板編譯），
+      # 以建置後的 dist/ 驗證消費端的生產建置可通過
+      - name: Type-check framework examples
+        run: pnpm typecheck:examples
+
+      - name: Build framework examples for production
+        run: pnpm build:examples
+
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v7
         with:
           files: ./coverage/lcov.info
           token: ${{ secrets.CODECOV_TOKEN }}
           fail_ci_if_error: false
 
       - name: Upload coverage report artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7.0.1
         with:
           name: coverage-report
           path: coverage/
           retention-days: 14
+
+  time-budget:
+    name: CI Time Budget
+    # TASK-214：整體 PR CI 須在 8 分鐘內完成。所有 job 結束後把各 job 的耗時寫入 job summary，
+    # 超出預算時發出警告（不讓 CI 失敗，避免 runner 偶爾變慢就擋住合併）。
+    needs: [lint-and-typecheck, build, size-report, storybook, visual, test]
+    if: ${{ !cancelled() }}
+    timeout-minutes: 5
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          sparse-checkout: scripts/ci-time-report.mjs
+          sparse-checkout-cone-mode: false
+
+      - name: Report job durations against the 8-minute budget
+        run: node scripts/ci-time-report.mjs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CI_TIME_BUDGET_MINUTES: 8

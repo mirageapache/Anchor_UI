@@ -157,15 +157,16 @@ import '@anchor-ui/core/tooltip';
 
 **測試**
 
-| 指令                                  | 說明                                                                                                      |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `pnpm test`                           | 元件與共用模組的單元、無障礙測試（`src/components`、`src/internal`；不含視覺回歸）                        |
-| `pnpm test:coverage`                  | 同上並產生覆蓋率報告（門檻：statements／functions／lines 85%、branches 75%）                              |
-| `pnpm test:a11y`                      | 只執行 `*.a11y.test.ts` 的 axe-core 無障礙檢測（需先 build）                                              |
-| `pnpm test:visual:docker`             | 在 Playwright 官方 Docker 映像中執行視覺回歸測試（淺色／深色主題截圖比對）                                |
-| `pnpm test:visual:docker:update`      | 同上，但更新基準圖（`screenshots/Chromium/baseline/`），並列出變更、產生 before／after／diff 供提交前檢視 |
-| `pnpm test:vue` / `pnpm test:angular` | Vue 3 / Angular 範例專案的整合測試（需先 build）                                                          |
-| `pnpm test:storybook`                 | 以 Storybook Test Runner 執行所有 story 與 play function 互動情境（需先 `pnpm build-storybook`）          |
+| 指令                                              | 說明                                                                                                      |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `pnpm test`                                       | 元件與共用模組的單元、無障礙測試（`src/components`、`src/internal`；不含視覺回歸）                        |
+| `pnpm test:coverage`                              | 同上並產生覆蓋率報告（門檻：statements／functions／lines 85%、branches 75%）                              |
+| `pnpm test:a11y`                                  | 只執行 `*.a11y.test.ts` 的 axe-core 無障礙檢測（需先 build）                                              |
+| `pnpm test:visual:docker`                         | 在 Playwright 官方 Docker 映像中執行視覺回歸測試（淺色／深色主題截圖比對）                                |
+| `pnpm test:visual:docker:update`                  | 同上，但更新基準圖（`screenshots/Chromium/baseline/`），並列出變更、產生 before／after／diff 供提交前檢視 |
+| `pnpm test:vue` / `pnpm test:angular`             | Vue 3 / Angular 範例專案的整合測試（需先 build）                                                          |
+| `pnpm typecheck:examples` / `pnpm build:examples` | 範例專案的型別檢查與正式建置（Vue SFC 編譯、Angular AOT；需先 build）                                     |
+| `pnpm test:storybook`                             | 以 Storybook Test Runner 執行所有 story 與 play function 互動情境（需先 `pnpm build-storybook`）          |
 
 **發布**
 

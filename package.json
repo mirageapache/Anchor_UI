@@ -114,6 +114,8 @@
     "test:visual:docker:update": "node scripts/visual-docker.mjs --update",
     "test:vue": "pnpm --filter example-vue3 test",
     "test:angular": "pnpm --filter example-angular test",
+    "build:examples": "pnpm --filter example-vue3 --filter example-angular build",
+    "typecheck:examples": "pnpm --filter example-vue3 --filter example-angular typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "stylelint": "stylelint \"src/**/*.{css,scss}\"",
