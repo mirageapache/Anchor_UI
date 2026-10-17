@@ -1,6 +1,7 @@
 import { expect, fixture, html, oneEvent } from '@open-wc/testing';
 import { getAxNode } from '../../test-utils/ax.js';
 import './index.js';
+import '../button/index.js';
 import type { AuiTooltip } from './tooltip.js';
 
 describe('AuiTooltip Accessibility (<aui-tooltip>)', () => {
@@ -201,6 +202,31 @@ describe('AuiTooltip Accessibility (<aui-tooltip>)', () => {
       expect((await getAxNode(triggerBtn)).description).to.equal(
         'Existing hint System Status All services operational.',
       );
+    });
+
+    it('describes the focusable button inside an <aui-button> trigger', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Saves without publishing">
+          <aui-button>Save draft</aui-button>
+        </aui-tooltip>
+      `);
+      const button = el.querySelector('aui-button')!;
+      await button.updateComplete;
+      // 實際取得焦點並被螢幕閱讀器播報的是 <aui-button> Shadow DOM 內的 <button>
+      const inner = button.shadowRoot!.querySelector('button')!;
+
+      setTimeout(() => el.show());
+      await oneEvent(el, 'aui-after-show');
+      await button.updateComplete;
+      const node = await getAxNode(inner);
+      expect(node.name).to.equal('Save draft');
+      expect(node.description).to.equal('Saves without publishing');
+
+      setTimeout(() => el.hide());
+      await oneEvent(el, 'aui-hide');
+      await el.updateComplete;
+      await button.updateComplete;
+      expect((await getAxNode(inner)).description).to.equal('');
     });
 
     it('keeps the description in sync when content changes while open', async () => {

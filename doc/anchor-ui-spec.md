@@ -51,8 +51,9 @@ anchor-ui/
 │   │   ├── tag/                 # <aui-tag>
 │   │   ├── segmented/           # <aui-segmented>
 │   │   ├── kbd/                 # <aui-kbd>
-│   │   ├── input/               # <aui-input>, <aui-field>
-│   │   ├── output-row/          # <aui-output-row>
+│   │   ├── input/               # <aui-input>
+│   │   ├── field/               # <aui-field>
+│   │   ├── output/              # <aui-output>
 │   │   ├── tooltip/             # <aui-tooltip>
 │   │   ├── toast/               # <aui-toast>, ToastService
 │   │   ├── modal/               # <aui-modal> (通用彈窗外框容器)
@@ -99,7 +100,7 @@ anchor-ui/
 
 - **Phase 2 — 高頻互動控制項、核心回饋與視覺回歸 (6 款元件)**
   - 工程防線先行：調整建置架構使 Tree-shaking 生效（個別元件入口），導入 Bundle 體積門禁與視覺回歸測試（Visual Regression），並建立共用浮層基礎模組。
-  - 實作 Input & Field、Output Row、Segmented Control，可參與原生表單並與 Vue 3 / Angular 表單機制雙向綁定。
+  - 實作 Input & Field、Output、Segmented Control，可參與原生表單並與 Vue 3 / Angular 表單機制雙向綁定。
   - **實作獨立的 Modal（通用彈窗外框容器）與以 Modal 為基礎的 Alert（提示與確認對話框服務）**。
   - 實作全域 Toast 通知服務（`ToastService`），於 Top Layer 顯示，Modal 開啟期間移入 modal 子樹以確保仍可見、可操作且可被播報。
 

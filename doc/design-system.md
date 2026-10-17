@@ -25,7 +25,7 @@
   - [4.3 圖示操作鈕 (Icon Buttons: Copy & Download)](#43-圖示操作鈕-icon-buttons)
   - [4.4 標籤系統 (Category Tags & Badges)](#44-標籤系統-category-tags--badges)
   - [4.5 輸入框與表單欄位 (Inputs & Field Layouts)](#45-輸入框與表單欄位-inputs--field-layouts)
-  - [4.6 輸出框與程式碼檢視 (Output Rows & Code View)](#46-輸出框與程式碼檢視-output-rows--code-view)
+  - [4.6 輸出框與程式碼檢視 (Output & Code View)](#46-輸出框與程式碼檢視-output--code-view)
 - [五、複合型與浮層元件規範 (Molecules, Organisms & Overlays)](#五複合型與浮層元件規範-molecules-organisms--overlays)
   - [5.1 卡片 (Card & Responsive Grid)](#51-卡片-card)
   - [5.2 拖放檔案上傳區 (Dropzone)](#52-拖放檔案上傳區-dropzone)
@@ -92,6 +92,7 @@
   --color-output-bg: #f0fdf4; // 成功輸出框淺綠底色 (Emerald-50)
   --color-output-placeholder: var(--color-text-muted);
   --color-error-bg: #fef2f2; // 錯誤輸出框淺紅底色 (Red-50)
+  --color-warning-bg: #fffbeb; // 警告輸出框淺琥珀底色 (Amber-50)
 
   /* Text (文字階層) */
   --color-text-primary: #0f172a; // 主標題、內文、輸入文字 (Slate-900)
@@ -106,6 +107,9 @@
   --color-tooltip-bg: #0f172a; // Slate-900
   --color-tooltip-text: #f8fafc; // Slate-50 (WCAG AAA)
   --color-tooltip-border: rgb(255 255 255 / 14%);
+
+  /* Backdrop (模態浮層遮罩：Modal、Alert、Drawer) */
+  --color-backdrop: rgb(15 23 42 / 65%); // Slate-900 65%
 
   /* ─── 語意與狀態色完整系統 (Semantic Status & Actions) ─── */
 
@@ -196,6 +200,7 @@
   --color-output-bg: #064e3b; // 深翠綠底色
   --color-output-placeholder: #6ee7b7; // Emerald-300: 清晰翠綠提示 (WCAG AA 6.38:1)
   --color-error-bg: #450a0a; // 深紅底色
+  --color-warning-bg: #451a03; // 深琥珀底色 (Amber-950)
 
   /* Text */
   --color-text-primary: #f8fafc; // Slate-50
@@ -206,6 +211,9 @@
   --color-tooltip-bg: #1e293b; // Slate-800
   --color-tooltip-text: #f8fafc; // Slate-50 (WCAG AAA)
   --color-tooltip-border: rgb(255 255 255 / 18%);
+
+  /* Backdrop (深色頁面上需更深的遮罩才能與浮層區隔) */
+  --color-backdrop: rgb(2 6 23 / 75%); // Slate-950 75%
 
   /* ─── 語意與狀態色 (Dark Mode: 提升亮度確保清晰度與對比度) ─── */
 
@@ -382,6 +390,8 @@
   /* Elevation (陰影層級) */
   --shadow-sm: 0 1px 3px rgb(0 0 0 / 8%); // 互動元件懸停微抬升（Tag、Icon Button）
   --shadow-popover: 0 4px 12px rgb(0 0 0 / 28%); // 浮層氣泡（Tooltip）
+  --shadow-modal: 0 25px 50px -12px rgb(0 0 0 / 35%); // 模態對話框（Modal、Alert）
+  --shadow-toast: 0 10px 25px -5px rgb(0 0 0 / 15%); // 浮動通知卡片（Toast）
 }
 ```
 
@@ -848,14 +858,14 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
 
 ---
 
-### 4.6 輸出框與程式碼檢視 (Output Rows & Code View)
+### 4.6 輸出框與程式碼檢視 (Output & Code View)
 
-#### 1. 單行/區塊結果列 (`.output-row`)
+#### 1. 單行/區塊結果輸出框 (`.output`)
 
 帶有 4px 左側語意邊條，成功為翠綠、錯誤為珊瑚紅：
 
 ```scss
-.output-row {
+.output {
   display: flex;
   align-items: center;
   min-height: 3.5rem;
@@ -864,6 +874,12 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
   border: 1px solid var(--color-success-border);
   border-left: 4px solid var(--color-success);
   border-radius: var(--radius-md);
+
+  &.is-warning {
+    background: var(--color-warning-bg);
+    border-color: var(--color-warning-border);
+    border-left-color: var(--color-warning);
+  }
 
   &.is-error {
     background: var(--color-error-bg);
@@ -880,7 +896,11 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
   line-height: var(--leading-normal);
   color: var(--color-success-text);
   white-space: pre-wrap;
-  word-break: break-all;
+  overflow-wrap: anywhere; // 優先於空白處換行，過長的 Hash／Base64／URL 才從中斷開
+
+  .is-warning & {
+    color: var(--color-warning-text);
+  }
 
   .is-error & {
     color: var(--color-danger-text);
@@ -1795,8 +1815,9 @@ packages/ui/ (或獨立 repo)
 │   │   ├── tag/                 # <aui-tag>
 │   │   ├── segmented/           # <aui-segmented>
 │   │   ├── kbd/                 # <aui-kbd>
-│   │   ├── input/               # <aui-input>, <aui-field>
-│   │   ├── output-row/          # <aui-output-row>
+│   │   ├── input/               # <aui-input>
+│   │   ├── field/               # <aui-field>
+│   │   ├── output/              # <aui-output>
 │   │   ├── tooltip/             # <aui-tooltip>
 │   │   ├── toast/               # <aui-toast>, ToastService
 │   │   ├── modal/               # <aui-modal> (通用彈窗外框容器)

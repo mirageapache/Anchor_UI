@@ -11,17 +11,45 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./alert": {
+      "types": "./dist/components/alert/index.d.ts",
+      "import": "./dist/components/alert/index.js"
+    },
     "./button": {
       "types": "./dist/components/button/index.d.ts",
       "import": "./dist/components/button/index.js"
+    },
+    "./field": {
+      "types": "./dist/components/field/index.d.ts",
+      "import": "./dist/components/field/index.js"
     },
     "./icon-button": {
       "types": "./dist/components/icon-button/index.d.ts",
       "import": "./dist/components/icon-button/index.js"
     },
+    "./input": {
+      "types": "./dist/components/input/index.d.ts",
+      "import": "./dist/components/input/index.js"
+    },
+    "./modal": {
+      "types": "./dist/components/modal/index.d.ts",
+      "import": "./dist/components/modal/index.js"
+    },
+    "./output": {
+      "types": "./dist/components/output/index.d.ts",
+      "import": "./dist/components/output/index.js"
+    },
+    "./segmented": {
+      "types": "./dist/components/segmented/index.d.ts",
+      "import": "./dist/components/segmented/index.js"
+    },
     "./tag": {
       "types": "./dist/components/tag/index.d.ts",
       "import": "./dist/components/tag/index.js"
+    },
+    "./toast": {
+      "types": "./dist/components/toast/index.d.ts",
+      "import": "./dist/components/toast/index.js"
     },
     "./tooltip": {
       "types": "./dist/components/tooltip/index.d.ts",
@@ -35,12 +63,26 @@
   "sideEffects": [
     "**/*.css",
     "./dist/index.js",
+    "./dist/components/alert/index.js",
+    "./dist/components/alert/alert.js",
     "./dist/components/button/index.js",
     "./dist/components/button/button.js",
+    "./dist/components/field/index.js",
+    "./dist/components/field/field.js",
     "./dist/components/icon-button/index.js",
     "./dist/components/icon-button/icon-button.js",
+    "./dist/components/input/index.js",
+    "./dist/components/input/input.js",
+    "./dist/components/modal/index.js",
+    "./dist/components/modal/modal.js",
+    "./dist/components/output/index.js",
+    "./dist/components/output/output.js",
+    "./dist/components/segmented/index.js",
+    "./dist/components/segmented/segmented.js",
     "./dist/components/tag/index.js",
     "./dist/components/tag/tag.js",
+    "./dist/components/toast/index.js",
+    "./dist/components/toast/toast.js",
     "./dist/components/tooltip/index.js",
     "./dist/components/tooltip/tooltip.js",
     "./src/**/*.ts"
@@ -72,6 +114,8 @@
     "test:visual:docker:update": "node scripts/visual-docker.mjs --update",
     "test:vue": "pnpm --filter example-vue3 test",
     "test:angular": "pnpm --filter example-angular test",
+    "build:examples": "pnpm --filter example-vue3 --filter example-angular build",
+    "typecheck:examples": "pnpm --filter example-vue3 --filter example-angular typecheck",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "stylelint": "stylelint \"src/**/*.{css,scss}\"",
@@ -81,6 +125,7 @@
     "prepare": "husky",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
+    "test:storybook": "node scripts/test-storybook.mjs",
     "yalc:publish": "pnpm build && yalc publish --no-scripts",
     "yalc:push": "pnpm build && yalc push --no-scripts",
     "dev:yalc": "node scripts/yalc-watch.mjs"
@@ -106,7 +151,10 @@
     "@open-wc/testing": "^5.0.0",
     "@size-limit/preset-small-lib": "^14.2.0",
     "@storybook/addon-essentials": "^8.6.14",
+    "@storybook/addon-interactions": "^8.6.14",
     "@storybook/addon-links": "^8.6.18",
+    "@storybook/test": "^8.6.15",
+    "@storybook/test-runner": "^0.23.0",
     "@storybook/web-components": "^8.6.18",
     "@storybook/web-components-vite": "^8.6.18",
     "@types/mocha": "^10.0.10",

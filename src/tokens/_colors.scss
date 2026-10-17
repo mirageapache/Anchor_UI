@@ -24,6 +24,7 @@
   --color-output-bg: #f0fdf4; // 成功輸出框淺綠底色 (Emerald-50)
   --color-output-placeholder: var(--color-text-muted);
   --color-error-bg: #fef2f2; // 錯誤輸出框淺紅底色 (Red-50)
+  --color-warning-bg: #fffbeb; // 警告輸出框淺琥珀底色 (Amber-50)
 
   /* Text (文字階層) */
   --color-text-primary: #0f172a; // 主標題、內文、輸入文字 (Slate-900)
@@ -38,6 +39,9 @@
   --color-tooltip-bg: #0f172a; // Slate-900
   --color-tooltip-text: #f8fafc; // Slate-50 (WCAG AAA)
   --color-tooltip-border: rgb(255 255 255 / 14%);
+
+  /* Backdrop (模態浮層遮罩：Modal、Alert、Drawer) */
+  --color-backdrop: rgb(15 23 42 / 65%); // Slate-900 65%
 
   /* ─── 語意與狀態色完整系統 (Semantic Status & Actions) ─── */
 
@@ -136,6 +140,7 @@
   --color-output-bg: #064e3b; // 深翠綠底色
   --color-output-placeholder: #6ee7b7; // Emerald-300: 清晰翠綠提示 (WCAG AA 6.38:1)
   --color-error-bg: #450a0a; // 深紅底色
+  --color-warning-bg: #451a03; // 深琥珀底色 (Amber-950)
 
   /* Text */
   --color-text-primary: #f8fafc; // Slate-50
@@ -146,6 +151,9 @@
   --color-tooltip-bg: #1e293b; // Slate-800
   --color-tooltip-text: #f8fafc; // Slate-50 (WCAG AAA)
   --color-tooltip-border: rgb(255 255 255 / 18%);
+
+  /* Backdrop (深色頁面上需更深的遮罩才能與浮層區隔) */
+  --color-backdrop: rgb(2 6 23 / 75%); // Slate-950 75%
 
   /* ─── 語意與狀態色 (Dark Mode: 提升亮度確保清晰度與對比度) ─── */
 

@@ -119,9 +119,27 @@ import '@anchor-ui/core/button';
 import '@anchor-ui/core/tooltip';
 ```
 
-- 元件依賴會自動帶入，例如 `@anchor-ui/core/icon-button` 會一併註冊 `<aui-tooltip>`。
+- 元件依賴會自動帶入，例如 `@anchor-ui/core/icon-button` 會一併註冊 `<aui-tooltip>`。元件只會自動註冊自己渲染的元件：`@anchor-ui/core/field` 會帶入 `<aui-icon-button>`，但放進欄位的 `<aui-input>` / `<aui-output>` / `<aui-segmented>` 需另行載入。
 - 型別可從全量入口或個別入口取得，例如 `import type { ButtonVariant } from '@anchor-ui/core/button'`。
 - `lit` 與 `@floating-ui/dom` 不打包進元件庫，由消費端的打包工具處理（`@floating-ui/dom` 隨套件相依自動安裝）。
+
+### 5. 在 Vue / Angular 中綁定表單元件
+
+`<aui-input>` 與 `<aui-segmented>` 會在 host 上分派原生 `input` / `change`（觸發時 `value` 已更新），可直接使用框架的雙向綁定：
+
+```html
+<!-- Vue 3：於 vite.config 以 compilerOptions.isCustomElement 排除 aui- 前綴後即可使用 v-model（含 .lazy 與輸入法組字） -->
+<aui-input v-model="text"></aui-input>
+<aui-segmented v-model="mode" :options="modes"></aui-segmented>
+
+<!-- Angular：自訂元素需加上 ngDefaultControl，才會套用內建的 DefaultValueAccessor -->
+<aui-input name="text" [(ngModel)]="text" ngDefaultControl required></aui-input>
+<aui-segmented [formControl]="mode" [options]="modes" ngDefaultControl></aui-segmented>
+```
+
+- Angular 的驗證器（如 `required`）、touched 狀態與 `control.disable()` 皆可運作；其他事件請直接綁定原生 `(change)` 或 `aui-` 前綴的自訂事件。
+- 與原生 `<input>` 相同，同一個元素不可同時設定 `value` 屬性與 `v-model`。
+- 以 Vitest + happy-dom 測試 Angular 時，zone.js 無法正確包裝 happy-dom 的 `MutationObserver`，需在 zone.js 之前載入修正（參考 `examples/angular/src/test-setup-happy-dom.ts`）。happy-dom 也不會把 Shadow DOM 內的事件 retarget 到 host，輸入法組字這類依賴 `event.target` 的行為請在真實瀏覽器驗證。
 
 ---
 
@@ -139,14 +157,16 @@ import '@anchor-ui/core/tooltip';
 
 **測試**
 
-| 指令                                  | 說明                                                                                                      |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `pnpm test`                           | 元件與共用模組的單元、無障礙測試（`src/components`、`src/internal`；不含視覺回歸）                        |
-| `pnpm test:coverage`                  | 同上並產生覆蓋率報告（門檻：statements／functions／lines 85%、branches 75%）                              |
-| `pnpm test:a11y`                      | 只執行 `*.a11y.test.ts` 的 axe-core 無障礙檢測（需先 build）                                              |
-| `pnpm test:visual:docker`             | 在 Playwright 官方 Docker 映像中執行視覺回歸測試（淺色／深色主題截圖比對）                                |
-| `pnpm test:visual:docker:update`      | 同上，但更新基準圖（`screenshots/Chromium/baseline/`），並列出變更、產生 before／after／diff 供提交前檢視 |
-| `pnpm test:vue` / `pnpm test:angular` | Vue 3 / Angular 範例專案的整合測試（需先 build）                                                          |
+| 指令                                              | 說明                                                                                                      |
+| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `pnpm test`                                       | 元件與共用模組的單元、無障礙測試（`src/components`、`src/internal`；不含視覺回歸）                        |
+| `pnpm test:coverage`                              | 同上並產生覆蓋率報告（門檻：statements／functions／lines 85%、branches 75%）                              |
+| `pnpm test:a11y`                                  | 只執行 `*.a11y.test.ts` 的 axe-core 無障礙檢測（需先 build）                                              |
+| `pnpm test:visual:docker`                         | 在 Playwright 官方 Docker 映像中執行視覺回歸測試（淺色／深色主題截圖比對）                                |
+| `pnpm test:visual:docker:update`                  | 同上，但更新基準圖（`screenshots/Chromium/baseline/`），並列出變更、產生 before／after／diff 供提交前檢視 |
+| `pnpm test:vue` / `pnpm test:angular`             | Vue 3 / Angular 範例專案的整合測試（需先 build）                                                          |
+| `pnpm typecheck:examples` / `pnpm build:examples` | 範例專案的型別檢查與正式建置（Vue SFC 編譯、Angular AOT；需先 build）                                     |
+| `pnpm test:storybook`                             | 以 Storybook Test Runner 執行所有 story 與 play function 互動情境（需先 `pnpm build-storybook`）          |
 
 **發布**
 
@@ -168,27 +188,6 @@ import '@anchor-ui/core/tooltip';
 | `pnpm yalc:publish`                     | 建置並發布至本機 yalc store                          |
 | `pnpm yalc:push`                        | 建置並推送更新至所有已 `yalc add` 的專案             |
 | `pnpm dev:yalc`                         | 監聽 `src/`，變更時自動建置並 `yalc push`            |
-
--------------------------------- | -------------------------------------------------------------------------------------------- |
-| `pnpm build` | 編譯專案產物 (`dist/index.js`, `dist/index.d.ts`, `dist/styles.css`) |
-| `pnpm verify:package` | 驗證建置產物的 Tree-shaking、`exports` / `sideEffects` 與發布內容（需先 build） |
-| `pnpm size` | 以 size-limit 檢查各元件入口的 gzip 體積是否超出預算（需先 build，設定見 `.size-limit.mjs`） |
-| `pnpm test:visual:docker` | 在 Playwright 官方 Docker 映像中執行視覺回歸測試（淺色／深色主題截圖比對） |
-| `pnpm release:verify` | 檢查版號是否為合法 SemVer；加上 `--tag v<版號>` 時檢查與 tag 一致 |
-| `pnpm release:pack` | 發布預演：建置 → 套件驗證 → 體積 → 版號檢查 → 產出 tarball 至 `release/` |
-| `pnpm test:visual:docker:update` | 同上，但更新基準圖（`screenshots/Chromium/baseline/`），刻意修改外觀時使用 |
-| `pnpm storybook` | 啟動 Storybook 開發環境 (預設 port: 6006) |
-| `pnpm build-storybook` | 建置 Storybook 靜態部署產物至 `storybook-static/` |
-| `pnpm typecheck` | 執行 TypeScript 靜態型別檢驗 (`tsc --noEmit`) |
-| `pnpm lint` | 執行 ESLint 檢查 TypeScript 與 Lit 語法 |
-| `pnpm lint:fix` | 自動修復 ESLint 可修復錯誤 |
-| `pnpm stylelint` | 執行 Stylelint 檢查 SCSS 變數與樣式規範 |
-| `pnpm stylelint:fix` | 自動修復 Stylelint 樣式問題 |
-| `pnpm format:check` | 檢查程式碼排版格式 (Prettier) |
-| `pnpm format` | 自動格式化所有代碼 (Prettier) |
-| `pnpm yalc:publish` | 建置並發布至本機 yalc store |
-| `pnpm yalc:push` | 建置並推送更新至所有已 `yalc add` 的專案 |
-| `pnpm dev:yalc` | 監聽 `src/`，變更時自動建置並 `yalc push` |
 
 ---
 
