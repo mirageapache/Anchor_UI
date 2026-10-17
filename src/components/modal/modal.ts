@@ -132,6 +132,9 @@ export class AuiModal extends LitElement {
   /** 下一次關閉的原因（由觸發關閉的操作設定） */
   private pendingReason: ModalCloseReason = 'api';
 
+  /** 退場動畫中這次關閉的原因 */
+  private hidingReason: ModalCloseReason = 'api';
+
   /** 本次點擊是否從遮罩開始按下（避免從面板內拖曳到遮罩放開時誤關閉） */
   private pointerDownOnBackdrop = false;
 
@@ -153,16 +156,36 @@ export class AuiModal extends LitElement {
     this.requestClose('api');
   }
 
+  /**
+   * 開啟中（或退場動畫中）被移出頁面：瀏覽器只會把 dialog 移出 Top Layer，不觸發 close 且保留 open 屬性，
+   * 重新插入後會成為蓋住整頁、卻不是 modal 的 dialog。因此自行關閉 dialog、釋放鎖定與 modal 層，
+   * 並補發關閉事件（無法取消），讓依關閉結果運作的元件（如 Alert）得到結果
+   */
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    // 移出頁面時瀏覽器會直接移除 dialog（不觸發 close），須自行釋放鎖定與 modal 層
-    if (this.isShown || this.dialog?.open) {
-      this.transitionId++;
-      this.isShown = false;
-      this.isVisible = false;
-      this.releaseResources({ restoreFocus: false });
-      this.open = false;
+    if (!this.isShown && !this.dialog?.open) return;
+
+    const wasShown = this.isShown;
+    // 退場動畫中：aui-hide 已分派，沿用當時的關閉原因
+    const reason = wasShown ? this.pendingReason : this.hidingReason;
+    this.pendingReason = 'api';
+    this.transitionId++;
+    this.isShown = false;
+    this.isVisible = false;
+    this.open = false;
+    this.dialog.close();
+    this.releaseResources({ restoreFocus: false });
+
+    if (wasShown) {
+      this.dispatchEvent(
+        new CustomEvent<ModalHideDetail>('aui-hide', {
+          detail: { reason },
+          bubbles: true,
+          composed: true,
+        }),
+      );
     }
+    this.dispatchAfterHide(reason);
   }
 
   private requestClose(reason: ModalCloseReason): void {
@@ -240,6 +263,7 @@ export class AuiModal extends LitElement {
     const transitionId = ++this.transitionId;
     this.isShown = false;
     this.isVisible = false;
+    this.hidingReason = reason;
 
     void this.updateComplete.then(() => {
       window.setTimeout(() => {

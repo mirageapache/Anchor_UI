@@ -21,7 +21,7 @@ export type AlertMode = 'alert' | 'confirm' | 'prompt';
  * - `escape`：按下 ESC
  * - `backdrop`：點擊遮罩
  * - `timer`：`timer` 設定的時間到而自動關閉
- * - `api`：以程式關閉（`hide()` 或將 `open` 設為 false）
+ * - `api`：以程式關閉（`hide()` 或將 `open` 設為 false），或開啟中被移出頁面
  */
 export type AlertCancelReason = 'cancel-button' | 'escape' | 'backdrop' | 'timer' | 'api';
 

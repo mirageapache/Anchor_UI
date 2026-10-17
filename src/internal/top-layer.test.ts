@@ -272,6 +272,37 @@ describe('internal/top-layer', () => {
       home.remove();
     });
 
+    it('reopens an open popover after the modal holding it is removed from the page', () => {
+      const { viewport } = createViewport();
+      cleanups.push(followTopModal(viewport, { slot: 'overlay' }));
+      const host = document.createElement('shadow-modal-host') as ShadowModalHost;
+      document.body.appendChild(host);
+      host.dialog.showModal();
+      const pop = pushModalLayer(host);
+      expect(viewport.parentElement).to.equal(host);
+
+      host.remove(); // 瀏覽器移除時直接關閉其中的 popover，且不觸發 beforetoggle
+      expect(viewport.matches(':popover-open')).to.be.false;
+      pop();
+      expect(viewport.parentElement).to.equal(document.body);
+      expect(viewport.matches(':popover-open'), 'open again at home').to.be.true;
+    });
+
+    it('keeps a popover closed inside a removed modal closed', () => {
+      const { viewport } = createViewport();
+      cleanups.push(followTopModal(viewport, { slot: 'overlay' }));
+      const host = document.createElement('shadow-modal-host') as ShadowModalHost;
+      document.body.appendChild(host);
+      host.dialog.showModal();
+      const pop = pushModalLayer(host);
+      viewport.hidePopover(); // 例如最後一則通知關閉
+
+      host.remove();
+      pop();
+      expect(viewport.parentElement).to.equal(document.body);
+      expect(viewport.matches(':popover-open')).to.be.false;
+    });
+
     it('keeps notifying other followers when one of them throws', () => {
       const { viewport: good } = createViewport();
       cleanups.push(followTopModal(good));

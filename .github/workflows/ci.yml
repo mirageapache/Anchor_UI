@@ -6,9 +6,11 @@ on:
   pull_request:
     branches: [main]
 
-# TASK-214：同一個 PR 推送新 commit 時取消仍在執行的舊 run，讓最新一次不必排隊等候（main 的 push 不取消）
+# TASK-214：同一個 PR 推送新 commit 時取消仍在執行的舊 run，讓最新一次不必排隊等候。
+# main 的 push 每次自成一組、互不影響：同一組最多只保留一個等候中的 run，連續合併時較早的等候 run
+# 會被取消，該 commit 便缺少必要檢查（release.yml 依此判斷能否發布）
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:

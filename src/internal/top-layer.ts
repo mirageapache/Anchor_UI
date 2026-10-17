@@ -128,6 +128,7 @@ export interface FollowTopModalOptions {
  *
  * - 「原位置」在元素**由原位置移入 modal 的當下**才記錄，因此元素可以先開始跟隨、之後才插入頁面。
  * - 回到原位置時，若原本的父節點已不在頁面上（例如框架拆掉了該區塊），改放到 `<body>`。
+ * - 所在的 modal 被移出頁面時（瀏覽器已關閉其中的 popover），依移出前最後一次開啟或關閉的結果決定是否重新開啟。
  *
  * @returns 停止跟隨的函式，並將元素移回原位置
  */
@@ -142,8 +143,18 @@ export function followTopModal(
     slot: string | null;
   } | null = null;
 
+  /**
+   * 最後一次明確開啟或關閉 popover 的結果。所在的 modal 被移出頁面時，瀏覽器會直接關閉 popover
+   * 且不觸發 beforetoggle，移動前已無法從 :popover-open 得知原本是否開啟，改以此判斷
+   */
+  let requestedOpen = element.isConnected && element.matches(':popover-open');
+  const trackToggle = (event: Event) => {
+    requestedOpen = (event as ToggleEvent).newState === 'open';
+  };
+  element.addEventListener('beforetoggle', trackToggle);
+
   const moveTo = (container: Element | null) => {
-    const wasOpen = element.matches(':popover-open');
+    const wasOpen = element.isConnected ? element.matches(':popover-open') : requestedOpen;
 
     if (container) {
       if (element.parentNode === container) return;
@@ -180,5 +191,6 @@ export function followTopModal(
   return () => {
     state.listeners.delete(listener);
     moveTo(null);
+    element.removeEventListener('beforetoggle', trackToggle);
   };
 }

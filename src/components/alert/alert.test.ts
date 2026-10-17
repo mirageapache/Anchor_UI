@@ -279,6 +279,17 @@ describe('AuiAlert (<aui-alert>)', () => {
       expect(await result).to.deep.equal({ type: 'aui-cancel', reason: 'api' });
     });
 
+    it('cancels with reason "api" and releases the page when removed while open', async () => {
+      const el = await fixture<AuiAlert>(html`<aui-alert heading="Removed"></aui-alert>`);
+      await openAlert(el);
+      const result = nextResult(el);
+      el.remove();
+      expect(await result).to.deep.equal({ type: 'aui-cancel', reason: 'api' });
+      expect(el.open).to.be.false;
+      expect(isScrollLocked()).to.be.false;
+      expect(getTopModalLayer()).to.be.null;
+    });
+
     it('stays closed when aui-show is cancelled', async () => {
       const el = await fixture<AuiAlert>(html`<aui-alert heading="Blocked"></aui-alert>`);
       el.addEventListener('aui-show', (event) => event.preventDefault());
@@ -544,6 +555,13 @@ describe('AuiAlert (<aui-alert>)', () => {
       alert = await serviceAlert();
       alert.cancel();
       expect(await promise).to.be.null;
+    });
+
+    it('resolves as cancelled when the page removes the alert while it is open', async () => {
+      const promise = AlertService.confirm('Leaving the page?');
+      const alert = await serviceAlert();
+      alert.remove(); // 例如框架切換頁面時清空 <body> 內容
+      expect(await promise).to.be.false;
     });
 
     it('resolves as cancelled when aui-show is prevented', async () => {

@@ -17,7 +17,7 @@ export type ModalRole = 'dialog' | 'alertdialog';
  * - `escape`：按下 ESC（或瀏覽器的返回手勢等關閉要求）
  * - `backdrop`：點擊遮罩
  * - `close-button`：點擊頁首的關閉鈕
- * - `api`：以程式關閉（`hide()` 或將 `open` 設為 false）
+ * - `api`：以程式關閉（`hide()` 或將 `open` 設為 false），或開啟中被移出頁面
  */
 export type ModalCloseReason = 'escape' | 'backdrop' | 'close-button' | 'api';
 

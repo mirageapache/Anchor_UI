@@ -12,6 +12,7 @@ import type { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
  *
  * 系統核心互動元件，支援 5 種語意層級變體、3 種尺寸規格、鍵盤可聚焦性、
  * 點擊微縮放動態、載入中 Spinner 以及與宿主表單（form）的原生提交互動。
+ * host 上的 `aria-describedby`（例如被 `<aui-tooltip>` 包住時的提示描述）會轉交給內部的 `<button>`。
  *
  * @element aui-button
  *
@@ -78,6 +79,14 @@ export class AuiButton extends LitElement {
   @property({ type: Boolean, reflect: true, attribute: 'full-width' })
   fullWidth = false;
 
+  /**
+   * host 上的 aria-describedby（例如 `<aui-tooltip>` 開啟時寫入的提示描述）。
+   * 實際取得焦點的是 Shadow DOM 內的 `<button>`，而 IDREF 無法跨越 Shadow DOM，
+   * 因此在 host 所在的 tree 中解析為元素，再以 ariaDescribedByElements 交給內部按鈕
+   */
+  @property({ attribute: 'aria-describedby' })
+  private hostDescribedBy: string | null = null;
+
   constructor() {
     super();
     this.internals = typeof this.attachInternals === 'function' ? this.attachInternals() : null;
@@ -109,6 +118,17 @@ export class AuiButton extends LitElement {
     }
   };
 
+  /** host 的 aria-describedby 所指向的元素；指向的元素須在設定屬性前已存在 */
+  private get describedByElements(): Element[] | null {
+    const ids = (this.hostDescribedBy ?? '').split(/\s+/).filter(Boolean);
+    const root = this.getRootNode();
+    if (!ids.length || !(root instanceof Document || root instanceof ShadowRoot)) return null;
+    const elements = ids
+      .map((id) => root.getElementById(id))
+      .filter((element): element is HTMLElement => element !== null);
+    return elements.length ? elements : null;
+  }
+
   override render() {
     // loading 只以 aria-disabled 標示並由 handleHostClick 攔截點擊，不設原生 disabled：
     // 否則聚焦中的按鈕進入 loading 時會失去焦點（焦點掉回 body）
@@ -128,6 +148,7 @@ export class AuiButton extends LitElement {
         ?disabled=${this.disabled}
         aria-busy=${this.loading ? 'true' : 'false'}
         aria-disabled=${isInactive ? 'true' : 'false'}
+        .ariaDescribedByElements=${this.describedByElements}
       >
         ${
           this.loading

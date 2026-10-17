@@ -291,6 +291,45 @@ describe('AuiModal (<aui-modal>)', () => {
       expect(getTopModalLayer()).to.be.null;
       expect(el.open).to.be.false;
     });
+
+    it('closes the dialog and emits non-cancelable close events with reason "api" when removed while open', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Removed"></aui-modal>`);
+      await openModal(el);
+      const events: Array<{ type: string; reason: string; cancelable: boolean }> = [];
+      for (const type of ['aui-hide', 'aui-after-hide']) {
+        el.addEventListener(type, (event) => {
+          const { detail, cancelable } = event as CustomEvent<ModalHideDetail>;
+          events.push({ type, reason: detail.reason, cancelable });
+        });
+      }
+
+      el.remove();
+      expect(events).to.deep.equal([
+        { type: 'aui-hide', reason: 'api', cancelable: false },
+        { type: 'aui-after-hide', reason: 'api', cancelable: false },
+      ]);
+      expect(dialogOf(el).open, 'not left open outside the top layer').to.be.false;
+    });
+
+    it('does not cover the page after being removed while open and inserted again', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Moved"></aui-modal>`);
+      const parent = el.parentElement!;
+      await openModal(el);
+
+      el.remove();
+      parent.appendChild(el);
+      await el.updateComplete;
+      expect(dialogOf(el).open).to.be.false;
+      // 若 dialog 保持 open，會成為蓋住整頁、卻不是 modal 的元素，擋下所有點擊
+      const hit = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+      expect(hit === el, 'page is not covered by the closed modal').to.be.false;
+
+      await openModal(el);
+      expect(dialogOf(el).matches(':modal'), 'reopens as a modal dialog').to.be.true;
+      expect(getTopModalLayer() === el).to.be.true;
+      await closeWith(el, () => el.hide());
+      expect(isScrollLocked()).to.be.false;
+    });
   });
 
   describe('animation', () => {
@@ -332,6 +371,26 @@ describe('AuiModal (<aui-modal>)', () => {
 
       await closeWith(el, () => el.hide());
       expect(isScrollLocked()).to.be.false;
+    });
+
+    it('finishes closing with the original reason when removed during the exit transition', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Leaving"></aui-modal>`);
+      await openModal(el);
+      const reasons: string[] = [];
+      el.addEventListener('aui-after-hide', (event) =>
+        reasons.push((event as CustomEvent<ModalHideDetail>).detail.reason),
+      );
+
+      el.shadowRoot!.querySelector<HTMLButtonElement>('[part="close-button"]')!.click();
+      await el.updateComplete;
+      expect(dialogOf(el).open, 'still animating out').to.be.true;
+      el.remove();
+
+      expect(reasons).to.deep.equal(['close-button']);
+      expect(dialogOf(el).open).to.be.false;
+      expect(isScrollLocked()).to.be.false;
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(reasons, 'the pending transition does not fire again').to.have.length(1);
     });
   });
 

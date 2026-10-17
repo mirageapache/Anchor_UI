@@ -346,6 +346,23 @@ describe('ToastService', () => {
       expect(isOpen(viewport)).to.be.true;
     });
 
+    it('stays visible when the modal holding it is removed from the page', async () => {
+      const modal = await fixture<AuiModal>(html`<aui-modal heading="Editor">Body</aui-modal>`);
+      const shown = oneEvent(modal, 'aui-after-show');
+      modal.open = true;
+      await shown;
+
+      ToastService.info('Survives the modal', { duration: 0 });
+      await rendered();
+      const viewport = viewportEl()!;
+      expect(viewport.parentElement === modal).to.be.true;
+
+      modal.remove(); // 例如框架切換頁面時直接拆掉開啟中的 modal
+      expect(viewport.parentElement === document.body, 'back to the page').to.be.true;
+      expect(isOpen(viewport), 'still open with a toast inside').to.be.true;
+      expect(hitsToast(toasts()[0])).to.be.true;
+    });
+
     it('stays above an alert opened after it', async () => {
       ToastService.warning('Still visible', { duration: 0 });
       await rendered();
