@@ -1,0 +1,67 @@
+name: PR Discord Notify
+
+# PR 開啟、重新開啟、轉為可審查（ready for review）、合併或關閉時，透過 Discord Webhook 通知頻道。
+# Webhook URL 存於 repository secret DISCORD_WEBHOOK_URL；未設定時只發出警告、不讓 workflow 失敗。
+#
+# 安全性：使用 pull_request_target 才能讓來自 fork 的 PR 也讀得到 secret。此 workflow 不 checkout、
+# 不執行 PR 的任何程式碼，只以 jq 讀取事件 payload 組成訊息，且不授予 GITHUB_TOKEN 任何權限。
+on:
+  pull_request_target:
+    types: [opened, reopened, ready_for_review, closed]
+
+permissions: {}
+
+jobs:
+  notify:
+    name: Notify Discord
+    # 草稿 PR 開啟時不通知，等轉為 ready_for_review 時再通知
+    if: github.event.action != 'opened' || !github.event.pull_request.draft
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Send PR notification to Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "::warning::尚未設定 DISCORD_WEBHOOK_URL secret，略過 Discord 通知"
+            exit 0
+          fi
+
+          # PR 標題、內文等皆為外部輸入：一律由 jq 從事件檔讀取，不經 ${{ }} 內插進 shell，避免指令注入。
+          # allowed_mentions.parse = [] 讓 PR 內文中的 @everyone / @here / 角色提及不會真的觸發通知。
+          payload=$(jq -c '
+            .action as $action
+            | .pull_request as $pr
+            | (if $action == "closed" then
+                 (if $pr.merged then {label: "已合併", color: 9000933}
+                  else {label: "已關閉", color: 15158332} end)
+               elif $action == "reopened" then {label: "重新開啟", color: 15105570}
+               elif $action == "ready_for_review" then {label: "可供審查", color: 3447003}
+               else {label: "新的 PR", color: 3066993} end) as $status
+            | (($pr.body // "") | gsub("\r"; "")) as $body
+            | {
+                username: "Anchor UI",
+                allowed_mentions: {parse: []},
+                embeds: [
+                  ({
+                    title: ("[\($status.label)] #\($pr.number) \($pr.title)" | .[0:256]),
+                    url: $pr.html_url,
+                    color: $status.color,
+                    author: {name: .sender.login, url: .sender.html_url, icon_url: .sender.avatar_url},
+                    description: (if ($body | length) > 500 then $body[0:500] + "…" else $body end),
+                    fields: [
+                      {name: "分支", value: "`\($pr.head.label)` → `\($pr.base.ref)`", inline: false},
+                      {name: "變更", value: "+\($pr.additions) / -\($pr.deletions)（\($pr.changed_files) 個檔案）", inline: true}
+                    ],
+                    footer: {text: .repository.full_name},
+                    timestamp: (if $action == "closed" then $pr.closed_at else $pr.updated_at end)
+                  } | if .description == "" then del(.description) else . end)
+                ]
+              }
+          ' "$GITHUB_EVENT_PATH")
+
+          curl --fail-with-body --silent --show-error --retry 3 \
+            -H "Content-Type: application/json" \
+            -d "$payload" \
+            "$DISCORD_WEBHOOK_URL"
