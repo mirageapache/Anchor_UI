@@ -1,5 +1,6 @@
 import { expect, fixture, html } from '@open-wc/testing';
-import { resetMouse, sendMouse } from '@web/test-runner-commands';
+import { resetMouse, sendKeys, sendMouse } from '@web/test-runner-commands';
+import { getAxNode } from '../../test-utils/ax.js';
 import './index.js';
 import type { AuiButton } from './button.js';
 
@@ -181,6 +182,30 @@ describe('AuiButton Accessibility (<aui-button>)', () => {
       const innerBtn = el.shadowRoot?.querySelector('button');
       expect(innerBtn?.getAttribute('type')).to.equal('submit');
     });
+
+    it('applies aria-describedby set on the host to the focusable inner button', async () => {
+      const wrapper = await fixture<HTMLDivElement>(html`
+        <div>
+          <span id="save-hint" hidden>Saves without publishing</span>
+          <span id="save-shortcut" hidden>Ctrl+S</span>
+          <aui-button>Save draft</aui-button>
+        </div>
+      `);
+      const el = wrapper.querySelector('aui-button')!;
+      const innerBtn = el.shadowRoot!.querySelector('button')!;
+      expect((await getAxNode(innerBtn)).description).to.equal('');
+
+      // IDREF 無法跨越 Shadow DOM：描述須由元件轉交給內部按鈕才會生效
+      el.setAttribute('aria-describedby', 'save-hint save-shortcut');
+      await el.updateComplete;
+      const node = await getAxNode(innerBtn);
+      expect(node.name).to.equal('Save draft');
+      expect(node.description).to.equal('Saves without publishing Ctrl+S');
+
+      el.removeAttribute('aria-describedby');
+      await el.updateComplete;
+      expect((await getAxNode(innerBtn)).description).to.equal('');
+    });
   });
 
   describe('Keyboard navigation and focusability', () => {
@@ -192,17 +217,29 @@ describe('AuiButton Accessibility (<aui-button>)', () => {
       expect(el.shadowRoot?.activeElement).to.equal(innerBtn);
     });
 
-    it('can be triggered by keyboard Enter and Space keys', async () => {
-      const el = await fixture<AuiButton>(html`<aui-button>Keyboard Click</aui-button>`);
-      let clickCount = 0;
-      el.addEventListener('click', () => {
-        clickCount++;
-      });
+    // 以 sendKeys 送出真實按鍵：自行 dispatch 的 KeyboardEvent 不會觸發原生按鈕的點擊行為
+    for (const key of ['Enter', 'Space'] as const) {
+      it(`is activated by the ${key} key`, async () => {
+        const el = await fixture<AuiButton>(html`<aui-button>Keyboard Click</aui-button>`);
+        let clickCount = 0;
+        el.addEventListener('click', () => clickCount++);
 
-      const innerBtn = el.shadowRoot?.querySelector('button');
-      innerBtn?.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
-      innerBtn?.click(); // Native button triggers click on Enter/Space
-      expect(clickCount).to.equal(1);
+        el.focus();
+        await sendKeys({ press: key });
+        expect(clickCount).to.equal(1);
+      });
+    }
+
+    it('stays focusable but ignores Enter and Space while loading', async () => {
+      const el = await fixture<AuiButton>(html`<aui-button loading>Saving</aui-button>`);
+      let clickCount = 0;
+      el.addEventListener('click', () => clickCount++);
+
+      el.focus();
+      expect(el.matches(':focus-within')).to.be.true;
+      await sendKeys({ press: 'Enter' });
+      await sendKeys({ press: 'Space' });
+      expect(clickCount).to.equal(0);
     });
 
     it('does not receive active focus when disabled', async () => {

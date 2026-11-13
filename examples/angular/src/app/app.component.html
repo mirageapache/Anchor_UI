@@ -10,7 +10,7 @@
     </div>
 
     <div class="header-actions">
-      <aui-button id="theme-toggle-btn" variant="ghost" size="sm" (click)="toggleTheme()">
+      <aui-button id="theme-toggle-btn" variant="ghost" size="sm" (click)="handleToggleTheme()">
         <span slot="prefix">{{ isDark ? '☀️' : '🌙' }}</span>
         {{ isDark ? '切換淺色模式' : '切換深色模式' }}
       </aui-button>
@@ -163,17 +163,40 @@
           <input type="checkbox" [(ngModel)]="hasArrow" id="chk-tooltip-arrow" />
           顯示指標箭頭 ([arrow])
         </label>
+
+        <label class="checkbox-label">
+          <input type="checkbox" [(ngModel)]="preventTooltipShow" id="chk-tooltip-prevent" />
+          阻止開啟 ((aui-show) preventDefault)
+        </label>
+
+        <aui-button variant="ghost" size="sm" id="btn-tooltip-show" (click)="showTooltip()">
+          show()
+        </aui-button>
+        <aui-button variant="ghost" size="sm" id="btn-tooltip-hide" (click)="hideTooltip()">
+          hide()
+        </aui-button>
       </div>
 
       <div class="preview-stage center-stage">
         <aui-tooltip
           id="test-tooltip"
+          #tooltipRef
           [content]="tooltipContent"
           [placement]="tooltipPlacement"
           [arrow]="hasArrow"
+          (aui-show)="handleTooltipShow($event)"
+          (aui-after-show)="logTooltipEvent($event)"
+          (aui-hide)="logTooltipEvent($event)"
+          (aui-after-hide)="logTooltipEvent($event)"
         >
           <aui-button variant="ghost" id="tooltip-target-btn">懸停或聚焦查看提示</aui-button>
         </aui-tooltip>
+      </div>
+
+      <div class="result-box">
+        <p id="tooltip-event-log">
+          事件紀錄：<code>{{ tooltipEvents.join(' → ') || '尚未觸發事件' }}</code>
+        </p>
       </div>
     </section>
 
@@ -199,6 +222,11 @@
           複製文字內容：
           <input [(ngModel)]="copySnippet" id="input-copy-snippet" class="text-input" />
         </label>
+
+        <label>
+          下載網址 ([downloadUrl])：
+          <input [(ngModel)]="downloadUrl" id="input-download-url" class="text-input" />
+        </label>
       </div>
 
       <div class="preview-stage icon-stage">
@@ -206,9 +234,13 @@
           id="target-icon-btn"
           [preset]="iconPreset"
           [copyValue]="copySnippet"
+          [downloadUrl]="downloadUrl"
           download-filename="anchor-ui.json"
           (aui-copy)="handleCopySuccess($event)"
+          (aui-copy-error)="handleCopyError()"
           (aui-download)="handleDownload($event)"
+          (aui-download-error)="handleDownloadError($event)"
+          (aui-status-change)="handleStatusChange($event)"
         ></aui-icon-button>
 
         <!-- 自訂 Slot 圖示按鈕 -->
@@ -226,6 +258,105 @@
           事件即時反饋：<span class="feedback-highlight">{{
             copyFeedbackText || '尚未觸發事件'
           }}</span>
+        </p>
+        <p id="icon-status-text">
+          狀態變化：<code>{{ statusChanges.join('、') || '—' }}</code>
+        </p>
+      </div>
+    </section>
+
+    <!-- 測試卡片 5：表單元件 ngModel / formControl -->
+    <section class="card" id="card-form-controls">
+      <div class="card-header">
+        <h2>5. 表單元件 ([(ngModel)] / [formControl])</h2>
+        <span class="badge">TASK-209</span>
+      </div>
+
+      <label class="checkbox-label control-panel">
+        <input
+          type="checkbox"
+          id="chk-decode-disabled"
+          [ngModel]="decodeDisabled"
+          (ngModelChange)="setDecodeDisabled($event)"
+        />
+        停用「解碼」選項（重新綁定 [options] 陣列）
+      </label>
+
+      <form
+        id="controls-form"
+        class="controls-form"
+        #controlsForm="ngForm"
+        (ngSubmit)="handleControlsSubmit($event)"
+      >
+        <aui-field id="field-mode" label="Mode">
+          <aui-segmented
+            id="segmented-mode"
+            name="mode"
+            [options]="modeOptions"
+            [(ngModel)]="mode"
+            ngDefaultControl
+            (change)="handleModeChange($event)"
+          ></aui-segmented>
+        </aui-field>
+
+        <aui-field
+          id="field-text"
+          label="Input"
+          description="[(ngModel)] + ngDefaultControl"
+          clearable
+        >
+          <aui-input
+            id="input-text"
+            name="text"
+            [(ngModel)]="textValue"
+            ngDefaultControl
+            required
+            #textModel="ngModel"
+          ></aui-input>
+        </aui-field>
+
+        <aui-field id="field-output" label="Output" copyable (aui-copy)="handleOutputCopy($event)">
+          <aui-output
+            id="output-result"
+            [value]="conversion.text"
+            [status]="conversion.status"
+            placeholder="結果會顯示在這裡"
+          ></aui-output>
+        </aui-field>
+
+        <aui-button type="submit" variant="accent" size="sm" id="controls-submit-btn">
+          提交表單
+        </aui-button>
+      </form>
+
+      <div class="sub-section">
+        <h3>Reactive Forms ([formControl])</h3>
+        <aui-field id="field-reactive" label="Reactive">
+          <aui-input
+            id="input-reactive"
+            [formControl]="reactiveControl"
+            ngDefaultControl
+          ></aui-input>
+        </aui-field>
+      </div>
+
+      <div class="result-box">
+        <p id="model-text">
+          textValue：<code>{{ textValue }}</code>
+        </p>
+        <p id="model-validity">valid：{{ textModel.valid }}／touched：{{ textModel.touched }}</p>
+        <p id="model-mode">
+          mode：<code>{{ mode }}</code
+          >（change 事件：{{ lastChangedMode || '—' }}）
+        </p>
+        <p id="reactive-value">
+          reactive：<code>{{ reactiveControl.value }}</code>
+        </p>
+        <p id="output-copy-text">
+          已複製輸出：<code>{{ outputCopyText || '—' }}</code>
+        </p>
+        <p id="submitted-data">
+          FormData：<code>{{ submittedData || '尚未提交' }}</code>
         </p>
       </div>
     </section>

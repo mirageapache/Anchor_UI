@@ -55,10 +55,10 @@ _非獨立 UI 元件，但為所有元件實作之外觀基礎與依賴單一事
    - **說明**：包含單行/多行等寬文字輸入框（`input`），以及由標題、次要描述、右側快速動作鈕（如複製、清除）組成的欄位容器（`field` 與 `field-head`）。
    - **狀態與能力**：支援 Focus 品牌雙層光環、Placeholder 淺色提示、Disabled、唯讀模式與高度自動/手動調整。
 
-7. **Output Row（結果輸出列）**
-   - **自訂標籤**：`<aui-output-row>`
+7. **Output（結果輸出框）**
+   - **自訂標籤**：`<aui-output>`
    - **說明**：用於展示運算或轉換結果的單行/區塊文字框，左側帶有 4px 語意垂直指示條。
-   - **狀態與能力**：支援成功態（翠綠底綠字）與錯誤態（淺紅底紅字），文字採等寬且具備安全折行與溢位處理。
+   - **狀態與能力**：支援成功態（翠綠底綠字）、警告態（淺琥珀底褐字）與錯誤態（淺紅底紅字），文字採等寬且具備安全折行與溢位處理。
 
 ---
 
@@ -150,7 +150,7 @@ _非獨立 UI 元件，但為所有元件實作之外觀基礎與依賴單一事
 |  4   | **Segmented Control**    | `<aui-segmented>`             |      Atom       | 膠囊軌道單選切換器，具備平滑選中過渡與鍵盤無障礙。                                                 |
 |  5   | **Kbd**                  | `<aui-kbd>`                   |      Atom       | 鍵盤按鍵鍵帽微元件，等寬字體微立體邊框風格。                                                       |
 |  6   | **Input & Form Field**   | `<aui-input>`, `<aui-field>`  |      Atom       | 單行/多行等寬輸入框，整合標籤與右側快捷操作鈕。                                                    |
-|  7   | **Output Row**           | `<aui-output-row>`            |      Atom       | 結果輸出展示框，4px 左側語意指示條與安全換行防禦。                                                 |
+|  7   | **Output**               | `<aui-output>`                |      Atom       | 結果輸出展示框，4px 左側語意指示條與安全換行防禦。                                                 |
 |  8   | **Tooltip**              | `<aui-tooltip>`               |     Overlay     | Shadcn 風格冷黑浮層氣泡，微縮放動態與全域定位。                                                    |
 |  9   | **Toast Notification**   | `<aui-toast>`, `ToastService` |     Overlay     | 右下角堆疊全域通知，5 種語意狀態與 TS 單例調用 API。                                               |
 |  10  | **Modal**                | `<aui-modal>`                 |     Overlay     | 通用彈窗外框容器（大/中/小尺寸），具備 Header/Body/Footer 插槽供自訂業務功能，似 Bootstrap Modal。 |

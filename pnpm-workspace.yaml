@@ -11,6 +11,8 @@ packages:
 
 allowBuilds:
   '@parcel/watcher': true
+  # @storybook/test-runner 經 @swc/jest 使用；原生程式由平台專屬的可選依賴提供，不需執行其 postinstall
+  '@swc/core': false
   'esbuild': true
   'lmdb': true
   'msgpackr-extract': true

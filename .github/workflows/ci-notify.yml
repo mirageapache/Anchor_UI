@@ -1,0 +1,105 @@
+name: CI Discord Notify
+
+# CI workflow 完成後，把結果（通過 / 失敗 / 逾時 / 等待核准）透過 Discord Webhook 通知頻道。
+# 涵蓋 PR 觸發的 CI 與 main 的 push；被新 commit 取代而取消（concurrency）或略過的 run 不通知。
+# Webhook URL 與 pr-notify.yml 共用 repository secret DISCORD_WEBHOOK_URL。
+#
+# 注意：workflow_run 只會使用預設分支（main）上的這個檔案，合併進 main 後才會開始運作。
+# 安全性：workflow_run 以目標 repo 的權限執行（fork PR 也讀得到 secret），因此不 checkout、不執行 PR 程式碼；
+# 分支名稱、commit 訊息、PR 標題等外部輸入一律交給 jq 處理，不以 GitHub 表達式內插進 shell。
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  actions: read # 讀取 run 中失敗的 job
+  pull-requests: read # 由 commit 找回對應的 PR（fork PR 的事件不含 PR 資訊）
+
+jobs:
+  notify:
+    name: Notify Discord
+    if: >-
+      contains(fromJSON('["success","failure","timed_out","startup_failure","action_required"]'),
+      github.event.workflow_run.conclusion)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Send CI result to Discord
+        env:
+          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$DISCORD_WEBHOOK_URL" ]; then
+            echo "::warning::尚未設定 DISCORD_WEBHOOK_URL secret，略過 Discord 通知"
+            exit 0
+          fi
+
+          run_id=$(jq -r '.workflow_run.id' "$GITHUB_EVENT_PATH")
+          event=$(jq -r '.workflow_run.event' "$GITHUB_EVENT_PATH")
+          sha=$(jq -r '.workflow_run.head_sha' "$GITHUB_EVENT_PATH")
+
+          # 對應的 PR：同 repo 的 PR 由事件直接提供編號；fork PR 的 pull_requests 為空，改以 commit SHA 搜尋。
+          # 查詢失敗時不影響通知，只是不顯示 PR 欄位。
+          pr=null
+          if [ "$event" = "pull_request" ]; then
+            number=$(jq -r '.workflow_run.pull_requests[0].number // empty' "$GITHUB_EVENT_PATH")
+            if [ -n "$number" ]; then
+              pr=$(gh pr view "$number" --repo "$GITHUB_REPOSITORY" --json number,title,url) || pr=null
+            else
+              pr=$(gh pr list --repo "$GITHUB_REPOSITORY" --state all --search "$sha" \
+                --json number,title,url --limit 1 --jq '.[0] // null') || pr=null
+            fi
+          fi
+          pr=${pr:-null}
+
+          # 失敗或逾時的 job（只取每個 job 的最新一次嘗試）
+          failed_jobs=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$run_id/jobs?filter=latest&per_page=100" \
+            --jq '[.jobs[] | select(.conclusion == "failure" or .conclusion == "timed_out") | {name, html_url}]') \
+            || failed_jobs='[]'
+          failed_jobs=${failed_jobs:-[]}
+
+          # allowed_mentions.parse = [] 讓 commit 訊息或 PR 標題中的 @everyone 等提及不會真的觸發通知
+          payload=$(jq -c --argjson pr "$pr" --argjson failed "$failed_jobs" '
+            .workflow_run as $run
+            | ({
+                success: {label: "✅ CI 通過", color: 3066993},
+                failure: {label: "❌ CI 失敗", color: 15158332},
+                timed_out: {label: "⏱️ CI 逾時", color: 15158332},
+                startup_failure: {label: "❌ CI 無法啟動", color: 15158332},
+                action_required: {label: "⏸️ CI 等待核准", color: 15105570}
+              }[$run.conclusion] // {label: "CI \($run.conclusion)", color: 9807270}) as $status
+            | (if $run.head_repository.full_name == $run.repository.full_name then $run.head_branch
+               else "\($run.head_repository.owner.login):\($run.head_branch)" end) as $branch
+            | (if $pr != null then "#\($pr.number) \($pr.title)" else $branch end) as $subject
+            | {
+                username: "Anchor UI",
+                allowed_mentions: {parse: []},
+                embeds: [{
+                  title: ("\($status.label) · \($subject)" | .[0:256]),
+                  url: $run.html_url,
+                  color: $status.color,
+                  author: {name: $run.triggering_actor.login, url: $run.triggering_actor.html_url, icon_url: $run.triggering_actor.avatar_url},
+                  fields: (
+                    (if $pr != null then [{name: "PR", value: "[#\($pr.number)](\($pr.url))", inline: true}] else [] end)
+                    + [
+                        {name: "分支", value: "`\($branch)`", inline: true},
+                        {name: "Commit", value: "[`\($run.head_sha[0:7])`](\($run.repository.html_url)/commit/\($run.head_sha)) \($run.head_commit.message // "" | split("\n")[0] | .[0:200])", inline: false}
+                      ]
+                    + (if ($failed | length) > 0 then
+                         [{name: "失敗的 job", value: ($failed | map("• [\(.name)](\(.html_url))") | join("\n") | .[0:1024]), inline: false}]
+                       else [] end)
+                    + (if $run.run_attempt > 1 then [{name: "重跑", value: "第 \($run.run_attempt) 次執行", inline: true}] else [] end)
+                  ),
+                  footer: {text: "\($run.repository.full_name) · \($run.event)"},
+                  timestamp: $run.updated_at
+                }]
+              }
+          ' "$GITHUB_EVENT_PATH")
+
+          curl --fail-with-body --silent --show-error --retry 3 \
+            -H "Content-Type: application/json" \
+            -d "$payload" \
+            "$DISCORD_WEBHOOK_URL"

@@ -1,5 +1,5 @@
 import { expect, fixture, html, oneEvent } from '@open-wc/testing';
-import { emulateMedia } from '@web/test-runner-commands';
+import { emulateMedia, sendKeys } from '@web/test-runner-commands';
 import { getAxNode } from '../../test-utils/ax.js';
 import './icon-button.js';
 import type { AuiIconButton } from './icon-button.js';
@@ -251,28 +251,30 @@ describe('AuiIconButton Accessibility (<aui-icon-button>)', () => {
       expect(el.shadowRoot?.activeElement).to.be.null;
     });
 
-    it('triggers action on keyboard Enter / Space activation', async () => {
-      const el = await fixture<AuiIconButton>(
-        html`<aui-icon-button preset="copy" copy-value="Keyboard copy"></aui-icon-button>`,
-      );
+    // 以 sendKeys 送出真實按鍵：自行 dispatch 的 KeyboardEvent 不會觸發原生按鈕的點擊行為
+    for (const key of ['Enter', 'Space'] as const) {
+      it(`runs its action when activated with the ${key} key`, async () => {
+        const el = await fixture<AuiIconButton>(
+          html`<aui-icon-button preset="copy" copy-value="Keyboard copy"></aui-icon-button>`,
+        );
+        const written: string[] = [];
+        const originalWriteText = navigator.clipboard.writeText;
+        navigator.clipboard.writeText = async (text: string) => {
+          written.push(text);
+        };
 
-      const originalWriteText = navigator.clipboard?.writeText;
-      if (navigator.clipboard) {
-        navigator.clipboard.writeText = async () => {};
-      }
-
-      try {
-        const innerBtn = el.shadowRoot?.querySelector('button');
-        setTimeout(() => innerBtn?.click());
-        const event = await oneEvent(el, 'aui-copy');
-        expect(event).to.exist;
-        expect(el.status).to.equal('success');
-      } finally {
-        if (navigator.clipboard && originalWriteText) {
+        try {
+          el.focus();
+          const copied = oneEvent(el, 'aui-copy');
+          await sendKeys({ press: key });
+          await copied;
+          expect(written).to.deep.equal(['Keyboard copy']);
+          expect(el.status).to.equal('success');
+        } finally {
           navigator.clipboard.writeText = originalWriteText;
         }
-      }
-    });
+      });
+    }
   });
 
   describe('Reduced motion (WCAG 2.3.3)', () => {

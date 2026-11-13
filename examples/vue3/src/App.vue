@@ -1,15 +1,12 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { getTheme, toggleTheme } from '@anchor-ui/core';
+import type { AuiTooltip, OutputStatus, SegmentedOption } from '@anchor-ui/core';
 
-// ─── 主題模式切換 ───
-const isDark = ref(false);
-const toggleTheme = () => {
-  isDark.value = !isDark.value;
-  if (isDark.value) {
-    document.documentElement.setAttribute('data-theme', 'dark');
-  } else {
-    document.documentElement.removeAttribute('data-theme');
-  }
+// ─── 主題模式切換（使用元件庫的主題 API） ───
+const isDark = ref(getTheme() === 'dark');
+const handleToggleTheme = () => {
+  isDark.value = toggleTheme() === 'dark';
 };
 
 // ─── 1. Button 互動狀態 ───
@@ -70,11 +67,30 @@ const resetTags = () => {
 const tooltipContent = ref('即時動態提示文字內容');
 const tooltipPlacement = ref<'top' | 'bottom' | 'left' | 'right'>('top');
 const hasArrow = ref(true);
+const tooltipRef = ref<AuiTooltip | null>(null);
+const preventTooltipShow = ref(false);
+const tooltipEvents = ref<string[]>([]);
+
+/** 可取消的 aui-show：勾選「阻止開啟」時呼叫 preventDefault() */
+const handleTooltipShow = (event: Event) => {
+  if (preventTooltipShow.value) {
+    event.preventDefault();
+    tooltipEvents.value.push('aui-show（已取消）');
+    return;
+  }
+  tooltipEvents.value.push('aui-show');
+};
+
+const logTooltipEvent = (event: Event) => {
+  tooltipEvents.value.push(event.type);
+};
 
 // ─── 4. IconButton 互動狀態 ───
 const copySnippet = ref('npm install @anchor-ui/core');
 const copyFeedbackText = ref('');
 const iconPreset = ref<'copy' | 'download' | 'refresh' | 'external'>('copy');
+const downloadUrl = ref('');
+const statusChanges = ref<string[]>([]);
 
 const handleCopySuccess = (event: Event) => {
   const customEvent = event as CustomEvent<{ value: string }>;
@@ -84,6 +100,68 @@ const handleCopySuccess = (event: Event) => {
 const handleDownload = (event: Event) => {
   const customEvent = event as CustomEvent<{ url?: string; filename?: string }>;
   copyFeedbackText.value = `下載事件觸發：${customEvent.detail.filename || 'default'}`;
+};
+
+const handleCopyError = () => {
+  copyFeedbackText.value = '複製失敗：沒有可複製的內容';
+};
+
+const handleDownloadError = (event: Event) => {
+  const customEvent = event as CustomEvent<{ url: string }>;
+  copyFeedbackText.value = `下載被拒絕：${customEvent.detail.url}`;
+};
+
+const handleStatusChange = (event: Event) => {
+  const { status, previousStatus } = (
+    event as CustomEvent<{ status: string; previousStatus: string }>
+  ).detail;
+  statusChanges.value.push(`${previousStatus}→${status}`);
+};
+
+// ─── 5. 表單元件 v-model 狀態（TASK-209） ───
+const textValue = ref('Hello, Anchor UI!');
+const mode = ref('encode');
+const decodeDisabled = ref(false);
+/** 以 computed 產生新的選項陣列，驗證響應式陣列 prop 的重新綁定 */
+const modeOptions = computed<SegmentedOption[]>(() => [
+  { value: 'encode', label: '編碼' },
+  { value: 'decode', label: '解碼', disabled: decodeDisabled.value },
+]);
+const notes = ref('');
+const notesChangeCount = ref(0);
+const lastChangedMode = ref('');
+const submittedData = ref('');
+const outputCopyText = ref('');
+
+/** <aui-field> 內建複製鈕成功時，aui-copy 由欄位冒出 */
+const handleOutputCopy = (event: Event) => {
+  outputCopyText.value = (event as CustomEvent<{ value: string }>).detail.value;
+};
+
+/** 以 UTF-8 進行 Base64 編碼／解碼，解碼失敗時以錯誤狀態呈現 */
+const conversion = computed<{ text: string; status: OutputStatus }>(() => {
+  if (!textValue.value) return { text: '', status: 'success' };
+  try {
+    if (mode.value === 'encode') {
+      const bytes = new TextEncoder().encode(textValue.value);
+      return { text: btoa(String.fromCharCode(...bytes)), status: 'success' };
+    }
+    const bytes = Uint8Array.from(atob(textValue.value.trim()), (char) => char.charCodeAt(0));
+    return { text: new TextDecoder('utf-8', { fatal: true }).decode(bytes), status: 'success' };
+  } catch {
+    return { text: '無效的 Base64 輸入', status: 'error' };
+  }
+});
+
+/** 原生 change 事件：觸發時元件的 value 已更新 */
+const handleModeChange = (event: Event) => {
+  lastChangedMode.value = (event.target as HTMLElement & { value: string }).value;
+};
+
+/** 以原生 FormData 讀取表單元件的提交值 */
+const handleControlsSubmit = (event: Event) => {
+  const form = event.target as HTMLFormElement;
+  submittedData.value = JSON.stringify(Object.fromEntries(new FormData(form)));
 };
 </script>
 
@@ -100,7 +178,7 @@ const handleDownload = (event: Event) => {
       </div>
 
       <div class="header-actions">
-        <aui-button id="theme-toggle-btn" variant="ghost" size="sm" @click="toggleTheme">
+        <aui-button id="theme-toggle-btn" variant="ghost" size="sm" @click="handleToggleTheme">
           <span slot="prefix">{{ isDark ? '☀️' : '🌙' }}</span>
           {{ isDark ? '切換淺色模式' : '切換深色模式' }}
         </aui-button>
@@ -254,17 +332,40 @@ const handleDownload = (event: Event) => {
             <input type="checkbox" v-model="hasArrow" id="chk-tooltip-arrow" />
             顯示指標箭頭 (arrow)
           </label>
+
+          <label class="checkbox-label">
+            <input type="checkbox" v-model="preventTooltipShow" id="chk-tooltip-prevent" />
+            阻止開啟 (aui-show preventDefault)
+          </label>
+
+          <aui-button variant="ghost" size="sm" id="btn-tooltip-show" @click="tooltipRef?.show()">
+            show()
+          </aui-button>
+          <aui-button variant="ghost" size="sm" id="btn-tooltip-hide" @click="tooltipRef?.hide()">
+            hide()
+          </aui-button>
         </div>
 
         <div class="preview-stage center-stage">
           <aui-tooltip
             id="test-tooltip"
+            ref="tooltipRef"
             :content="tooltipContent"
             :placement="tooltipPlacement"
             :arrow="hasArrow"
+            @aui-show="handleTooltipShow"
+            @aui-after-show="logTooltipEvent"
+            @aui-hide="logTooltipEvent"
+            @aui-after-hide="logTooltipEvent"
           >
             <aui-button variant="ghost" id="tooltip-target-btn">懸停或聚焦查看提示</aui-button>
           </aui-tooltip>
+        </div>
+
+        <div class="result-box">
+          <p id="tooltip-event-log">
+            事件紀錄：<code>{{ tooltipEvents.join(' → ') || '尚未觸發事件' }}</code>
+          </p>
         </div>
       </section>
 
@@ -290,6 +391,11 @@ const handleDownload = (event: Event) => {
             複製文字內容：
             <input v-model="copySnippet" id="input-copy-snippet" class="text-input" />
           </label>
+
+          <label>
+            下載網址 (download-url)：
+            <input v-model="downloadUrl" id="input-download-url" class="text-input" />
+          </label>
         </div>
 
         <div class="preview-stage icon-stage">
@@ -297,9 +403,13 @@ const handleDownload = (event: Event) => {
             id="target-icon-btn"
             :preset="iconPreset"
             :copy-value="copySnippet"
+            :download-url="downloadUrl"
             download-filename="anchor-ui.json"
             @aui-copy="handleCopySuccess"
+            @aui-copy-error="handleCopyError"
             @aui-download="handleDownload"
+            @aui-download-error="handleDownloadError"
+            @aui-status-change="handleStatusChange"
           ></aui-icon-button>
 
           <!-- 自訂 Slot 圖示按鈕 -->
@@ -317,6 +427,81 @@ const handleDownload = (event: Event) => {
             事件即時反饋：<span class="feedback-highlight">{{
               copyFeedbackText || '尚未觸發事件'
             }}</span>
+          </p>
+          <p id="icon-status-text">
+            狀態變化：<code>{{ statusChanges.join('、') || '—' }}</code>
+          </p>
+        </div>
+      </section>
+
+      <!-- 測試卡片 5：表單元件 v-model -->
+      <section class="card" id="card-form-controls">
+        <div class="card-header">
+          <h2>5. 表單元件 v-model (&lt;aui-input&gt; / &lt;aui-segmented&gt;)</h2>
+          <span class="badge">TASK-209</span>
+        </div>
+
+        <label class="checkbox-label control-panel">
+          <input type="checkbox" v-model="decodeDisabled" id="chk-decode-disabled" />
+          停用「解碼」選項（重新綁定 :options 陣列）
+        </label>
+
+        <form id="controls-form" class="controls-form" @submit.prevent="handleControlsSubmit">
+          <aui-field id="field-mode" label="Mode">
+            <aui-segmented
+              id="segmented-mode"
+              name="mode"
+              v-model="mode"
+              :options="modeOptions"
+              @change="handleModeChange"
+            ></aui-segmented>
+          </aui-field>
+
+          <aui-field id="field-text" label="Input" description="v-model 雙向綁定" clearable>
+            <aui-input id="input-text" name="text" v-model="textValue"></aui-input>
+          </aui-field>
+
+          <aui-field id="field-output" label="Output" copyable @aui-copy="handleOutputCopy">
+            <aui-output
+              id="output-result"
+              :value="conversion.text"
+              :status="conversion.status"
+              placeholder="結果會顯示在這裡"
+            ></aui-output>
+          </aui-field>
+
+          <aui-field id="field-notes" label="Notes" description="v-model.lazy：失焦時才同步">
+            <aui-input
+              id="input-notes"
+              name="notes"
+              multiline
+              v-model.lazy="notes"
+              @change="notesChangeCount++"
+            ></aui-input>
+          </aui-field>
+
+          <aui-button type="submit" variant="accent" size="sm" id="controls-submit-btn">
+            提交表單
+          </aui-button>
+        </form>
+
+        <div class="result-box">
+          <p id="model-text">
+            textValue：<code>{{ textValue }}</code>
+          </p>
+          <p id="model-mode">
+            mode：<code>{{ mode }}</code
+            >（change 事件：{{ lastChangedMode || '—' }}）
+          </p>
+          <p id="model-notes">
+            notes：<code>{{ notes }}</code
+            >（change {{ notesChangeCount }} 次）
+          </p>
+          <p id="output-copy-text">
+            已複製輸出：<code>{{ outputCopyText || '—' }}</code>
+          </p>
+          <p id="submitted-data">
+            FormData：<code>{{ submittedData || '尚未提交' }}</code>
           </p>
         </div>
       </section>
@@ -491,6 +676,17 @@ const handleDownload = (event: Event) => {
   margin-top: 8px;
   font-size: 0.8125rem;
   color: var(--color-success-text, #047857);
+}
+
+.controls-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.controls-form aui-button {
+  align-self: flex-start;
 }
 
 .feedback-highlight {

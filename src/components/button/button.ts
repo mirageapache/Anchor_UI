@@ -2,6 +2,7 @@ import { LitElement, html, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { buttonStyles } from './button.styles.js';
+import { findFormOwner } from '../../internal/form-owner.js';
 import { interceptInactiveClick } from '../../internal/inactive-click.js';
 import { spinnerIcon, spinnerStyles } from '../../internal/spinner.js';
 import type { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
@@ -11,6 +12,7 @@ import type { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
  *
  * 系統核心互動元件，支援 5 種語意層級變體、3 種尺寸規格、鍵盤可聚焦性、
  * 點擊微縮放動態、載入中 Spinner 以及與宿主表單（form）的原生提交互動。
+ * host 上的 `aria-describedby`（例如被 `<aui-tooltip>` 包住時的提示描述）會轉交給內部的 `<button>`。
  *
  * @element aui-button
  *
@@ -77,6 +79,14 @@ export class AuiButton extends LitElement {
   @property({ type: Boolean, reflect: true, attribute: 'full-width' })
   fullWidth = false;
 
+  /**
+   * host 上的 aria-describedby（例如 `<aui-tooltip>` 開啟時寫入的提示描述）。
+   * 實際取得焦點的是 Shadow DOM 內的 `<button>`，而 IDREF 無法跨越 Shadow DOM，
+   * 因此在 host 所在的 tree 中解析為元素，再以 ariaDescribedByElements 交給內部按鈕
+   */
+  @property({ attribute: 'aria-describedby' })
+  private hostDescribedBy: string | null = null;
+
   constructor() {
     super();
     this.internals = typeof this.attachInternals === 'function' ? this.attachInternals() : null;
@@ -88,31 +98,36 @@ export class AuiButton extends LitElement {
    * 所屬的表單（包含以 `form` 屬性指定的外部表單）
    */
   get form(): HTMLFormElement | null {
-    if (this.internals) return this.internals.form;
-
-    const formId = this.getAttribute('form');
-    if (formId) {
-      const root = this.getRootNode() as Document | ShadowRoot;
-      const referenced = root.getElementById?.(formId);
-      return referenced instanceof HTMLFormElement ? referenced : null;
-    }
-    return this.closest('form');
+    return this.internals ? this.internals.form : findFormOwner(this);
   }
 
   private handleHostClick = (event: MouseEvent) => {
     if (interceptInactiveClick(event, this.disabled || this.loading)) return;
 
-    // 與所屬 Form 表單原生連動
+    // 與所屬 Form 表單原生連動。
+    // 以 HTMLFormElement.prototype 呼叫：表單內 id／name 為 "reset"、"submit" 的控制項（包含這顆按鈕本身）
+    // 會以同名屬性蓋過 form.reset 等方法（DOM clobbering）
     const form = this.form;
     if (!form) return;
     if (this.type === 'submit') {
       event.preventDefault();
-      form.requestSubmit();
+      HTMLFormElement.prototype.requestSubmit.call(form);
     } else if (this.type === 'reset') {
       event.preventDefault();
-      form.reset();
+      HTMLFormElement.prototype.reset.call(form);
     }
   };
+
+  /** host 的 aria-describedby 所指向的元素；指向的元素須在設定屬性前已存在 */
+  private get describedByElements(): Element[] | null {
+    const ids = (this.hostDescribedBy ?? '').split(/\s+/).filter(Boolean);
+    const root = this.getRootNode();
+    if (!ids.length || !(root instanceof Document || root instanceof ShadowRoot)) return null;
+    const elements = ids
+      .map((id) => root.getElementById(id))
+      .filter((element): element is HTMLElement => element !== null);
+    return elements.length ? elements : null;
+  }
 
   override render() {
     // loading 只以 aria-disabled 標示並由 handleHostClick 攔截點擊，不設原生 disabled：
@@ -133,6 +148,7 @@ export class AuiButton extends LitElement {
         ?disabled=${this.disabled}
         aria-busy=${this.loading ? 'true' : 'false'}
         aria-disabled=${isInactive ? 'true' : 'false'}
+        .ariaDescribedByElements=${this.describedByElements}
       >
         ${
           this.loading
