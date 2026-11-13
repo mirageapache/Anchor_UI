@@ -28,7 +28,8 @@ jobs:
             exit 0
           fi
 
-          # PR 標題、內文等皆為外部輸入：一律由 jq 從事件檔讀取，不經 ${{ }} 內插進 shell，避免指令注入。
+          # PR 標題、內文等皆為外部輸入：一律由 jq 從事件檔讀取，不以 GitHub 表達式內插進 shell，避免指令注入。
+          # （註：run 腳本中即使是 shell 註解，GitHub 也會先解析其中的表達式語法，因此這裡不能寫出該語法）
           # allowed_mentions.parse = [] 讓 PR 內文中的 @everyone / @here / 角色提及不會真的觸發通知。
           payload=$(jq -c '
             .action as $action

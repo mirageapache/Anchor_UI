@@ -6,7 +6,7 @@ name: CI Discord Notify
 #
 # 注意：workflow_run 只會使用預設分支（main）上的這個檔案，合併進 main 後才會開始運作。
 # 安全性：workflow_run 以目標 repo 的權限執行（fork PR 也讀得到 secret），因此不 checkout、不執行 PR 程式碼；
-# 分支名稱、commit 訊息、PR 標題等外部輸入一律交給 jq 處理，不經 ${{ }} 內插進 shell。
+# 分支名稱、commit 訊息、PR 標題等外部輸入一律交給 jq 處理，不以 GitHub 表達式內插進 shell。
 on:
   workflow_run:
     workflows: [CI]
