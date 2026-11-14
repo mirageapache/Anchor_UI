@@ -7,6 +7,16 @@ import { inputStyles } from './input.styles.js';
 import { FormControlController } from '../../internal/form-control.js';
 import type { InputType } from './input.types.js';
 
+/** 支援的單行類型（與 InputType 一致）；其他類型（如 file、checkbox）無法以文字值運作 */
+const INPUT_TYPES: ReadonlySet<string> = new Set<InputType>([
+  'text',
+  'email',
+  'url',
+  'search',
+  'tel',
+  'password',
+]);
+
 /**
  * Anchor UI — Input 元件 (`<aui-input>`)
  *
@@ -86,7 +96,7 @@ export class AuiInput extends LitElement {
   name = '';
 
   /**
-   * 單行輸入框的原生類型
+   * 單行輸入框的原生類型；不支援的類型（如 `file`、`checkbox`、`number`）以 `text` 呈現
    */
   @property({ type: String, reflect: true })
   type: InputType = 'text';
@@ -329,7 +339,7 @@ export class AuiInput extends LitElement {
             id="control"
             part="control"
             class=${classes}
-            type=${this.type}
+            type=${INPUT_TYPES.has(this.type) ? this.type : 'text'}
             .value=${live(this.value)}
             placeholder=${ifDefined(placeholder)}
             minlength=${ifDefined(this.minLength)}

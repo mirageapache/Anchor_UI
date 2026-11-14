@@ -69,6 +69,26 @@ describe('AuiInput (<aui-input>)', () => {
       expect(control.readOnly).to.be.true;
     });
 
+    it('falls back to a text input for unsupported types instead of throwing', async () => {
+      const el = await fixture<AuiInput>(
+        html`<aui-input type="file" value="report.pdf"></aui-input>`,
+      );
+      const control = controlOf(el) as HTMLInputElement;
+      expect(control.type).to.equal('text');
+      expect(control.value).to.equal('report.pdf');
+      expect(el.value).to.equal('report.pdf');
+
+      for (const type of ['checkbox', 'number', '']) {
+        el.type = type as AuiInput['type'];
+        await el.updateComplete;
+        expect(control.type, `type="${type}"`).to.equal('text');
+      }
+
+      el.type = 'password';
+      await el.updateComplete;
+      expect(control.type).to.equal('password');
+    });
+
     it('marks the control invalid with aria-invalid when invalid is set', async () => {
       const el = await fixture<AuiInput>(html`<aui-input invalid></aui-input>`);
       const control = controlOf(el);
