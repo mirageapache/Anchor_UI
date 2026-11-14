@@ -64,6 +64,44 @@ describe('AuiField (<aui-field>)', () => {
     expect(input.description).to.equal('');
   });
 
+  it("keeps the control's own label and description when the field does not set them", async () => {
+    const field = await fixture<AuiField>(html`
+      <aui-field description="Hint"><aui-input label="Email"></aui-input></aui-field>
+    `);
+    await settle(field);
+    const input = field.querySelector<AuiInput>('aui-input')!;
+    expect(input.label).to.equal('Email');
+    expect(input.description).to.equal('Hint');
+
+    const labelOnly = await fixture<AuiField>(html`
+      <aui-field label="Name"><aui-input description="Own hint"></aui-input></aui-field>
+    `);
+    await settle(labelOnly);
+    const other = labelOnly.querySelector<AuiInput>('aui-input')!;
+    expect(other.label).to.equal('Name');
+    expect(other.description).to.equal('Own hint');
+
+    // 欄位之後才設定標題：改用欄位的標題；清空後撤回欄位帶入的值
+    field.label = 'Work email';
+    await settle(field);
+    expect(input.label).to.equal('Work email');
+    field.label = '';
+    await settle(field);
+    expect(input.label).to.equal('');
+  });
+
+  it("does not clear a label the control changed itself when the field's label is removed", async () => {
+    const field = await fixture<AuiField>(html`
+      <aui-field label="Field"><aui-input></aui-input></aui-field>
+    `);
+    await settle(field);
+    const input = field.querySelector<AuiInput>('aui-input')!;
+    input.label = 'Custom';
+    field.label = '';
+    await settle(field);
+    expect(input.label).to.equal('Custom');
+  });
+
   it('hides the visible label and description from assistive technology only when an input receives them', async () => {
     const withInput = await fixture<AuiField>(html`
       <aui-field label="Name" description="Hint"><aui-input></aui-input></aui-field>
