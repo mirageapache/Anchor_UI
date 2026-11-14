@@ -38,15 +38,27 @@ function notify(): void {
   }
 }
 
+/**
+ * 元素是否為開啟中的 popover。不支援 Popover API 的瀏覽器中 `:popover-open` 是無效的選擇器，
+ * matches() 會拋出 SyntaxError，視為未開啟。所有 `:popover-open` 判斷都須經過此函式
+ */
+export function isPopoverOpen(element: Element): boolean {
+  try {
+    return element.matches(':popover-open');
+  } catch {
+    return false;
+  }
+}
+
 /** 收集 root 子樹內（含各層 Shadow DOM）已開啟的 popover，依樹狀順序排列 */
 function openPopoversWithin(root: Element): HTMLElement[] {
   const result: HTMLElement[] = [];
   const visit = (node: Element) => {
     for (const child of node.children) {
-      if (child instanceof HTMLElement && child.matches(':popover-open')) result.push(child);
+      if (child instanceof HTMLElement && isPopoverOpen(child)) result.push(child);
       if (child.shadowRoot) {
         for (const shadowChild of child.shadowRoot.children) {
-          if (shadowChild instanceof HTMLElement && shadowChild.matches(':popover-open')) {
+          if (shadowChild instanceof HTMLElement && isPopoverOpen(shadowChild)) {
             result.push(shadowChild);
           }
           visit(shadowChild);
@@ -61,7 +73,7 @@ function openPopoversWithin(root: Element): HTMLElement[] {
 
 /** 重新進入 Top Layer：先移出再放回（瀏覽器沒有直接調整順序的 API） */
 function reenterTopLayer(popover: HTMLElement): void {
-  if (popover.matches(':popover-open')) popover.hidePopover();
+  if (isPopoverOpen(popover)) popover.hidePopover();
   popover.showPopover();
 }
 
@@ -73,7 +85,7 @@ function reenterTopLayer(popover: HTMLElement): void {
  * 注意：過程中會觸發這些 popover 的 beforetoggle / toggle 事件。
  */
 export function raisePopover(element: HTMLElement): void {
-  if (!element.matches(':popover-open')) return;
+  if (!isPopoverOpen(element)) return;
   const nested = openPopoversWithin(element);
   reenterTopLayer(element);
   for (const popover of nested) {
@@ -147,14 +159,14 @@ export function followTopModal(
    * 最後一次明確開啟或關閉 popover 的結果。所在的 modal 被移出頁面時，瀏覽器會直接關閉 popover
    * 且不觸發 beforetoggle，移動前已無法從 :popover-open 得知原本是否開啟，改以此判斷
    */
-  let requestedOpen = element.isConnected && element.matches(':popover-open');
+  let requestedOpen = element.isConnected && isPopoverOpen(element);
   const trackToggle = (event: Event) => {
     requestedOpen = (event as ToggleEvent).newState === 'open';
   };
   element.addEventListener('beforetoggle', trackToggle);
 
   const moveTo = (container: Element | null) => {
-    const wasOpen = element.isConnected ? element.matches(':popover-open') : requestedOpen;
+    const wasOpen = element.isConnected ? isPopoverOpen(element) : requestedOpen;
 
     if (container) {
       if (element.parentNode === container) return;
@@ -179,7 +191,7 @@ export function followTopModal(
     }
 
     // 只有位於頁面上的 popover 才能開啟
-    if (wasOpen && element.isConnected && !element.matches(':popover-open')) {
+    if (wasOpen && element.isConnected && !isPopoverOpen(element)) {
       element.showPopover();
     }
   };

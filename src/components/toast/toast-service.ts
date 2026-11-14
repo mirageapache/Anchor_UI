@@ -4,7 +4,12 @@ import { toastViewportStyles } from './toast.styles.js';
 import type { ToastConfig, ToastHandle, ToastOptions, ToastVariant } from './toast.types.js';
 import { PausableTimer } from '../../internal/pausable-timer.js';
 import { sharedState } from '../../internal/shared-state.js';
-import { followTopModal, MODAL_OVERLAY_SLOT, raisePopover } from '../../internal/top-layer.js';
+import {
+  followTopModal,
+  isPopoverOpen,
+  MODAL_OVERLAY_SLOT,
+  raisePopover,
+} from '../../internal/top-layer.js';
 import { transitionTimeMs } from '../../internal/transition.js';
 import './toast.js';
 
@@ -34,15 +39,6 @@ interface Entry {
   duration: number;
   state: 'queued' | 'visible' | 'leaving';
   resolveClosed: () => void;
-}
-
-/** 瀏覽器不支援 :popover-open 時 matches() 會拋錯，視為未開啟 */
-function isPopoverOpen(element: HTMLElement): boolean {
-  try {
-    return element.matches(':popover-open');
-  } catch {
-    return false;
-  }
 }
 
 /**
@@ -295,10 +291,11 @@ class ToastManager {
       this.syncPause();
     });
 
+    // 先記錄再進行後續步驟：即使之後拋錯，下一則通知也會沿用這個 Viewport，不會每次都在 <body> 留下新的
+    this.viewport = viewport;
     document.body.appendChild(viewport);
     // Modal / Alert 開啟期間移入最上層 modal 的 overlay slot，保持可見、可操作且可被播報
     followTopModal(viewport, { slot: MODAL_OVERLAY_SLOT });
-    this.viewport = viewport;
     return viewport;
   }
 }

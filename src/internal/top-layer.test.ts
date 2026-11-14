@@ -1,5 +1,11 @@
 import { expect } from '@open-wc/testing';
-import { followTopModal, getTopModalLayer, pushModalLayer, raisePopover } from './top-layer.js';
+import {
+  followTopModal,
+  getTopModalLayer,
+  isPopoverOpen,
+  pushModalLayer,
+  raisePopover,
+} from './top-layer.js';
 
 /** inert 的元素無法取得焦點：以此判斷是否可互動 */
 function canFocus(el: HTMLElement): boolean {
@@ -310,15 +316,16 @@ describe('internal/top-layer', () => {
       const errors: unknown[] = [];
       const originalReportError = globalThis.reportError;
       globalThis.reportError = (error: unknown) => errors.push(error);
-      // 以自訂的會拋錯元素模擬未知的失敗（登記完成後才開始拋錯，模擬 modal 開啟時才發生的錯誤）
+      // 以自訂的會拋錯元素模擬未知的失敗（登記完成後才開始拋錯，模擬 modal 開啟時才發生的錯誤）。
+      // 移入 modal 前會讀取 slot 屬性以記錄原位置，由此拋錯（matches 的錯誤已由 isPopoverOpen 處理）
       const broken = document.createElement('div');
       document.body.appendChild(broken);
       let failing = false;
-      const originalMatches = broken.matches.bind(broken);
-      Object.defineProperty(broken, 'matches', {
-        value: (selector: string) => {
+      const originalGetAttribute = broken.getAttribute.bind(broken);
+      Object.defineProperty(broken, 'getAttribute', {
+        value: (name: string) => {
           if (failing) throw new Error('boom');
-          return originalMatches(selector);
+          return originalGetAttribute(name);
         },
       });
       const stopBroken = followTopModal(broken);
@@ -338,6 +345,45 @@ describe('internal/top-layer', () => {
         failing = false; // 之後的清理（移除 modal 層）不再模擬錯誤
         globalThis.reportError = originalReportError;
       }
+    });
+  });
+
+  describe('browsers without the Popover API', () => {
+    /** 模擬不支援 :popover-open 的瀏覽器：matches() 對該選擇器拋出 SyntaxError */
+    function withoutPopoverSelector(element: HTMLElement): HTMLElement {
+      const originalMatches = element.matches.bind(element);
+      Object.defineProperty(element, 'matches', {
+        value: (selector: string) => {
+          if (selector.includes(':popover-open')) {
+            throw new DOMException(`'${selector}' is not a valid selector.`, 'SyntaxError');
+          }
+          return originalMatches(selector);
+        },
+      });
+      return element;
+    }
+
+    it('isPopoverOpen() reports false instead of throwing', () => {
+      const element = withoutPopoverSelector(document.createElement('div'));
+      expect(isPopoverOpen(element)).to.be.false;
+    });
+
+    it('followTopModal() and raisePopover() do not throw', () => {
+      const element = withoutPopoverSelector(document.createElement('div'));
+      document.body.appendChild(element);
+      cleanups.push(() => element.remove());
+      expect(() => raisePopover(element)).to.not.throw();
+
+      let stop: () => void = () => {};
+      expect(() => (stop = followTopModal(element))).to.not.throw();
+      cleanups.push(stop);
+      const { dialog, container } = createModal();
+      dialog.showModal();
+      const pop = pushModalLayer(container);
+      expect(element.parentElement).to.equal(container);
+      dialog.close();
+      expect(() => pop()).to.not.throw();
+      expect(element.parentElement).to.equal(document.body);
     });
   });
 });
