@@ -183,18 +183,47 @@ export class AuiAlert extends LitElement {
     this.autoClose.stop();
   }
 
+  /** 本次更新中與內部 Modal 的同步（等待 Modal 決定是否真的開啟 / 關閉）；updateComplete 會一併等待 */
+  private syncing: Promise<void> = Promise.resolve();
+
   /**
-   * 開啟對話框
+   * 開啟對話框。開啟完成（`aui-after-show` 之後）、被取消（`aui-show` 被 preventDefault）
+   * 或被之後的關閉取代時 resolve；結果請以 `open` 判斷
    */
   async show(): Promise<void> {
     this.open = true;
+    await this.transitionEnd();
   }
 
   /**
-   * 以取消關閉對話框（原因為 `api`）
+   * 以取消關閉對話框（原因為 `api`）。關閉完成（`aui-cancel` 之後）、被取消（`aui-hide` 被 preventDefault）
+   * 或被之後的開啟取代時 resolve；結果請以 `open` 判斷
    */
   async hide(): Promise<void> {
     this.open = false;
+    await this.transitionEnd();
+  }
+
+  /**
+   * 等待 open 與內部 Modal 同步完成，再等待 Modal 目前的轉場結束
+   * （Modal 的 show() / hide() 在狀態已相同時只等待轉場）
+   */
+  private async transitionEnd(): Promise<void> {
+    if (!this.isConnected) return;
+    let done = false;
+    while (!done) done = await this.updateComplete;
+    const modal = this.modal;
+    if (modal) await (modal.open ? modal.show() : modal.hide());
+  }
+
+  /**
+   * updateComplete 也等待與內部 Modal 的同步：resolve 時已知 Modal 是否真的開啟 / 關閉
+   * （aui-show / aui-hide 是否被取消），同步撤回 open 而有後續更新時回傳 false
+   */
+  protected override async getUpdateComplete(): Promise<boolean> {
+    const result = await super.getUpdateComplete();
+    await this.syncing;
+    return result && !this.isUpdatePending;
   }
 
   /**
@@ -218,7 +247,12 @@ export class AuiAlert extends LitElement {
     this.open = false;
   }
 
-  override async updated(changed: PropertyValues<this>): Promise<void> {
+  override updated(changed: PropertyValues<this>): void {
+    this.syncing = this.syncModal(changed);
+  }
+
+  /** 把 open 同步到內部 Modal；Modal 取消開啟或關閉時同步回 Alert */
+  private async syncModal(changed: PropertyValues<this>): Promise<void> {
     if (!this.modal) return;
     // 開啟中變更 timer：以新的時間重新計時
     if (changed.has('timer') && !changed.has('open') && this.open && this.modal.open) {
@@ -227,6 +261,11 @@ export class AuiAlert extends LitElement {
     if (!changed.has('open')) return;
 
     if (this.open && !this.modal.open) {
+      // 不在頁面上（例如開啟前就被移出）時內部 Modal 無法開啟，其 updateComplete 也可能永不 resolve
+      if (!this.isConnected) {
+        this.open = false;
+        return;
+      }
       this.decision = null;
       if (this.input) this.input.value = this.inputValue;
       this.modal.open = true;

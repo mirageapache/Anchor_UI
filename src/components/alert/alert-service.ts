@@ -35,7 +35,10 @@ function open(mode: AlertMode, options: PromptOptions): Promise<Result> {
   alert.timer = options.timer ?? 0;
 
   return new Promise<Result>((resolve) => {
+    let settled = false;
     const settle = (result: Result) => {
+      if (settled) return;
+      settled = true;
       alert.remove();
       resolve(result);
     };
@@ -46,11 +49,13 @@ function open(mode: AlertMode, options: PromptOptions): Promise<Result> {
 
     document.body.appendChild(alert);
     alert.open = true;
-    // aui-show 被取消時不會開啟，視同取消
-    void alert.updateComplete.then(async () => {
-      await alert.updateComplete;
-      if (!alert.open && alert.isConnected) settle({ confirmed: false, value: '' });
-    });
+    // alert.updateComplete 會等到內部 Modal 決定是否開啟：aui-show 被取消、或開啟前就被移出頁面時
+    // 不會開啟（也就不會有 aui-confirm / aui-cancel），視同取消
+    void (async () => {
+      let done = false;
+      while (!done) done = await alert.updateComplete;
+      if (!alert.open) settle({ confirmed: false, value: '' });
+    })();
   });
 }
 

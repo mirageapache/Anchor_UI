@@ -85,6 +85,57 @@ describe('AuiAlert (<aui-alert>)', () => {
     await resetMouse();
   });
 
+  describe('show() and hide()', () => {
+    it('resolve after the transition and the result event', async () => {
+      const el = await fixture<AuiAlert>(html`<aui-alert heading="Promises"></aui-alert>`);
+      const log: string[] = [];
+      el.addEventListener('aui-after-show', (event) => {
+        if (event.composedPath()[0] === modalOf(el)) log.push('aui-after-show');
+      });
+      el.addEventListener('aui-cancel', () => log.push('aui-cancel'));
+
+      await el.show();
+      log.push('show() resolved');
+      expect(modalOf(el).open).to.be.true;
+
+      await el.hide();
+      log.push('hide() resolved');
+      expect(el.open).to.be.false;
+      expect(log).to.deep.equal([
+        'aui-after-show',
+        'show() resolved',
+        'aui-cancel',
+        'hide() resolved',
+      ]);
+    });
+
+    it('resolve when cancelled, with open reflecting the result', async () => {
+      const el = await fixture<AuiAlert>(html`<aui-alert heading="Cancelled"></aui-alert>`);
+      const prevent = (event: Event) => event.preventDefault();
+      el.addEventListener('aui-show', prevent);
+      await el.show();
+      expect(el.open).to.be.false;
+      el.removeEventListener('aui-show', prevent);
+
+      await el.show();
+      el.addEventListener('aui-hide', prevent);
+      await el.hide();
+      expect(el.open).to.be.true;
+      el.removeEventListener('aui-hide', prevent);
+      await el.hide();
+      expect(el.open).to.be.false;
+    });
+
+    it('updateComplete resolves once the inner modal has decided', async () => {
+      const el = await fixture<AuiAlert>(html`<aui-alert heading="Decided"></aui-alert>`);
+      el.addEventListener('aui-show', (event) => event.preventDefault(), { once: true });
+      el.open = true;
+      let done = false;
+      while (!done) done = await el.updateComplete;
+      expect(el.open, 'reverted after the cancelled aui-show').to.be.false;
+    });
+  });
+
   describe('modes and buttons', () => {
     it('is closed by default and built on <aui-modal>', async () => {
       const el = await fixture<AuiAlert>(html`<aui-alert heading="Saved"></aui-alert>`);
@@ -635,6 +686,14 @@ describe('AuiAlert (<aui-alert>)', () => {
       const alert = await serviceAlert();
       alert.remove(); // 例如框架切換頁面時清空 <body> 內容
       expect(await promise).to.be.false;
+    });
+
+    it('resolves as cancelled when the page removes the alert before it opens', async () => {
+      const promise = AlertService.confirm('Removed at once');
+      document.body.querySelector<AuiAlert>(':scope > aui-alert:last-of-type')!.remove();
+      const result = await Promise.race([promise, wait(1000).then(() => 'still pending')]);
+      expect(result).to.equal(false);
+      expect(isScrollLocked()).to.be.false;
     });
 
     it('resolves as cancelled when aui-show is prevented', async () => {
