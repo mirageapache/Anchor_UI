@@ -126,6 +126,10 @@ export class AuiModal extends LitElement {
   /** 轉場序號：延遲執行的回呼若序號已過期即放棄，避免快速開關時互相覆蓋 */
   private transitionId = 0;
 
+  /** 目前轉場的結束通知：轉場完成、被下一次轉場取代或中止時 resolve（供 show() / hide() 等待） */
+  private transitionSettled: Promise<void> = Promise.resolve();
+  private settleTransition: () => void = () => {};
+
   /** 下一次關閉的原因（由觸發關閉的操作設定） */
   private pendingReason: ModalCloseReason = 'api';
 
@@ -140,17 +144,40 @@ export class AuiModal extends LitElement {
   private popLayer: (() => void) | null = null;
 
   /**
-   * 開啟對話框
+   * 開啟對話框。開啟完成（`aui-after-show` 之後）、被取消（`aui-show` 被 preventDefault）
+   * 或被之後的關閉取代時 resolve；結果請以 `open` 判斷
    */
   async show(): Promise<void> {
     this.open = true;
+    await this.transitionEnd();
   }
 
   /**
-   * 關閉對話框（關閉原因為 `api`）
+   * 關閉對話框（關閉原因為 `api`）。關閉完成（`aui-after-hide` 之後）、被取消（`aui-hide` 被 preventDefault）
+   * 或被之後的開啟取代時 resolve；結果請以 `open` 判斷
    */
   async hide(): Promise<void> {
     this.requestClose('api');
+    await this.transitionEnd();
+  }
+
+  /**
+   * 等待 open 的變化處理完畢，再等待目前的轉場結束。
+   * aui-show / aui-hide 被取消時會撤回 open 而再更新一次，因此等到沒有後續更新為止。
+   * 不在頁面上的元素不會開啟（從未連接過的 Lit 元素 updateComplete 也不會 resolve），直接返回
+   */
+  private async transitionEnd(): Promise<void> {
+    if (!this.isConnected) return;
+    let done = false;
+    while (!done) done = await this.updateComplete;
+    await this.transitionSettled;
+  }
+
+  /** 開始新的轉場：前一次轉場視為已被取代（其等待者隨即 resolve），回傳新的序號 */
+  private beginTransition(): number {
+    this.settleTransition();
+    this.transitionSettled = new Promise((resolve) => (this.settleTransition = resolve));
+    return ++this.transitionId;
   }
 
   /**
@@ -166,7 +193,7 @@ export class AuiModal extends LitElement {
     // 退場動畫中：aui-hide 已分派，沿用當時的關閉原因
     const reason = wasShown ? this.pendingReason : this.hidingReason;
     this.pendingReason = 'api';
-    this.transitionId++;
+    this.beginTransition();
     this.isShown = false;
     this.isVisible = false;
     this.open = false;
@@ -183,6 +210,7 @@ export class AuiModal extends LitElement {
       );
     }
     this.dispatchAfterHide(reason);
+    this.settleTransition();
   }
 
   private requestClose(reason: ModalCloseReason): void {
@@ -247,7 +275,7 @@ export class AuiModal extends LitElement {
       this.popLayer = pushModalLayer(this);
     }
 
-    const transitionId = ++this.transitionId;
+    const transitionId = this.beginTransition();
     this.isShown = true;
     if (!reopening) this.applyInitialFocus(transitionId);
 
@@ -258,6 +286,7 @@ export class AuiModal extends LitElement {
         window.setTimeout(() => {
           if (transitionId !== this.transitionId) return;
           this.dispatchEvent(new CustomEvent('aui-after-show', { bubbles: true, composed: true }));
+          this.settleTransition();
         }, transitionTimeMs(this.panel));
       });
     });
@@ -276,7 +305,7 @@ export class AuiModal extends LitElement {
       return;
     }
 
-    const transitionId = ++this.transitionId;
+    const transitionId = this.beginTransition();
     this.isShown = false;
     this.isVisible = false;
     this.hidingReason = reason;
@@ -287,6 +316,7 @@ export class AuiModal extends LitElement {
         this.dialog.close();
         this.releaseResources({ restoreFocus: true });
         this.dispatchAfterHide(reason);
+        this.settleTransition();
       }, transitionTimeMs(this.panel));
     });
   }
@@ -346,7 +376,7 @@ export class AuiModal extends LitElement {
    */
   private handleNativeClose = () => {
     if (this.dialog.open || (!this.isShown && !this.open)) return;
-    this.transitionId++;
+    this.beginTransition();
     const wasShown = this.isShown;
     this.isShown = false;
     this.isVisible = false;
@@ -362,6 +392,7 @@ export class AuiModal extends LitElement {
     }
     this.releaseResources({ restoreFocus: true });
     this.dispatchAfterHide('escape');
+    this.settleTransition();
   };
 
   private handlePointerDown = (event: PointerEvent) => {

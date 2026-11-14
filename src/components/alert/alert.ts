@@ -237,7 +237,8 @@ export class AuiAlert extends LitElement {
     } else if (!this.open && this.modal.open) {
       this.autoClose.stop();
       this.decision ??= { confirmed: false, reason: 'api' };
-      await this.modal.hide();
+      // 只需等 Modal 處理完 aui-hide（是否被取消），不必等退場動畫（modal.hide() 會等到動畫結束）
+      this.modal.open = false;
       await this.modal.updateComplete;
       // aui-hide 被取消時 Modal 保持開啟，撤回這次的結果
       if (this.modal.open) {
