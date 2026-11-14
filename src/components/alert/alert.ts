@@ -308,11 +308,21 @@ export class AuiAlert extends LitElement {
 
   /**
    * 任何鍵盤操作都代表使用者正在處理對話框，不再自動關閉。
-   * Enter 確認：焦點在按鈕或多行輸入框上、或正在以輸入法組字時，交由原生行為處理
+   * Enter 確認：焦點在按鈕或多行輸入框上、或正在以輸入法組字時，交由原生行為處理。
+   *
+   * - 長按 Enter 的重複按鍵一律忽略（含按鈕的原生啟動）：以 Enter 開啟對話框時若按住不放，
+   *   重複的 keydown 會在使用者看到內容前就確認或取消。
+   * - Safari 以 Enter 選字時會先結束組字再分派 keydown（`isComposing` 為 false），
+   *   只能從 `keyCode === 229`（輸入法處理中）辨識。
    */
   private handleKeyDown = (event: KeyboardEvent) => {
     this.autoClose.stop();
-    if (event.key !== 'Enter' || event.isComposing) return;
+    if (event.key !== 'Enter') return;
+    if (event.repeat) {
+      event.preventDefault();
+      return;
+    }
+    if (event.isComposing || event.keyCode === 229) return;
     const origin = event.composedPath()[0];
     if (origin instanceof HTMLButtonElement || origin instanceof HTMLTextAreaElement) return;
     event.preventDefault();

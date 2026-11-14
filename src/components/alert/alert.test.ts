@@ -224,6 +224,79 @@ describe('AuiAlert (<aui-alert>)', () => {
       el.cancel();
     });
 
+    it('does not confirm on the Enter that commits an IME candidate in Safari (keyCode 229)', async () => {
+      const el = await fixture<AuiAlert>(
+        html`<aui-alert mode="prompt" heading="Name"></aui-alert>`,
+      );
+      await openAlert(el);
+      let confirmed = 0;
+      el.addEventListener('aui-confirm', () => confirmed++);
+      const control = part(el, 'input')!.shadowRoot!.querySelector('.control')!;
+      control.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          keyCode: 229,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      await el.updateComplete;
+      expect(el.open).to.be.true;
+      expect(confirmed).to.equal(0);
+      el.cancel();
+    });
+
+    it('ignores auto-repeated Enter in the prompt input', async () => {
+      const el = await fixture<AuiAlert>(
+        html`<aui-alert mode="prompt" heading="Name"></aui-alert>`,
+      );
+      await openAlert(el);
+      let confirmed = 0;
+      el.addEventListener('aui-confirm', () => confirmed++);
+      const control = part(el, 'input')!.shadowRoot!.querySelector('.control')!;
+      const event = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        repeat: true,
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      });
+      control.dispatchEvent(event);
+      await el.updateComplete;
+      expect(event.defaultPrevented).to.be.true;
+      expect(el.open).to.be.true;
+      expect(confirmed).to.equal(0);
+      el.cancel();
+    });
+
+    it('is not confirmed by holding the Enter key that opened it', async () => {
+      const wrapper = await fixture<HTMLDivElement>(html`
+        <div><button id="trigger">Open</button><aui-alert heading="Held"></aui-alert></div>
+      `);
+      const trigger = wrapper.querySelector<HTMLButtonElement>('#trigger')!;
+      const el = wrapper.querySelector<AuiAlert>('aui-alert')!;
+      trigger.addEventListener('click', () => (el.open = true));
+      let confirmed = 0;
+      el.addEventListener('aui-confirm', () => confirmed++);
+      trigger.focus();
+
+      const shown = oneEvent(el, 'aui-after-show');
+      await sendKeys({ down: 'Enter' });
+      await shown;
+      expect(getDeepActiveElement()).to.equal(innerButton(el, 'confirm-button'));
+      // 按住不放：第二次 keydown 為自動重複
+      await sendKeys({ down: 'Enter' });
+      await sendKeys({ up: 'Enter' });
+      await wait(50);
+      expect(el.open).to.be.true;
+      expect(confirmed).to.equal(0);
+
+      // 放開後再按一次 Enter 才確認
+      const result = nextResult(el);
+      await sendKeys({ press: 'Enter' });
+      expect((await result).type).to.equal('aui-confirm');
+    });
+
     it('cancels on Escape with reason "escape"', async () => {
       const el = await fixture<AuiAlert>(
         html`<aui-alert mode="confirm" heading="Escape"></aui-alert>`,
