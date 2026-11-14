@@ -1,0 +1,20 @@
+# workflow 中的第三方 action 一律釘選 commit SHA（tag 可被改寫，見供應鏈攻擊 tj-actions 事件），
+# 由 Dependabot 每週檢查新版本並開 PR 更新 SHA 與後方的版本註解。
+#
+# 未涵蓋（需手動更新）：
+# - ci.yml 中以 docker run 執行的 rhysd/actionlint 映像（釘選 @sha256 digest）
+# - Playwright 容器映像：版本須與 package.json 的 playwright 一致，由 pnpm check:versions 把關
+#
+# PR 目標為 develop（與一般開發相同，經 develop → main 的 PR 執行完整 CI）。
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: develop
+    schedule:
+      interval: weekly
+    groups:
+      github-actions:
+        patterns: ['*']
+    commit-message:
+      prefix: ci
