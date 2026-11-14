@@ -110,9 +110,9 @@ export class AuiModal extends LitElement {
   @property({ type: Boolean, attribute: 'no-close-button' })
   noCloseButton = false;
 
-  /** 進場動畫的目標狀態（開啟後下一幀才套用，讓 transition 生效） */
+  /** 退場動畫中（套用 modal--leaving）；進場的起始狀態由 CSS @starting-style 定義 */
   @state()
-  private isVisible = false;
+  private isLeaving = false;
 
   @state()
   private hasHeaderSlot = false;
@@ -195,7 +195,7 @@ export class AuiModal extends LitElement {
     this.pendingReason = 'api';
     this.beginTransition();
     this.isShown = false;
-    this.isVisible = false;
+    this.isLeaving = false;
     this.open = false;
     this.dialog.close();
     this.releaseResources({ restoreFocus: false });
@@ -279,16 +279,15 @@ export class AuiModal extends LitElement {
     this.isShown = true;
     if (!reopening) this.applyInitialFocus(transitionId);
 
-    requestAnimationFrame(() => {
-      if (transitionId !== this.transitionId) return;
-      this.isVisible = true;
-      void this.updateComplete.then(() => {
-        window.setTimeout(() => {
-          if (transitionId !== this.transitionId) return;
-          this.dispatchEvent(new CustomEvent('aui-after-show', { bubbles: true, composed: true }));
-          this.settleTransition();
-        }, transitionTimeMs(this.panel));
-      });
+    // 進場由 CSS 的 @starting-style 處理（showModal() 後自動從起始樣式轉場）；
+    // 退場動畫中重新開啟時，移除 modal--leaving 即轉場回開啟狀態
+    this.isLeaving = false;
+    void this.updateComplete.then(() => {
+      window.setTimeout(() => {
+        if (transitionId !== this.transitionId) return;
+        this.dispatchEvent(new CustomEvent('aui-after-show', { bubbles: true, composed: true }));
+        this.settleTransition();
+      }, transitionTimeMs(this.panel));
     });
   }
 
@@ -307,13 +306,14 @@ export class AuiModal extends LitElement {
 
     const transitionId = this.beginTransition();
     this.isShown = false;
-    this.isVisible = false;
+    this.isLeaving = true;
     this.hidingReason = reason;
 
     void this.updateComplete.then(() => {
       window.setTimeout(() => {
         if (transitionId !== this.transitionId) return;
         this.dialog.close();
+        this.isLeaving = false;
         this.releaseResources({ restoreFocus: true });
         this.dispatchAfterHide(reason);
         this.settleTransition();
@@ -379,7 +379,7 @@ export class AuiModal extends LitElement {
     this.beginTransition();
     const wasShown = this.isShown;
     this.isShown = false;
-    this.isVisible = false;
+    this.isLeaving = false;
     this.open = false;
     if (wasShown) {
       this.dispatchEvent(
@@ -423,7 +423,7 @@ export class AuiModal extends LitElement {
     return html`
       <dialog
         part="dialog"
-        class=${classMap({ modal: true, 'modal--visible': this.isVisible })}
+        class=${classMap({ modal: true, 'modal--leaving': this.isLeaving })}
         aria-labelledby=${ifDefined(this.heading ? 'title' : undefined)}
         aria-label=${ifDefined(ariaLabel)}
         aria-describedby=${ifDefined(this.description ? 'description' : undefined)}

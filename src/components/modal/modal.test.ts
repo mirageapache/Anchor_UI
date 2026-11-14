@@ -461,19 +461,38 @@ describe('AuiModal (<aui-modal>)', () => {
       await emulateMedia({ reducedMotion: 'reduce' });
     });
 
+    it('animates in from the @starting-style state', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Entering"></aui-modal>`);
+      const shown = oneEvent(el, 'aui-after-show');
+      el.open = true;
+      await el.updateComplete;
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      const entering = Number(getComputedStyle(panelOf(el)).opacity);
+      expect(entering, 'still fading in on the first frame').to.be.below(1);
+
+      await shown;
+      const style = getComputedStyle(panelOf(el));
+      expect(style.opacity).to.equal('1');
+      // 計時器與轉場起點相差不到一幀，ease-out 的尾端可能還剩極小的位移（如 matrix(0.999996, …)）
+      const scale = new DOMMatrix(style.transform).a;
+      expect(scale).to.be.closeTo(1, 0.001);
+      await closeWith(el, () => el.hide());
+    });
+
     it('waits for the exit transition before closing the dialog', async () => {
       const el = await fixture<AuiModal>(html`<aui-modal heading="Animated"></aui-modal>`);
       await openModal(el);
-      expect(dialogOf(el).classList.contains('modal--visible')).to.be.true;
+      expect(dialogOf(el).classList.contains('modal--leaving')).to.be.false;
 
       const hidden = oneEvent(el, 'aui-after-hide');
       void el.hide(); // hide() 會等到退場動畫結束，這裡要檢查動畫中的狀態
       await el.updateComplete; // 處理 open
-      await el.updateComplete; // 移除 modal--visible 的渲染
-      expect(dialogOf(el).classList.contains('modal--visible')).to.be.false;
+      await el.updateComplete; // 加上 modal--leaving 的渲染
+      expect(dialogOf(el).classList.contains('modal--leaving')).to.be.true;
       expect(dialogOf(el).open, 'still open while animating out').to.be.true;
       await hidden;
       expect(dialogOf(el).open).to.be.false;
+      expect(dialogOf(el).classList.contains('modal--leaving')).to.be.false;
     });
 
     it('can be reopened during the exit transition', async () => {
@@ -489,7 +508,8 @@ describe('AuiModal (<aui-modal>)', () => {
       await new Promise((resolve) => setTimeout(resolve, 300));
       expect(afterHide).to.equal(0);
       expect(dialogOf(el).open).to.be.true;
-      expect(dialogOf(el).classList.contains('modal--visible')).to.be.true;
+      expect(dialogOf(el).classList.contains('modal--leaving')).to.be.false;
+      expect(getComputedStyle(panelOf(el)).opacity).to.equal('1');
 
       await closeWith(el, () => el.hide());
       expect(isScrollLocked()).to.be.false;
