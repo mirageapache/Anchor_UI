@@ -295,6 +295,45 @@ describe('ToastService', () => {
   });
 
   describe('pausing (WCAG 2.2.1)', () => {
+    /** 模擬切換分頁：以實例屬性蓋過 Document.prototype 的 visibilityState，並分派 visibilitychange */
+    function setPageVisibility(state: DocumentVisibilityState | null): void {
+      if (state === null) delete (document as { visibilityState?: unknown }).visibilityState;
+      else Object.defineProperty(document, 'visibilityState', { value: state, configurable: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    }
+
+    it('pauses while the page is hidden and resumes with the remaining time', async () => {
+      ToastService.info('Warm up', { duration: 0 }); // 確保 Viewport 與 visibilitychange 監聽已建立
+      const handle = ToastService.info('Background', { duration: 200 });
+      await rendered();
+      try {
+        setPageVisibility('hidden');
+        await wait(350);
+        expect(
+          toasts().map((toast) => toast.message),
+          'paused while hidden',
+        ).to.include('Background');
+      } finally {
+        setPageVisibility(null);
+      }
+      await handle.closed;
+    });
+
+    it('does not start the timer of a toast shown while the page is hidden', async () => {
+      ToastService.info('Warm up', { duration: 0 });
+      await rendered();
+      setPageVisibility('hidden');
+      let handle;
+      try {
+        handle = ToastService.info('Shown in background', { duration: 100 });
+        await wait(250);
+        expect(toasts().map((toast) => toast.message)).to.include('Shown in background');
+      } finally {
+        setPageVisibility(null);
+      }
+      await handle.closed;
+    });
+
     it('pauses while the pointer is over a toast', async () => {
       const handle = ToastService.info('Hover me', { duration: 200 });
       await rendered();

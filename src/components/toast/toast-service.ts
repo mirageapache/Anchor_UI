@@ -48,7 +48,7 @@ interface Entry {
  *   新通知出現時重新提升至最上層，Modal / Alert 開啟期間透過 followTopModal 移入最上層 modal 的子樹，
  *   因為 modal dialog 以外的節點都會 inert，即使視覺上在上層也無法操作與播報。
  * - 同時顯示上限之外的通知排隊等候，有通知關閉時依序補上。
- * - 指標停在通知上或焦點位於通知內時暫停所有自動關閉（WCAG 2.2.1）。
+ * - 指標停在通知上、焦點位於通知內或分頁不可見時暫停所有自動關閉（WCAG 2.2.1）。
  */
 class ToastManager {
   private viewport: HTMLElement | null = null;
@@ -225,7 +225,7 @@ class ToastManager {
 
   private startTimer(entry: Entry): void {
     entry.timer.start(entry.duration);
-    if (this.hovering || this.focused) entry.timer.pause();
+    if (this.paused) entry.timer.pause();
   }
 
   /**
@@ -240,8 +240,16 @@ class ToastManager {
     return Boolean(hit && hit !== viewport && viewport.contains(hit));
   }
 
+  /**
+   * 是否暫停所有自動關閉：指標停在通知上、焦點位於通知內，或分頁不可見
+   * （使用者切到其他分頁時看不到通知，不應在背景倒數完畢而錯過）
+   */
+  private get paused(): boolean {
+    return this.hovering || this.focused || document.visibilityState === 'hidden';
+  }
+
   private syncPause(): void {
-    const paused = this.hovering || this.focused;
+    const paused = this.paused;
     for (const entry of this.order) {
       if (entry.state !== 'visible') continue;
       if (paused) entry.timer.pause();
@@ -290,6 +298,8 @@ class ToastManager {
       this.focused = false;
       this.syncPause();
     });
+
+    document.addEventListener('visibilitychange', () => this.syncPause());
 
     // 先記錄再進行後續步驟：即使之後拋錯，下一則通知也會沿用這個 Viewport，不會每次都在 <body> 留下新的
     this.viewport = viewport;
