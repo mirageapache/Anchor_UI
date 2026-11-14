@@ -177,7 +177,7 @@
 | **TASK-210** | 元件 | `Modal` 通用彈窗外框容器 (`<aui-modal>`) [✅]                        | 以原生 `<dialog>.showModal()` 實作（Top Layer、背景 inert、`::backdrop` 模糊遮罩）；大中小三種尺寸規格（sm/md/lg）；Header/Body/Footer 插槽；ESC 與點擊遮罩關閉（可配置）；使用 TASK-204 的捲動鎖定與焦點返還；分派可取消的 `aui-show` / `aui-hide` 與 `aui-after-show` / `aui-after-hide` 事件。                                                                                                                                                                                                                                  |
 | **TASK-211** | 元件 | `Alert` 提示與確認對話框 (`<aui-alert>`, `AlertService`) [✅]        | **以 `<aui-modal>` 為基礎組成**，不重複實作焦點、捲動與 ESC 邏輯；SweetAlert2 風格成功／失敗／警告／資訊向量圖示（遵循減少動畫設定）；`AlertService.alert()` / `confirm()` / `prompt()` 回傳 Promise；Enter 確認、ESC 取消；破壞性確認的初始焦點落在取消鈕；支援於 Modal 內再開啟。                                                                                                                                                                                                                                                |
 | **TASK-212** | 元件 | `Toast Notification` 元件與服務 (`<aui-toast>`, `ToastService`) [✅] | 右下角堆疊 Viewport（Popover API 進入 Top Layer，新通知出現時重新提升至最上層；Modal 開啟期間透過 TASK-204 移入最上層 modal 子樹，確保仍可見、可操作且可被播報）；Success、Error、Warning、Info、Loading 5 種狀態；`ToastService.success('複製成功')` 等單例 API，並支援更新既有通知（如 Loading 轉 Success）；佇列管理與同時顯示上限；以 live region 播報（Error 為 `role="alert"`，其餘為 `role="status"`）；滑鼠懸停或聚焦時暫停自動關閉；單例以 `globalThis` 上的 `Symbol.for()` 共用，避免微前端重複載入時產生多個 Viewport。 |
-| **TASK-213** | 展示 | 表單與回饋 Storybook 交互測試 [✅]                                   | 以 `@storybook/test` 撰寫複雜表單與非同步通知的 play function 互動情境，並以 Storybook Test Runner 於 CI 對 `build-storybook` 產物執行。                                                                                                                                                                                                                                                                                                                                                                                           |
+| **TASK-213** | 展示 | 表單與回饋 Storybook 交互測試 [✅]                                   | 以 `storybook/test` 撰寫複雜表單與非同步通知的 play function 互動情境，並以 `@storybook/addon-vitest`（Vitest browser mode + Playwright Chromium）於 CI 執行，之後再執行 `build-storybook`。                                                                                                                                                                                                                                                                                                                                       |
 | **TASK-214** | 工程 | CI 擴充與時間預算 [✅]                                               | 新增 Visual Regression 與 Size Limit job（與既有 job 平行執行），並將 `examples/vue3`、`examples/angular` 的生產建置納入 CI；整體 PR CI 維持在 8 分鐘內完成。                                                                                                                                                                                                                                                                                                                                                                      |
 
 #### 交付成果 (Deliverables)
@@ -193,30 +193,30 @@
 
 **工程防線**
 
-- [ ] 元件庫 Tree-shaking 正常運作：消費端僅引用 Button 時，打包結果不含其他元件的程式碼（以自動化測試驗證）。
-- [ ] size-limit 於 CI 逐一檢查各元件入口，超出預算（基準 +10%）時 PR 檢查失敗並留言列出差異。
-- [ ] 視覺回歸測試在深淺色模式下皆通過比對，像素差異 > 0.1% 時 CI 自動阻擋；同一 commit 重跑結果一致，無偶發失敗。
-- [ ] 發布產物不含測試、stories 與 `test-utils` 檔案；`package.json` 版本與 Git Tag 對齊里程碑。
-- [ ] PR CI 全部 job 於 8 分鐘內完成。
+- [✅] 元件庫 Tree-shaking 正常運作：消費端僅引用 Button 時，打包結果不含其他元件的程式碼（以自動化測試驗證）。
+- [✅] size-limit 於 CI 逐一檢查各元件入口，超出預算（基準 +10%）時 PR 檢查失敗並留言列出差異。
+- [✅] 視覺回歸測試在深淺色模式下皆通過比對，像素差異 > 0.1% 時 CI 自動阻擋；同一 commit 重跑結果一致，無偶發失敗。
+- [ ] 發布產物不含測試、stories 與 `test-utils` 檔案；`package.json` 版本與 Git Tag 對齊里程碑。（發布產物內容已由 `pnpm verify:package` 檢查；版本與 Tag 對齊待 `v0.2.0-beta` 發布後完成）
+- [✅] PR CI 全部 job 於 8 分鐘內完成。
 
 **表單控制項**
 
-- [ ] Input 與 Segmented Control 於 host 上分派 `input` 與 `change` 事件，事件觸發時 `value` 已更新；Vue 3 `v-model` 與 Angular `ngModel`（`ngDefaultControl`）皆可雙向同步。
-- [ ] 表單元件可參與原生 `<form>`：提交時帶出 `name` / `value`、`required` 未填時阻擋提交、`form.reset()` 還原初始值、`<fieldset disabled>` 時一併停用。
-- [ ] `<aui-field>` 的標題與描述可被讀出為輸入框的無障礙名稱與描述（以瀏覽器實際計算的無障礙樹驗證）。
-- [ ] Segmented Control 可用方向鍵、Home、End 巡覽並選取，Tab 僅停留在選中項。
-- [ ] Output 長文字安全換行、無橫向溢位，成功／警告／錯誤狀態不只依賴顏色傳達。
+- [✅] Input 與 Segmented Control 於 host 上分派 `input` 與 `change` 事件，事件觸發時 `value` 已更新；Vue 3 `v-model` 與 Angular `ngModel`（`ngDefaultControl`）皆可雙向同步。
+- [✅] 表單元件可參與原生 `<form>`：提交時帶出 `name` / `value`、`required` 未填時阻擋提交、`form.reset()` 還原初始值、`<fieldset disabled>` 時一併停用。
+- [✅] `<aui-field>` 的標題與描述可被讀出為輸入框的無障礙名稱與描述（以瀏覽器實際計算的無障礙樹驗證）。
+- [✅] Segmented Control 可用方向鍵、Home、End 巡覽並選取，Tab 僅停留在選中項。
+- [✅] Output 長文字安全換行、無橫向溢位，成功／警告／錯誤狀態不只依賴顏色傳達。
 
 **浮層與回饋**
 
-- [ ] Toast 具備佇列管理能力，多筆通知快速觸發時依序垂直堆疊，不產生位置重疊破版；Modal 或 Alert 開啟時，Toast 仍顯示於最上層、可操作且可被螢幕閱讀器播報。
-- [ ] Toast 以 live region 播報內容，滑鼠懸停或聚焦時暫停自動關閉（WCAG 2.2.1）。
-- [ ] Modal 與 Alert 開啟時正確鎖定背景捲動（巢狀開啟時正確計數）、背景不可互動、ESC 可關閉；關閉後焦點返還至觸發元素（含位於 Shadow DOM 內的觸發元素）。
+- [✅] Toast 具備佇列管理能力，多筆通知快速觸發時依序垂直堆疊，不產生位置重疊破版；Modal 或 Alert 開啟時，Toast 仍顯示於最上層、可操作且可被螢幕閱讀器播報。（以 Chromium 無障礙樹驗證 Modal 內的 live region 未被 inert，並以 Tab 鍵抵達通知）
+- [✅] Toast 以 live region 播報內容，滑鼠懸停或聚焦時暫停自動關閉（WCAG 2.2.1）。
+- [✅] Modal 與 Alert 開啟時正確鎖定背景捲動（巢狀開啟時正確計數）、背景不可互動、ESC 可關閉；關閉後焦點返還至觸發元素（含位於 Shadow DOM 內的觸發元素）。
 
 **品質基準（延續 Phase 1）**
 
-- [ ] 所有新元件通過 `axe-core` 檢驗，無任何 WCAG 2.1 AA 違規（淺色與深色主題皆涵蓋所有變體），且可完整以鍵盤操作。
-- [ ] 單元測試覆蓋率維持 statements / functions / lines ≥ 85%、branches ≥ 75%。
+- [✅] 所有新元件通過 `axe-core` 檢驗，無任何 WCAG 2.1 AA 違規（淺色與深色主題皆涵蓋所有變體），且可完整以鍵盤操作。
+- [✅] 單元測試覆蓋率維持 statements / functions / lines ≥ 85%、branches ≥ 75%。
 
 ---
 
