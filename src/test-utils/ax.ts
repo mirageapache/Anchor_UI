@@ -4,6 +4,10 @@ export interface AxNode {
   role: string;
   name: string;
   description: string;
+  /** 節點不會被輔助科技讀取（例如位於 inert 子樹、display: none 或 aria-hidden） */
+  ignored: boolean;
+  /** live region 的播報方式（`polite` / `assertive`），非 live region 為空字串 */
+  live: string;
 }
 
 /**

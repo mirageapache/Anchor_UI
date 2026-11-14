@@ -30,6 +30,9 @@ function axNodePlugin() {
           role: node?.role?.value ?? '',
           name: node?.name?.value ?? '',
           description: node?.description?.value ?? '',
+          // inert / display: none / aria-hidden 等使節點不會被輔助科技讀取時為 true
+          ignored: node?.ignored ?? true,
+          live: node?.properties?.find((property) => property.name === 'live')?.value?.value ?? '',
         };
       } finally {
         await cdp.detach();
