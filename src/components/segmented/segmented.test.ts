@@ -61,6 +61,42 @@ describe('AuiSegmented (<aui-segmented>)', () => {
       expect(buttons(el)[1].getAttribute('part')).to.equal('option option-disabled');
     });
 
+    it('treats null, undefined and malformed JSON options as an empty list', async () => {
+      const el = await fixture<AuiSegmented>(
+        html`<aui-segmented
+          .options=${null as unknown as SegmentedOption[]}
+          value="a"
+        ></aui-segmented>`,
+      );
+      expect(el.options).to.deep.equal([]);
+      expect(buttons(el)).to.have.length(0);
+
+      el.options = undefined as unknown as SegmentedOption[];
+      await el.updateComplete;
+      expect(el.options).to.deep.equal([]);
+
+      el.setAttribute('options', '[{"value":"a",');
+      await el.updateComplete;
+      expect(el.options).to.deep.equal([]);
+
+      // 之後給正確的選項仍可正常運作
+      el.options = MODES;
+      await el.updateComplete;
+      expect(el.options).to.equal(MODES);
+      expect(buttons(el)).to.have.length(3);
+    });
+
+    it('skips option entries that are not objects', async () => {
+      const el = await fixture<AuiSegmented>(html`
+        <aui-segmented
+          .options=${[null, MODES[0], 'x', MODES[1]] as unknown as SegmentedOption[]}
+          value="decode"
+        ></aui-segmented>
+      `);
+      expect(buttons(el).map((b) => b.textContent!.trim())).to.deep.equal(['Encode', 'Decode']);
+      expect(buttons(el)[1].getAttribute('aria-checked')).to.equal('true');
+    });
+
     it('keeps the track width stable when the selection changes', async () => {
       const el = await fixture<AuiSegmented>(
         html`<aui-segmented .options=${MODES} value="encode"></aui-segmented>`,

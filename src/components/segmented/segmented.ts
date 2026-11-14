@@ -19,6 +19,10 @@ function radioValueMissingMessage(): string {
   return valueMissingMessage;
 }
 
+/** 選項須為物件（null、字串等項目無法渲染，直接略過） */
+const isOptionLike = (item: unknown): item is SegmentedOption =>
+  typeof item === 'object' && item !== null;
+
 /**
  * Anchor UI — Segmented Control 元件 (`<aui-segmented>`)
  *
@@ -66,11 +70,23 @@ export class AuiSegmented extends LitElement {
   @state()
   private formDisabled = false;
 
+  private optionItems: SegmentedOption[] = [];
+
   /**
-   * 選項清單；於 HTML 中可用 JSON 字串設定 `options` 屬性
+   * 選項清單；於 HTML 中可用 JSON 字串設定 `options` 屬性。
+   * 非陣列（如框架首幀綁定的 null / undefined、格式錯誤的 JSON 屬性）視為空清單，非物件的項目會被略過
    */
   @property({ type: Array })
-  options: SegmentedOption[] = [];
+  get options(): SegmentedOption[] {
+    return this.optionItems;
+  }
+
+  set options(next: SegmentedOption[]) {
+    const previous = this.optionItems;
+    const items: unknown[] = Array.isArray(next) ? next : [];
+    this.optionItems = items.every(isOptionLike) ? items : items.filter(isOptionLike);
+    this.requestUpdate('options', previous);
+  }
 
   /**
    * 目前選取的值（未選取為空字串）。以程式設定後，`value` 屬性的變更不再覆寫
