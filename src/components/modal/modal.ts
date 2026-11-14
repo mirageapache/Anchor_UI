@@ -22,6 +22,8 @@ import type { ModalCloseReason, ModalHideDetail, ModalRole, ModalSize } from './
  * - **初始焦點**：聚焦內容中帶有 `autofocus` 屬性的元素，否則聚焦面板本身。
  * - **巢狀浮層**：開啟期間登記為最上層 modal，Toast 等浮層會移入 dialog 內的 `overlay` slot，
  *   避免被 modal 的 inert 邊界擋住（見 note/04-top-layer.md）。
+ * - **事件冒泡**：下列事件皆 `bubbles` + `composed`，內容中 Tooltip 或巢狀 Modal 的同名事件也會傳到這裡
+ *   （且不一定帶有 `detail.reason`）；只處理自身事件時請先檢查 `event.target === event.currentTarget`。
  *
  * @element aui-modal
  *

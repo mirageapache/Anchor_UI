@@ -141,6 +141,17 @@ import '@anchor-ui/core/tooltip';
 - 與原生 `<input>` 相同，同一個元素不可同時設定 `value` 屬性與 `v-model`。
 - 以 Vitest + happy-dom 測試 Angular 時，zone.js 無法正確包裝 happy-dom 的 `MutationObserver`，需在 zone.js 之前載入修正（參考 `examples/angular/src/test-setup-happy-dom.ts`）。happy-dom 也不會把 Shadow DOM 內的事件 retarget 到 host，輸入法組字這類依賴 `event.target` 的行為請在真實瀏覽器驗證。
 
+### 6. 監聽 `aui-` 自訂事件
+
+`aui-show` / `aui-hide` / `aui-after-show` / `aui-after-hide` 等事件皆會冒泡並穿出 Shadow DOM（`bubbles` + `composed`），以便在外層統一監聽。代價是**內層元件的同名事件也會傳到外層**：例如 Modal 內容中的 Tooltip（包含 `<aui-icon-button>`、`<aui-field>` 複製鈕的提示）或巢狀 Modal 關閉時，外層 Modal 的 `aui-hide` 監聽器同樣會收到，且這些事件不一定帶有 `detail.reason`。只處理元件自身的事件時，請先比對事件來源：
+
+```ts
+modal.addEventListener('aui-hide', (event) => {
+  if (event.target !== event.currentTarget) return; // 來自內層的 Tooltip / Modal
+  console.log((event as CustomEvent<{ reason: string }>).detail.reason);
+});
+```
+
 ---
 
 ## 常用命令 (Scripts)

@@ -25,6 +25,9 @@ const DESCRIPTION_SLOT = 'aui-tooltip-description';
  * 全域浮動氣泡提示元件，提供 Shadcn/ui 風格冷黑外觀、微縮放動畫（0.95 -> 1.0）、
  * 支援原生 Popover API 進入 Top Layer（免受 overflow: hidden 裁切）與 @floating-ui/dom 邊界碰撞檢測。
  *
+ * 下列事件皆 `bubbles` + `composed`，會與 `<aui-modal>` 的同名事件一起傳到外層的監聽器（例如放在 Modal 內時），
+ * 外層請以 `event.target` 區分來源。
+ *
  * @element aui-tooltip
  *
  * @slot - 觸發目標元素（Trigger）
