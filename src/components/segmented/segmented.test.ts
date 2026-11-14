@@ -97,6 +97,28 @@ describe('AuiSegmented (<aui-segmented>)', () => {
       expect(buttons(el)[1].getAttribute('aria-checked')).to.equal('true');
     });
 
+    it('matches and submits numeric option values as strings', async () => {
+      const form = await fixture<HTMLFormElement>(html`
+        <form>
+          <aui-segmented
+            name="level"
+            value="2"
+            options='[{"value":1,"label":"One"},{"value":2,"label":"Two"}]'
+          ></aui-segmented>
+        </form>
+      `);
+      const el = form.querySelector<AuiSegmented>('aui-segmented')!;
+      await el.updateComplete;
+      expect(el.options.map((option) => option.value)).to.deep.equal(['1', '2']);
+      expect(buttons(el)[1].getAttribute('aria-checked')).to.equal('true');
+      expect(new FormData(form).get('level')).to.equal('2');
+
+      buttons(el)[0].click();
+      await el.updateComplete;
+      expect(el.value).to.equal('1');
+      expect(new FormData(form).get('level')).to.equal('1');
+    });
+
     it('keeps the track width stable when the selection changes', async () => {
       const el = await fixture<AuiSegmented>(
         html`<aui-segmented .options=${MODES} value="encode"></aui-segmented>`,
