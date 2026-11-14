@@ -164,6 +164,21 @@ describe('AuiModal (<aui-modal>)', () => {
   });
 
   describe('closing', () => {
+    it('forgets the reason of a close request that was reverted in the same task', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Reverted"></aui-modal>`);
+      await openModal(el);
+      let hides = 0;
+      el.addEventListener('aui-hide', () => hides++);
+
+      part(el, 'close-button').click();
+      el.open = true; // 同一個 task 內撤回
+      await el.updateComplete;
+      expect(hides, 'nothing to close').to.equal(0);
+      expect(dialogOf(el).open).to.be.true;
+
+      expect(await closeWith(el, () => (el.open = false))).to.equal('api');
+    });
+
     it('stays open when aui-hide is cancelled, and reports the reason', async () => {
       const el = await fixture<AuiModal>(html`<aui-modal heading="Cancel hide"></aui-modal>`);
       await openModal(el);

@@ -200,11 +200,13 @@ export class AuiModal extends LitElement {
 
   override updated(changed: PropertyValues<this>): void {
     if (!changed.has('open')) return;
+    // 每次處理 open 的變化都取用並清除關閉原因：關閉要求在同一個 task 內被撤回（open 又設回 true）時，
+    // 殘留的原因不可套用到之後以 `open = false` 觸發的關閉
+    const reason = this.pendingReason;
+    this.pendingReason = 'api';
     if (this.open && !this.isShown) {
       this.startShow();
     } else if (!this.open && this.isShown) {
-      const reason = this.pendingReason;
-      this.pendingReason = 'api';
       this.startHide(reason);
     }
   }
