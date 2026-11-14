@@ -98,7 +98,8 @@ describe('PausableTimer', () => {
     const timer = new PausableTimer(() => expired++);
     timer.start(2 ** 32);
     expect(timer.running).to.be.true;
-    expect(timer.remaining).to.be.at.most(2 ** 31 - 1);
+    // remaining 由 performance.now() 推算，會有浮點誤差（例如 2147483647.0000002），只確認已被限制在上限附近
+    expect(timer.remaining).to.be.below(2 ** 31);
     await wait(20);
     expect(expired, 'an overflowing delay would fire immediately').to.equal(0);
     timer.stop();
