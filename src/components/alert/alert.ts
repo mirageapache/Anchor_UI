@@ -12,16 +12,11 @@ import type {
 import type { AuiInput } from '../input/input.js';
 import type { AuiModal } from '../modal/modal.js';
 import type { ModalHideDetail } from '../modal/modal.types.js';
+import { defaultTrue } from '../../internal/converters.js';
 import { PausableTimer } from '../../internal/pausable-timer.js';
 import '../button/index.js';
 import '../input/index.js';
 import '../modal/index.js';
-
-/** 預設為 true 的布林屬性：只有字串 "false" 視為 false（與 <aui-modal> 相同） */
-const defaultTrue = {
-  fromAttribute: (value: string | null) => value !== 'false',
-  toAttribute: (value: boolean) => (value ? null : 'false'),
-};
 
 /**
  * 圖示的符號（圓環另外繪製），以 pathLength="1" 支援描繪動畫。

@@ -3,17 +3,12 @@ import { property, query, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { modalStyles } from './modal.styles.js';
+import { defaultTrue } from '../../internal/converters.js';
 import { rememberFocus } from '../../internal/focus-return.js';
 import { lockScroll } from '../../internal/scroll-lock.js';
 import { MODAL_OVERLAY_SLOT, pushModalLayer } from '../../internal/top-layer.js';
 import { transitionTimeMs } from '../../internal/transition.js';
 import type { ModalCloseReason, ModalHideDetail, ModalRole, ModalSize } from './modal.types.js';
-
-/** 預設為 true 的布林屬性：只有字串 "false" 視為 false（例如 close-on-escape="false"） */
-const defaultTrue = {
-  fromAttribute: (value: string | null) => value !== 'false',
-  toAttribute: (value: boolean) => (value ? null : 'false'),
-};
 
 /**
  * Anchor UI — Modal 元件 (`<aui-modal>`)
