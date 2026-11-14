@@ -19,6 +19,13 @@ const DEFAULT_DURATIONS: Record<ToastVariant, number> = {
 
 const DEFAULT_MAX_VISIBLE = 3;
 
+/** 執行期驗證：JavaScript 呼叫端或 API 回應可能傳入型別以外的值 */
+const isVariant = (value: unknown): value is ToastVariant =>
+  typeof value === 'string' && Object.hasOwn(DEFAULT_DURATIONS, value);
+
+/** 有效的自動關閉時間：非負數（Infinity 視為不自動關閉）；NaN、負數與非數字無效 */
+const isDuration = (value: unknown): value is number => typeof value === 'number' && value >= 0;
+
 interface Entry {
   readonly id: string;
   readonly element: AuiToast;
@@ -59,10 +66,15 @@ class ToastManager {
   private focused = false;
   private nextId = 0;
 
+  /** 無效的值（NaN、負數、未知的狀態等）會被忽略，保留原本的設定 */
   configure(config: ToastConfig): void {
-    if (config.maxVisible !== undefined)
-      this.maxVisible = Math.max(1, Math.floor(config.maxVisible));
-    if (config.durations) this.durations = { ...this.durations, ...config.durations };
+    const { maxVisible, durations } = config;
+    if (typeof maxVisible === 'number' && Number.isFinite(maxVisible)) {
+      this.maxVisible = Math.max(1, Math.floor(maxVisible));
+    }
+    for (const [variant, duration] of Object.entries(durations ?? {})) {
+      if (isVariant(variant) && isDuration(duration)) this.durations[variant] = duration;
+    }
     this.flush();
   }
 
@@ -97,7 +109,8 @@ class ToastManager {
       state: 'queued',
       resolveClosed,
     };
-    this.apply(entry, { variant: 'info', ...options });
+    // 明確傳入 variant: undefined 時也要採用預設狀態（展開運算會以 undefined 覆寫預設值）
+    this.apply(entry, { ...options, variant: options.variant ?? 'info' });
     this.entries.set(id, entry);
     this.order.push(entry);
     this.flush();
@@ -127,15 +140,24 @@ class ToastManager {
     if (entry.state === 'visible') this.startTimer(entry);
   }
 
-  /** 套用選項；狀態改變或指定 duration 時重新決定自動關閉時間 */
+  /**
+   * 套用選項；狀態改變或指定 duration 時重新決定自動關閉時間。
+   * 未知的狀態以 info 呈現並採用 info 的預設時間（與 <aui-toast> 的外觀一致）；無效的 duration 視為未指定
+   */
   private apply(entry: Entry, options: Omit<ToastOptions, 'id'>): void {
     const { element } = entry;
-    if (options.variant !== undefined) element.variant = options.variant;
+    const variant =
+      options.variant === undefined
+        ? undefined
+        : isVariant(options.variant)
+          ? options.variant
+          : 'info';
+    if (variant !== undefined) element.variant = variant;
     if (options.title !== undefined) element.heading = options.title;
     if (options.message !== undefined) element.message = options.message;
     if (options.noCloseButton !== undefined) element.noCloseButton = options.noCloseButton;
-    if (options.duration !== undefined) entry.duration = options.duration;
-    else if (options.variant !== undefined) entry.duration = this.durations[options.variant] ?? 0;
+    if (isDuration(options.duration)) entry.duration = options.duration;
+    else if (variant !== undefined) entry.duration = this.durations[variant];
   }
 
   private close(entry: Entry): void {

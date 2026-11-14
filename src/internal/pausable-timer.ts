@@ -4,6 +4,9 @@
  * 自動消失的內容須讓使用者能暫停或延長（WCAG 2.2.1 Timing Adjustable），
  * 因此提供 pause() / resume()，暫停時保留剩餘時間，恢復後從剩餘時間繼續。
  */
+/** setTimeout 可接受的最大延遲（2³¹−1 毫秒，約 24.8 天）；超過會溢位而立即到期 */
+const MAX_DELAY_MS = 2 ** 31 - 1;
+
 export class PausableTimer {
   private timeoutId: number | null = null;
   private deadline = 0;
@@ -21,11 +24,14 @@ export class PausableTimer {
     return this.running ? Math.max(0, this.deadline - performance.now()) : this.remainingMs;
   }
 
-  /** 重新開始倒數；ms 不大於 0（或不是數字）時只停止 */
+  /**
+   * 重新開始倒數；ms 不大於 0、不是數字或為 Infinity 時只停止（不會到期）。
+   * 超過 setTimeout 上限（約 24.8 天）的時間以上限計算，避免溢位成立即到期
+   */
   start(ms: number): void {
     this.stop();
-    if (!(ms > 0)) return;
-    this.remainingMs = ms;
+    if (!(ms > 0) || ms === Infinity) return;
+    this.remainingMs = Math.min(ms, MAX_DELAY_MS);
     this.resume();
   }
 

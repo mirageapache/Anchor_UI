@@ -83,4 +83,24 @@ describe('PausableTimer', () => {
     await wait(20);
     expect(expired).to.equal(0);
   });
+
+  it('treats Infinity as "never expires"', async () => {
+    let expired = 0;
+    const timer = new PausableTimer(() => expired++);
+    timer.start(Infinity);
+    expect(timer.running).to.be.false;
+    await wait(20);
+    expect(expired).to.equal(0);
+  });
+
+  it('caps delays beyond the setTimeout limit instead of expiring at once', async () => {
+    let expired = 0;
+    const timer = new PausableTimer(() => expired++);
+    timer.start(2 ** 32);
+    expect(timer.running).to.be.true;
+    expect(timer.remaining).to.be.at.most(2 ** 31 - 1);
+    await wait(20);
+    expect(expired, 'an overflowing delay would fire immediately').to.equal(0);
+    timer.stop();
+  });
 });

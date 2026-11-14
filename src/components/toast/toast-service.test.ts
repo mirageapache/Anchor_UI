@@ -239,6 +239,61 @@ describe('ToastService', () => {
     });
   });
 
+  describe('input validation', () => {
+    it('keeps a toast with an Infinity or oversized duration instead of closing it at once', async () => {
+      ToastService.info('Forever', { duration: Infinity });
+      ToastService.info('Overflow', { duration: 2 ** 32 });
+      await rendered();
+      await wait(50);
+      expect(toasts().map((toast) => toast.message)).to.deep.equal(['Forever', 'Overflow']);
+    });
+
+    it('shows an unknown variant as info and uses the info duration', async () => {
+      ToastService.configure({ durations: { info: 60 } });
+      const handle = ToastService.show({
+        message: 'Unknown',
+        variant: 'bogus' as unknown as 'info',
+      });
+      await rendered();
+      expect(toasts()[0].variant).to.equal('info');
+      await handle.closed;
+    });
+
+    it('uses the info default when variant is explicitly undefined', async () => {
+      ToastService.configure({ durations: { info: 60 } });
+      const handle = ToastService.show({ message: 'Undefined variant', variant: undefined });
+      await rendered();
+      expect(toasts()[0].variant).to.equal('info');
+      await handle.closed;
+    });
+
+    it('falls back to the variant default for an invalid duration', async () => {
+      ToastService.configure({ durations: { success: 60 } });
+      const handle = ToastService.success('NaN duration', { duration: Number.NaN });
+      await handle.closed;
+      expect(toasts()).to.have.length(0);
+    });
+
+    it('ignores an invalid maxVisible', async () => {
+      ToastService.configure({ maxVisible: Number.NaN });
+      for (const message of ['A', 'B', 'C', 'D']) ToastService.info(message, { duration: 0 });
+      await rendered();
+      expect(toasts(), 'maxVisible stays at the default of 3').to.have.length(3);
+    });
+
+    it('ignores invalid durations and keeps the previous ones', async () => {
+      ToastService.configure({ durations: { success: 60, info: 60 } });
+      ToastService.configure({
+        durations: { success: undefined, info: -1, bogus: 10 } as unknown as { success: number },
+      });
+      const success = ToastService.success('Kept 60ms');
+      const info = ToastService.info('Kept 60ms too');
+      const timeout = wait(1000).then(() => 'timeout');
+      expect(await Promise.race([success.closed.then(() => 'closed'), timeout])).to.equal('closed');
+      expect(await Promise.race([info.closed.then(() => 'closed'), timeout])).to.equal('closed');
+    });
+  });
+
   describe('pausing (WCAG 2.2.1)', () => {
     it('pauses while the pointer is over a toast', async () => {
       const handle = ToastService.info('Hover me', { duration: 200 });
