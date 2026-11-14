@@ -215,6 +215,12 @@ export class AuiModal extends LitElement {
   }
 
   private startShow(): void {
+    // 不在頁面上的 dialog 無法 showModal()（例如設定 open 後在同一個 task 內被移除）：不開啟
+    if (!this.isConnected) {
+      this.open = false;
+      return;
+    }
+
     const event = new CustomEvent('aui-show', { bubbles: true, composed: true, cancelable: true });
     this.dispatchEvent(event);
     if (event.defaultPrevented) {
@@ -222,18 +228,29 @@ export class AuiModal extends LitElement {
       return;
     }
 
-    const transitionId = ++this.transitionId;
-    this.isShown = true;
-
     // 退場動畫期間重新開啟時，dialog 仍開著，沿用既有的鎖定與 modal 層
-    if (!this.dialog.open) {
-      this.restoreFocus = rememberFocus();
-      this.releaseScroll = lockScroll();
-      this.dialog.showModal();
+    const reopening = this.dialog.open;
+    if (!reopening) {
+      const restoreFocus = rememberFocus();
+      // 須在 showModal() 前鎖定（隱藏捲軸前才量得到捲軸寬度）；showModal() 失敗時立即歸還，
+      // 否則計數永遠不會歸零，整頁無法捲動
+      const releaseScroll = lockScroll();
+      try {
+        this.dialog.showModal();
+      } catch (error) {
+        releaseScroll();
+        this.open = false;
+        throw error;
+      }
+      this.restoreFocus = restoreFocus;
+      this.releaseScroll = releaseScroll;
       // 須在 showModal() 之後登記（見 pushModalLayer 說明）
       this.popLayer = pushModalLayer(this);
-      this.applyInitialFocus(transitionId);
     }
+
+    const transitionId = ++this.transitionId;
+    this.isShown = true;
+    if (!reopening) this.applyInitialFocus(transitionId);
 
     requestAnimationFrame(() => {
       if (transitionId !== this.transitionId) return;

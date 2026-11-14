@@ -117,6 +117,50 @@ describe('AuiModal (<aui-modal>)', () => {
       await new Promise((resolve) => setTimeout(resolve, 20));
       expect(afterShow).to.equal(0);
     });
+
+    it('does not open or lock scrolling when removed in the same task it was opened', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Removed"></aui-modal>`);
+      const parent = el.parentElement!;
+      let shown = 0;
+      el.addEventListener('aui-show', () => shown++);
+
+      el.open = true;
+      el.remove();
+      await el.updateComplete;
+      await el.updateComplete;
+      expect(el.open).to.be.false;
+      expect(dialogOf(el).open).to.be.false;
+      expect(isScrollLocked()).to.be.false;
+      expect(getTopModalLayer()).to.be.null;
+      expect(shown).to.equal(0);
+
+      // 重新放回頁面後仍可正常開啟
+      parent.appendChild(el);
+      await openModal(el);
+      expect(isScrollLocked()).to.be.true;
+      await closeWith(el, () => el.hide());
+      expect(isScrollLocked()).to.be.false;
+    });
+
+    it('releases the scroll lock when showModal() throws', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Throws"></aui-modal>`);
+      const dialog = dialogOf(el);
+      dialog.showModal = () => {
+        throw new DOMException('test', 'InvalidStateError');
+      };
+      el.open = true;
+      let error: unknown;
+      try {
+        await el.updateComplete;
+      } catch (caught) {
+        error = caught;
+      }
+      await el.updateComplete;
+      expect((error as DOMException | undefined)?.name).to.equal('InvalidStateError');
+      expect(el.open).to.be.false;
+      expect(isScrollLocked()).to.be.false;
+      expect(getTopModalLayer()).to.be.null;
+    });
   });
 
   describe('closing', () => {
