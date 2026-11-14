@@ -24,6 +24,9 @@ const DEFAULT_DURATIONS: Record<ToastVariant, number> = {
 
 const DEFAULT_MAX_VISIBLE = 3;
 
+/** 排隊等候的上限：錯誤迴圈等情況大量呼叫時，捨棄最舊的排隊通知，避免無限累積 */
+const DEFAULT_MAX_QUEUED = 50;
+
 /** 執行期驗證：JavaScript 呼叫端或 API 回應可能傳入型別以外的值 */
 const isVariant = (value: unknown): value is ToastVariant =>
   typeof value === 'string' && Object.hasOwn(DEFAULT_DURATIONS, value);
@@ -55,6 +58,7 @@ class ToastManager {
   private readonly entries = new Map<string, Entry>();
   private readonly order: Entry[] = [];
   private maxVisible = DEFAULT_MAX_VISIBLE;
+  private maxQueued = DEFAULT_MAX_QUEUED;
   private durations: Record<ToastVariant, number> = { ...DEFAULT_DURATIONS };
   private hovering = false;
   /** 指標最後停留在通知上的位置，用於通知被移除後重新判斷是否仍停在通知上 */
@@ -64,19 +68,24 @@ class ToastManager {
 
   /** 無效的值（NaN、負數、未知的狀態等）會被忽略，保留原本的設定 */
   configure(config: ToastConfig): void {
-    const { maxVisible, durations } = config;
+    const { maxVisible, maxQueued, durations } = config;
     if (typeof maxVisible === 'number' && Number.isFinite(maxVisible)) {
       this.maxVisible = Math.max(1, Math.floor(maxVisible));
+    }
+    if (typeof maxQueued === 'number' && maxQueued >= 0) {
+      this.maxQueued = Math.floor(maxQueued);
     }
     for (const [variant, duration] of Object.entries(durations ?? {})) {
       if (isVariant(variant) && isDuration(duration)) this.durations[variant] = duration;
     }
     this.flush();
+    this.trimQueue();
   }
 
   /** 還原預設設定（測試或重設用） */
   resetConfig(): void {
     this.maxVisible = DEFAULT_MAX_VISIBLE;
+    this.maxQueued = DEFAULT_MAX_QUEUED;
     this.durations = { ...DEFAULT_DURATIONS };
   }
 
@@ -110,6 +119,7 @@ class ToastManager {
     this.entries.set(id, entry);
     this.order.push(entry);
     this.flush();
+    this.trimQueue();
     return entry.handle;
   }
 
@@ -198,6 +208,13 @@ class ToastManager {
       this.syncPause();
     }
     this.flush();
+  }
+
+  /** 排隊中的通知超過上限時，關閉最舊的（closed 照常 resolve），保留較新的訊息 */
+  private trimQueue(): void {
+    const queued = this.order.filter((entry) => entry.state === 'queued');
+    const excess = queued.length - this.maxQueued;
+    for (const entry of queued.slice(0, Math.max(0, excess))) this.close(entry);
   }
 
   /** 依同時顯示上限，把排隊中的通知依序加入 Viewport */
@@ -358,7 +375,7 @@ export const ToastService = {
   closeAll(): Promise<void> {
     return toastManager.closeAll();
   },
-  /** 設定同時顯示上限與各狀態預設的自動關閉時間 */
+  /** 設定同時顯示上限、排隊上限與各狀態預設的自動關閉時間 */
   configure(config: ToastConfig): void {
     toastManager.configure(config);
   },
