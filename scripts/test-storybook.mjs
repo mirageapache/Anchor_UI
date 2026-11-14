@@ -33,7 +33,15 @@ const CONTENT_TYPES = {
 
 const server = createServer((request, response) => {
   const { pathname } = new URL(request.url ?? '/', 'http://localhost');
-  let file = normalize(join(staticDir, decodeURIComponent(pathname)));
+  let decoded;
+  try {
+    decoded = decodeURIComponent(pathname);
+  } catch {
+    // 畸形的百分比編碼（如 /%E0%A4%A）會拋出 URIError，不可讓整個伺服器因單一請求而終止
+    response.writeHead(400).end();
+    return;
+  }
+  let file = normalize(join(staticDir, decoded));
   // 不允許跳出 storybook-static
   if (file !== staticDir && !file.startsWith(staticDir + sep)) {
     response.writeHead(403).end();
