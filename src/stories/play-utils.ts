@@ -4,7 +4,7 @@
  * Testing Library 的查詢（within / getByRole）無法穿透 Shadow DOM，
  * 因此以元件的 part / class 取得內部元素，再交給 userEvent 操作。
  */
-import { userEvent } from '@storybook/test';
+import { userEvent } from 'storybook/test';
 import type { AuiInput } from '../components/input/input.js';
 import type { AuiSegmented } from '../components/segmented/segmented.js';
 import type { AuiToast } from '../components/toast/toast.js';

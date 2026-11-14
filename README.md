@@ -25,7 +25,7 @@ Anchor UI 是一套以 **Web Component (Lit)** 為核心實作的跨框架共用
 | **程式語言**      | [TypeScript](https://www.typescriptlang.org/) | 嚴格型別定義、裝飾器語法支援                       |
 | **Design Tokens** | Pure SCSS / CSS Variables                     | 色彩、字體、間距、圓角與動態單一事實來源           |
 | **打包工具**      | [Vite](https://vitejs.dev/) (Library Mode)    | 產出標準 ESM 模組、`.d.ts` 型別宣告與獨立 CSS      |
-| **元件預覽**      | [Storybook 8](https://storybook.js.org/)      | 元件展示、文件化與深淺主題互動測試                 |
+| **元件預覽**      | [Storybook 10](https://storybook.js.org/)     | 元件展示、文件化與深淺主題互動測試                 |
 | **代碼品質**      | ESLint + Stylelint + Prettier                 | TypeScript、Lit 範本與 SCSS 樣式靜態檢查           |
 | **Git 防線**      | Husky + lint-staged + Commitlint              | Pre-commit 自動檢查修復、Conventional Commits 規範 |
 
@@ -177,7 +177,7 @@ modal.addEventListener('aui-hide', (event) => {
 | `pnpm test:visual:docker:update`                  | 同上，但更新基準圖（`screenshots/Chromium/baseline/`），並列出變更、產生 before／after／diff 供提交前檢視 |
 | `pnpm test:vue` / `pnpm test:angular`             | Vue 3 / Angular 範例專案的整合測試（需先 build）                                                          |
 | `pnpm typecheck:examples` / `pnpm build:examples` | 範例專案的型別檢查與正式建置（Vue SFC 編譯、Angular AOT；需先 build）                                     |
-| `pnpm test:storybook`                             | 以 Storybook Test Runner 執行所有 story 與 play function 互動情境（需先 `pnpm build-storybook`）          |
+| `pnpm test:storybook`                             | 以 Vitest（@storybook/addon-vitest）在 Chromium 中執行所有 story 與 play function 互動情境                |
 
 **發布**
 

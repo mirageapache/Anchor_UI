@@ -149,7 +149,8 @@ jobs:
   storybook:
     name: Storybook Interaction Tests
     timeout-minutes: 15
-    # TASK-213: 建置 Storybook，並以 Storybook Test Runner 執行所有 story（渲染冒煙測試）與 play function 互動情境。
+    # TASK-213: 以 @storybook/addon-vitest（Vitest browser mode）執行所有 story（渲染冒煙測試）與 play function 互動情境，
+    # 並建置靜態 Storybook 確認可部署。job 名稱為 main Ruleset 的必要檢查，請勿更名。
     # 與 Visual Regression 相同，於 Playwright 官方映像中執行：瀏覽器已預先安裝，版本與 package.json 的 playwright 一致。
     needs: lint-and-typecheck
     runs-on: ubuntu-latest
@@ -173,11 +174,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Storybook
-        run: pnpm build-storybook
-
       - name: Run Storybook interaction tests (play functions)
         run: pnpm test:storybook
+
+      - name: Build Storybook
+        run: pnpm build-storybook
 
   visual:
     name: Visual Regression
