@@ -27,6 +27,10 @@
       "types": "./dist/components/card/index.d.ts",
       "import": "./dist/components/card/index.js"
     },
+    "./dropzone": {
+      "types": "./dist/components/dropzone/index.d.ts",
+      "import": "./dist/components/dropzone/index.js"
+    },
     "./field": {
       "types": "./dist/components/field/index.d.ts",
       "import": "./dist/components/field/index.js"
@@ -79,6 +83,8 @@
     "./dist/components/button/button.js",
     "./dist/components/card/index.js",
     "./dist/components/card/card.js",
+    "./dist/components/dropzone/index.js",
+    "./dist/components/dropzone/dropzone.js",
     "./dist/components/field/index.js",
     "./dist/components/field/field.js",
     "./dist/components/icon-button/index.js",

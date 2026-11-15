@@ -101,7 +101,7 @@ _非獨立 UI 元件，但為所有元件實作之外觀基礎與依賴單一事
 14. **FileUpload Dropzone（拖放檔案上傳區）**
     - **自訂標籤**：`<aui-dropzone>`
     - **說明**：虛線框外觀的拖放式檔案上傳區，提示使用者拖入檔案或點擊瀏覽選檔。
-    - **狀態與能力**：拖曳懸浮（Dragover）整塊染上 Accent 琥珀色與邊框加亮、原生 input[type=file] 同步連動、支援檔案格式限制提示。
+    - **狀態與能力**：拖曳懸浮（Dragover）整塊染上 Accent 琥珀色與邊框加亮、點擊（或 Enter / Space）開啟原生 input[type=file] 檔案選取器、支援檔案格式限制提示與過濾；取得的檔案由 `aui-file-drop` 事件送出（元件不保留已選的檔案，也不參與表單送出）。
 
 15. **Favorite Toggle Button（收藏星號按鈕）**
     - **自訂標籤**：`<aui-favorite-btn>`
