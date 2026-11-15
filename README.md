@@ -296,6 +296,7 @@ npm install https://github.com/mirageapache/Anchor_UI/releases/download/v0.3.0/a
 | `pnpm release:verify` | 檢查版號是否為合法 SemVer；`--tag v<版號>` 檢查與 tag 一致，`--all-tags` 檢查所有既有 tag                                          |
 | `pnpm release:pack`   | 發布預演：建置 → 套件驗證 → 體積 → 版號檢查 → 產出 tarball 至 `release/`（不含安裝時會執行的生命週期腳本）                         |
 | `pnpm smoke`          | 跨框架冒煙測試：以 tarball 安裝到 `smoke/` 的 Vue 3 / Angular 專案並做型別檢查與正式建置（需先 build；可指定 `vue3` 或 `angular`） |
+| `pnpm test:scripts`   | 部署腳本的測試（`scripts/*.test.mjs`：gh-pages 發布與 PR 預覽留言，對本機暫存 repo 與假 API 驗證）                                 |
 
 **開發與程式碼品質**
 
@@ -332,6 +333,17 @@ pnpm dev:yalc          # 或手動：pnpm yalc:push
 - 若 Vite 預打包快取未更新，請於消費端執行 `vite --force`。
 - 結束後以 `npx yalc remove @anchor-ui/core`（或 `--all`）還原依賴，避免把 `file:.yalc` 提交進版控。
 - `.yalc/` 與 `yalc.lock` 已列入 `.gitignore`。
+
+---
+
+## 線上文件與 PR 預覽
+
+Storybook 由 `.github/workflows/storybook-preview.yml` 自動部署到 GitHub Pages：
+
+- **線上元件文件**（`main` 的最新內容）：<https://mirageapache.github.io/Anchor_UI/>
+- **PR 預覽**：以 `main` 為目標的 PR 會自動部署到 `…/pr-preview/pr-<編號>/`，並在 PR 留言連結；PR 關閉後自動移除。
+
+啟用方式、限制（來自 fork 的 PR 沒有預覽）與常見狀況見 [`note/07-deployment.md`](note/07-deployment.md) 第 6 節。
 
 ---
 

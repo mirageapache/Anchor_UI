@@ -7,12 +7,12 @@
 
 Anchor UI 是元件庫，不是網站，所以沒有「部署到伺服器」這件事。目前的部署指的是**發布一個版本**：
 
-| 項目                | 現況                                                                     |
-| ------------------- | ------------------------------------------------------------------------ |
-| 版本發布            | ✅ 推送 `v*` tag → GitHub Actions 自動建立 GitHub Release 並附上 tarball |
-| 交付給其他專案      | ✅ 以 Release 的 tarball 網址安裝（見第 3 節），或本機用 yalc            |
-| Storybook 線上預覽  | ❌ 尚未建置（Phase 3 TASK-308），GitHub Pages 也還沒啟用                 |
-| 發布到 npm registry | ❌ 尚未建置（Phase 4 TASK-405，Changesets）                              |
+| 項目                         | 現況                                                                              |
+| ---------------------------- | --------------------------------------------------------------------------------- |
+| 版本發布                     | ✅ 推送 `v*` tag → GitHub Actions 自動建立 GitHub Release 並附上 tarball          |
+| 交付給其他專案               | ✅ 以 Release 的 tarball 網址安裝（見第 3 節），或本機用 yalc                     |
+| Storybook 線上文件與 PR 預覽 | ⏳ workflow 已建置（Phase 3 TASK-308，見第 6 節）；需先啟用 GitHub Pages 才會生效 |
+| 發布到 npm registry          | ❌ 尚未建置（Phase 4 TASK-405，Changesets）                                       |
 
 Phase 1 做過的那次部署，就是發布 `v0.1.0-alpha`（PR #2 + tag），產物在 [GitHub Releases](https://github.com/mirageapache/Anchor_UI/releases)。
 
@@ -144,5 +144,61 @@ pnpm dev:yalc
 
 ## 5. 之後會改變的部分
 
-- **Phase 3 TASK-308**：PR 自動部署 Storybook 預覽並留言連結，`main` 更新時發布線上文件站。完成後在本篇補上操作方式。
 - **Phase 4 TASK-405**：導入 Changesets，版號、CHANGELOG、tag 與 `npm publish` 全自動，第 2 節的手動流程屆時作廢。
+
+## 6. Storybook 線上文件與 PR 預覽（GitHub Pages）
+
+由 `.github/workflows/storybook-preview.yml` 自動處理，平常不需要手動操作：
+
+| 事件                             | 結果                                                                                             |
+| -------------------------------- | ------------------------------------------------------------------------------------------------ |
+| 以 `main` 為目標的 PR 開啟／推送 | 建置 Storybook，部署到 `pr-preview/pr-<編號>/`，並在 PR 留言預覽連結（重新部署時更新同一則留言） |
+| PR 關閉（合併或放棄）            | 移除該 PR 的預覽，留言改為「已移除」                                                             |
+| `main` 更新                      | 部署到站台根目錄（線上元件文件），各 PR 的預覽保留                                               |
+
+網址（`<owner>` 為小寫的帳號名稱）：
+
+- 線上文件：`https://<owner>.github.io/Anchor_UI/`
+- PR 預覽：`https://<owner>.github.io/Anchor_UI/pr-preview/pr-<編號>/`
+
+### 一次性設定：啟用 GitHub Pages
+
+workflow 會把網站推送到 `gh-pages` 分支，但要在 repo 啟用 Pages 之後網址才會生效：
+
+1. 先讓 workflow 跑過一次（開一個以 `main` 為目標的 PR，或合併到 `main`），產生 `gh-pages` 分支。
+2. 到 repo 的 **Settings → Pages**，Source 選 **Deploy from a branch**，Branch 選 `gh-pages`、資料夾選 `/ (root)`，儲存。
+   也可以用指令：
+   ```bash
+   gh api -X POST repos/<owner>/Anchor_UI/pages -f "source[branch]=gh-pages" -f "source[path]=/"
+   ```
+3. 約一分鐘後開啟上面的網址確認。
+
+> Pages 站台是公開的。repo 為公開時沒有額外影響；若日後改為私有，預覽內容仍可能公開（視方案而定），需重新評估。
+
+### 運作方式與限制
+
+- **權限分離**：建置 job 只有讀取權限；只有部署／清除 job 取得 `contents: write` 與 `pull-requests: write`，
+  而且只執行 `scripts/pages-deploy.mjs` 與 `scripts/pr-preview-comment.mjs`，不安裝任何相依。
+- **協作者可經由 PR 改寫站台**：deploy job 執行的是 PR 分支上的部署腳本，能在本 repo 開分支的人可以不經審查改寫 `gh-pages`（包含線上文件）。單人維護時可接受；多人協作時請留意。
+- **PR 關閉時的清除**由 `pull_request_target` 觸發，執行的是 `main` 上的腳本（不執行 PR 的程式碼），PR 有合併衝突時也會執行。
+- **自訂網域**：部署到根目錄時會保留 `CNAME`；另在 repo 的 Variables 設定 `PAGES_BASE_URL`，PR 留言才會使用自訂網域的網址。
+- **部署頻率**：以分支為來源的 Pages 每小時約可建置 10 次（軟性限制），短時間內大量推送時較新的內容可能延後出現。
+- **來自 fork 的 PR 不會有預覽**：fork 的 PR 取得的權杖是唯讀的，無法推送也無法留言；Storybook 仍會建置，可從 artifact 下載。
+- **同時部署**：多個 PR 同時推送 `gh-pages` 時，腳本會重新取得最新內容後重試，不會互相覆蓋。
+- **Pages 的延遲**：推送後約一分鐘才會反映，剛部署完看到舊版或 404 屬正常。
+- **本機測試**：`pnpm test:scripts` 以本機的暫存 repo 與假的 API 伺服器測試部署與留言腳本。也可以手動演練：
+  ```bash
+  pnpm build-storybook
+  git init --bare /tmp/pages.git
+  node scripts/pages-deploy.mjs --source storybook-static --target pr-preview/pr-1 --remote /tmp/pages.git
+  ```
+
+### 常見狀況
+
+| 狀況                    | 原因與處理                                                                                                                                           |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 預覽連結是 404          | Pages 尚未啟用（見上方一次性設定），或剛部署完還沒反映（等一分鐘）。                                                                                 |
+| PR 沒有出現預覽留言     | PR 來自 fork；或 PR 的目標分支不是 `main`（workflow 只處理以 `main` 為目標的 PR）。                                                                  |
+| PR 關閉後預覽還在       | 清除 job 失敗或被取消，或 PR 關閉後有人重新執行了舊的部署。手動執行：`node scripts/pages-deploy.mjs --remove pr-preview/pr-<編號>`（需有推送權限）。 |
+| `gh-pages` 分支越來越大 | 每次部署都是一個 commit。必要時可刪除分支後重新部署 `main`（預覽會在各 PR 下次推送時重建）。                                                         |
+| 部署 job 顯示推送失敗   | 連續重試後仍被拒絕（極少見）。重新執行該 job 即可。                                                                                                  |

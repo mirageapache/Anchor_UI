@@ -241,7 +241,7 @@
 | **TASK-305** | 元件 | `Header` 複合元件 (`<aui-header>`) [✅]              | 整合 Tag 標籤、HOT 徽標、H1 主標題、我的最愛收藏鈕與簡述文字的統一頁首容器。                                                                                                                                                                                                |
 | **TASK-306** | 元件 | `Kbd` 鍵帽微元件 (`<aui-kbd>`) [✅]                  | 鍵盤按鍵微元件，等寬字體微立體邊框風格，用於介面操作指引。                                                                                                                                                                                                                  |
 | **TASK-307** | 工程 | **跨框架 CI 整合冒煙測試** [✅]                      | 範例專案的生產建置已於 Phase 2 TASK-214 納入 CI；本任務於 GitHub Actions 建立矩陣工作流（Matrix Workflow），每次發起 PR 時以 `npm pack` 產出的 tarball 安裝至 Vue 3 與 Angular 小型專案並建置，驗證實際發布產物（`exports`、`sideEffects`、型別宣告），提早抓出破壞性變更。 |
-| **TASK-308** | 工程 | **Storybook 自動化預覽部署 (Preview CD)**            | 建置 GitHub Actions 部署腳本：<br>1. PR 建立時自動建置 Storybook 並發布至預覽環境（如 GitHub Pages 或臨時預覽站點），自動留言 PR 預覽連結。<br>2. `main` 分支更新時自動發布最新版線上元件文檔庫。                                                                           |
+| **TASK-308** | 工程 | **Storybook 自動化預覽部署 (Preview CD)** [✅]       | 建置 GitHub Actions 部署腳本：<br>1. PR 建立時自動建置 Storybook 並發布至預覽環境（如 GitHub Pages 或臨時預覽站點），自動留言 PR 預覽連結。<br>2. `main` 分支更新時自動發布最新版線上元件文檔庫。                                                                           |
 
 #### 交付成果 (Deliverables)
 
@@ -254,7 +254,7 @@
 
 - [✅] `Card` 在不同容器寬度下自動排版填滿，縮放視窗無橫向溢位破版。（`.card-grid` 於 200px～1200px 容器寬度下的欄數、等寬填滿與無橫向溢位皆以自動化測試驗證）
 - [✅] `FileUpload Dropzone` 拖放外部檔案（如 JSON、圖片）能正確截獲 File 物件並拋出 `aui-file-drop` 事件。（自訂事件一律使用 `aui-` 前綴；以合成的拖放事件於自動化測試驗證，`detail.files` 為可讀取內容的 File 物件）
-- [ ] 每個 PR 均會自動產生獨立的 Storybook 預覽連結，供團隊即時檢驗視覺與互動。
+- [ ] 每個 PR 均會自動產生獨立的 Storybook 預覽連結，供團隊即時檢驗視覺與互動。（workflow 與部署腳本已完成並於本機以暫存 repo 驗證；需啟用 GitHub Pages 並待 PR 實際執行後勾選。限制：只處理以 `main` 為目標的 PR，來自 fork 的 PR 因權杖唯讀不會部署預覽）
 - [ ] 跨框架 CI 冒煙測試成功跑過 Vue 3 與 Angular 的生產編譯。（`pnpm smoke` 已於本機通過；CI 的 `Framework Smoke Test` matrix job 待 PR 實際執行後勾選。CI 只在以 `main` 為目標的 PR 與 `main` 的 push 執行，與其他 job 相同；另需在 `main` 的 Ruleset 將 `Framework Smoke Test (vue3)`、`Framework Smoke Test (angular)` 加入必要檢查，冒煙測試才會阻擋合併）
 
 ---

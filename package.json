@@ -139,6 +139,7 @@
     "check:versions": "node scripts/check-tool-versions.mjs",
     "release:pack": "pnpm build && pnpm verify:package && pnpm size && pnpm release:verify && node scripts/pack.mjs",
     "smoke": "node scripts/smoke-test.mjs",
+    "test:scripts": "node --test \"scripts/*.test.mjs\"",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
     "test": "wtr",

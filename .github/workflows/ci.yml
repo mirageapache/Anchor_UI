@@ -57,6 +57,11 @@ jobs:
       - name: Lint GitHub Actions workflows (actionlint)
         run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9
 
+      # TASK-308：部署腳本（gh-pages 發布、PR 預覽留言）的測試；部署本身只能在 GitHub 上實際執行，
+      # 這裡對本機的 bare repo 與假的 API 伺服器驗證其邏輯
+      - name: Test deployment scripts
+        run: pnpm test:scripts
+
       # package.json 版號為合法 SemVer，且每個既有 v* tag 所指 commit 的版號都與 tag 一致
       - name: Check release versions and existing tags
         run: pnpm release:verify --all-tags
