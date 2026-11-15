@@ -10,6 +10,7 @@ import { AuiField } from './field/field.js';
 import { AuiHeader } from './header/header.js';
 import { AuiIconButton } from './icon-button/icon-button.js';
 import { AuiInput } from './input/input.js';
+import { AuiKbd } from './kbd/kbd.js';
 import { AuiModal } from './modal/modal.js';
 import { AuiOutput } from './output/output.js';
 import { AuiSegmented } from './segmented/segmented.js';
@@ -121,6 +122,7 @@ describe('Design token fallbacks', () => {
     'aui-dropzone': AuiDropzone,
     'aui-favorite-btn': AuiFavoriteBtn,
     'aui-header': AuiHeader,
+    'aui-kbd': AuiKbd,
   };
 
   for (const [tagName, ctor] of Object.entries(components)) {
