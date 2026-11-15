@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/web-components';
+import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import '../components/modal/index.js';
 import '../components/button/index.js';
@@ -142,6 +142,8 @@ export const CloseReasons: Story = {
   name: 'Close reasons (aui-hide)',
   render: () => {
     const log = (event: Event) => {
+      // aui-hide 會冒泡：忽略內容中 Tooltip 或巢狀 Modal 的同名事件
+      if (event.target !== event.currentTarget) return;
       const reason = (event as CustomEvent<ModalHideDetail>).detail.reason;
       const output = (event.currentTarget as HTMLElement)
         .closest('.story')!

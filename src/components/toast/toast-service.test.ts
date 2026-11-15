@@ -230,6 +230,36 @@ describe('ToastService', () => {
       await queued.closed;
     });
 
+    it('drops the oldest queued toasts beyond maxQueued', async () => {
+      ToastService.configure({ maxVisible: 1, maxQueued: 2 });
+      const handles = ['A', 'B', 'C', 'D', 'E'].map((message) =>
+        ToastService.info(message, { duration: 0 }),
+      );
+      // B、C 被捨棄：closed 照常 resolve
+      await Promise.all([handles[1].closed, handles[2].closed]);
+      await rendered();
+      expect(toasts().map((toast) => toast.message)).to.deep.equal(['A']);
+
+      handles[0].close();
+      await handles[0].closed;
+      await rendered();
+      expect(toasts().map((toast) => toast.message)).to.deep.equal(['D']);
+    });
+
+    it('caps the queue at 50 by default', async () => {
+      ToastService.configure({ maxVisible: 1 });
+      const handles = Array.from({ length: 60 }, (_, i) =>
+        ToastService.info(`#${i}`, { duration: 0 }),
+      );
+      // #0 顯示中，#1–#9 超出 50 則排隊上限而被捨棄
+      await Promise.all(handles.slice(1, 10).map((handle) => handle.closed));
+      const settled = await Promise.race([
+        handles[10].closed.then(() => 'closed'),
+        wait(50).then(() => 'pending'),
+      ]);
+      expect(settled, '#10 is still queued').to.equal('pending');
+    });
+
     it('closeAll() also clears queued toasts', async () => {
       ToastService.configure({ maxVisible: 1 });
       const handles = ['A', 'B', 'C'].map((message) => ToastService.info(message, { duration: 0 }));
@@ -239,7 +269,101 @@ describe('ToastService', () => {
     });
   });
 
+  describe('input validation', () => {
+    it('keeps a toast with an Infinity or oversized duration instead of closing it at once', async () => {
+      ToastService.info('Forever', { duration: Infinity });
+      ToastService.info('Overflow', { duration: 2 ** 32 });
+      await rendered();
+      await wait(50);
+      expect(toasts().map((toast) => toast.message)).to.deep.equal(['Forever', 'Overflow']);
+    });
+
+    it('shows an unknown variant as info and uses the info duration', async () => {
+      ToastService.configure({ durations: { info: 60 } });
+      const handle = ToastService.show({
+        message: 'Unknown',
+        variant: 'bogus' as unknown as 'info',
+      });
+      await rendered();
+      expect(toasts()[0].variant).to.equal('info');
+      await handle.closed;
+    });
+
+    it('uses the info default when variant is explicitly undefined', async () => {
+      ToastService.configure({ durations: { info: 60 } });
+      const handle = ToastService.show({ message: 'Undefined variant', variant: undefined });
+      await rendered();
+      expect(toasts()[0].variant).to.equal('info');
+      await handle.closed;
+    });
+
+    it('falls back to the variant default for an invalid duration', async () => {
+      ToastService.configure({ durations: { success: 60 } });
+      const handle = ToastService.success('NaN duration', { duration: Number.NaN });
+      await handle.closed;
+      expect(toasts()).to.have.length(0);
+    });
+
+    it('ignores an invalid maxVisible', async () => {
+      ToastService.configure({ maxVisible: Number.NaN });
+      for (const message of ['A', 'B', 'C', 'D']) ToastService.info(message, { duration: 0 });
+      await rendered();
+      expect(toasts(), 'maxVisible stays at the default of 3').to.have.length(3);
+    });
+
+    it('ignores invalid durations and keeps the previous ones', async () => {
+      ToastService.configure({ durations: { success: 60, info: 60 } });
+      ToastService.configure({
+        durations: { success: undefined, info: -1, bogus: 10 } as unknown as { success: number },
+      });
+      const success = ToastService.success('Kept 60ms');
+      const info = ToastService.info('Kept 60ms too');
+      const timeout = wait(1000).then(() => 'timeout');
+      expect(await Promise.race([success.closed.then(() => 'closed'), timeout])).to.equal('closed');
+      expect(await Promise.race([info.closed.then(() => 'closed'), timeout])).to.equal('closed');
+    });
+  });
+
   describe('pausing (WCAG 2.2.1)', () => {
+    /** 模擬切換分頁：以實例屬性蓋過 Document.prototype 的 visibilityState，並分派 visibilitychange */
+    function setPageVisibility(state: DocumentVisibilityState | null): void {
+      if (state === null) delete (document as { visibilityState?: unknown }).visibilityState;
+      else Object.defineProperty(document, 'visibilityState', { value: state, configurable: true });
+      document.dispatchEvent(new Event('visibilitychange'));
+    }
+
+    it('pauses while the page is hidden and resumes with the remaining time', async () => {
+      ToastService.info('Warm up', { duration: 0 }); // 確保 Viewport 與 visibilitychange 監聽已建立
+      const handle = ToastService.info('Background', { duration: 200 });
+      await rendered();
+      try {
+        setPageVisibility('hidden');
+        await wait(350);
+        expect(
+          toasts().map((toast) => toast.message),
+          'paused while hidden',
+        ).to.include('Background');
+      } finally {
+        setPageVisibility(null);
+      }
+      await handle.closed;
+    });
+
+    it('does not start the timer of a toast shown while the page is hidden', async () => {
+      ToastService.info('Warm up', { duration: 0 });
+      await rendered();
+      setPageVisibility('hidden');
+      let handle;
+      try {
+        handle = ToastService.info('Shown in background', { duration: 100 });
+        await wait(250);
+        expect(toasts().map((toast) => toast.message)).to.include('Shown in background');
+      } finally {
+        setPageVisibility(null);
+      }
+      await handle.closed;
+    });
+
     it('pauses while the pointer is over a toast', async () => {
       const handle = ToastService.info('Hover me', { duration: 200 });
       await rendered();

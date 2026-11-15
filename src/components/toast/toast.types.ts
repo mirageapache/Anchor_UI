@@ -49,6 +49,11 @@ export interface ToastHandle {
 export interface ToastConfig {
   /** 同時顯示的上限，超過的通知會排隊等候（預設 3） */
   maxVisible?: number;
+  /**
+   * 排隊等候的上限（預設 50）：超過時捨棄最舊的排隊通知（其 `closed` 照常 resolve），
+   * 避免錯誤迴圈等情況無限累積；0 為不排隊，Infinity 為不限制
+   */
+  maxQueued?: number;
   /** 各狀態預設的自動關閉時間（毫秒） */
   durations?: Partial<Record<ToastVariant, number>>;
 }

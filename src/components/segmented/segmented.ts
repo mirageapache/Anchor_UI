@@ -19,6 +19,21 @@ function radioValueMissingMessage(): string {
   return valueMissingMessage;
 }
 
+/** 選項須為物件（null、字串等項目無法渲染，直接略過） */
+const isOptionLike = (item: unknown): item is SegmentedOption =>
+  typeof item === 'object' && item !== null;
+
+/** 已可直接使用的選項：物件且 value 為字串 */
+const isNormalizedOption = (item: unknown): item is SegmentedOption =>
+  isOptionLike(item) && typeof item.value === 'string';
+
+/**
+ * value 統一為字串：JSON 屬性或 API 資料常給數字（如 `{"value": 1}`），
+ * 而目前值與表單值都是字串，不轉換時以 === 比對永遠選不到
+ */
+const normalizeOption = (item: SegmentedOption): SegmentedOption =>
+  typeof item.value === 'string' ? item : { ...item, value: String(item.value ?? '') };
+
 /**
  * Anchor UI — Segmented Control 元件 (`<aui-segmented>`)
  *
@@ -66,11 +81,26 @@ export class AuiSegmented extends LitElement {
   @state()
   private formDisabled = false;
 
+  private optionItems: SegmentedOption[] = [];
+
   /**
-   * 選項清單；於 HTML 中可用 JSON 字串設定 `options` 屬性
+   * 選項清單；於 HTML 中可用 JSON 字串設定 `options` 屬性。
+   * 非陣列（如框架首幀綁定的 null / undefined、格式錯誤的 JSON 屬性）視為空清單，非物件的項目會被略過，
+   * 非字串的 `value`（如數字）會轉為字串。不需修正時保留原本的陣列
    */
   @property({ type: Array })
-  options: SegmentedOption[] = [];
+  get options(): SegmentedOption[] {
+    return this.optionItems;
+  }
+
+  set options(next: SegmentedOption[]) {
+    const previous = this.optionItems;
+    const items: unknown[] = Array.isArray(next) ? next : [];
+    this.optionItems = items.every(isNormalizedOption)
+      ? items
+      : items.filter(isOptionLike).map(normalizeOption);
+    this.requestUpdate('options', previous);
+  }
 
   /**
    * 目前選取的值（未選取為空字串）。以程式設定後，`value` 屬性的變更不再覆寫

@@ -1,4 +1,4 @@
-import type { Meta, StoryObj } from '@storybook/web-components';
+import type { Meta, StoryObj } from '@storybook/web-components-vite';
 import { html } from 'lit';
 import '../components/button/index.js';
 import type { ButtonSize, ButtonType, ButtonVariant } from '../components/button/button.types.js';

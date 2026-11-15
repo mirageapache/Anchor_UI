@@ -12,16 +12,11 @@ import type {
 import type { AuiInput } from '../input/input.js';
 import type { AuiModal } from '../modal/modal.js';
 import type { ModalHideDetail } from '../modal/modal.types.js';
+import { defaultTrue } from '../../internal/converters.js';
 import { PausableTimer } from '../../internal/pausable-timer.js';
 import '../button/index.js';
 import '../input/index.js';
 import '../modal/index.js';
-
-/** 預設為 true 的布林屬性：只有字串 "false" 視為 false（與 <aui-modal> 相同） */
-const defaultTrue = {
-  fromAttribute: (value: string | null) => value !== 'false',
-  toAttribute: (value: boolean) => (value ? null : 'false'),
-};
 
 /**
  * 圖示的符號（圓環另外繪製），以 pathLength="1" 支援描繪動畫。
@@ -188,18 +183,47 @@ export class AuiAlert extends LitElement {
     this.autoClose.stop();
   }
 
+  /** 本次更新中與內部 Modal 的同步（等待 Modal 決定是否真的開啟 / 關閉）；updateComplete 會一併等待 */
+  private syncing: Promise<void> = Promise.resolve();
+
   /**
-   * 開啟對話框
+   * 開啟對話框。開啟完成（`aui-after-show` 之後）、被取消（`aui-show` 被 preventDefault）
+   * 或被之後的關閉取代時 resolve；結果請以 `open` 判斷
    */
   async show(): Promise<void> {
     this.open = true;
+    await this.transitionEnd();
   }
 
   /**
-   * 以取消關閉對話框（原因為 `api`）
+   * 以取消關閉對話框（原因為 `api`）。關閉完成（`aui-cancel` 之後）、被取消（`aui-hide` 被 preventDefault）
+   * 或被之後的開啟取代時 resolve；結果請以 `open` 判斷
    */
   async hide(): Promise<void> {
     this.open = false;
+    await this.transitionEnd();
+  }
+
+  /**
+   * 等待 open 與內部 Modal 同步完成，再等待 Modal 目前的轉場結束
+   * （Modal 的 show() / hide() 在狀態已相同時只等待轉場）
+   */
+  private async transitionEnd(): Promise<void> {
+    if (!this.isConnected) return;
+    let done = false;
+    while (!done) done = await this.updateComplete;
+    const modal = this.modal;
+    if (modal) await (modal.open ? modal.show() : modal.hide());
+  }
+
+  /**
+   * updateComplete 也等待與內部 Modal 的同步：resolve 時已知 Modal 是否真的開啟 / 關閉
+   * （aui-show / aui-hide 是否被取消），同步撤回 open 而有後續更新時回傳 false
+   */
+  protected override async getUpdateComplete(): Promise<boolean> {
+    const result = await super.getUpdateComplete();
+    await this.syncing;
+    return result && !this.isUpdatePending;
   }
 
   /**
@@ -223,7 +247,12 @@ export class AuiAlert extends LitElement {
     this.open = false;
   }
 
-  override async updated(changed: PropertyValues<this>): Promise<void> {
+  override updated(changed: PropertyValues<this>): void {
+    this.syncing = this.syncModal(changed);
+  }
+
+  /** 把 open 同步到內部 Modal；Modal 取消開啟或關閉時同步回 Alert */
+  private async syncModal(changed: PropertyValues<this>): Promise<void> {
     if (!this.modal) return;
     // 開啟中變更 timer：以新的時間重新計時
     if (changed.has('timer') && !changed.has('open') && this.open && this.modal.open) {
@@ -232,6 +261,11 @@ export class AuiAlert extends LitElement {
     if (!changed.has('open')) return;
 
     if (this.open && !this.modal.open) {
+      // 不在頁面上（例如開啟前就被移出）時內部 Modal 無法開啟，其 updateComplete 也可能永不 resolve
+      if (!this.isConnected) {
+        this.open = false;
+        return;
+      }
       this.decision = null;
       if (this.input) this.input.value = this.inputValue;
       this.modal.open = true;
@@ -242,7 +276,8 @@ export class AuiAlert extends LitElement {
     } else if (!this.open && this.modal.open) {
       this.autoClose.stop();
       this.decision ??= { confirmed: false, reason: 'api' };
-      await this.modal.hide();
+      // 只需等 Modal 處理完 aui-hide（是否被取消），不必等退場動畫（modal.hide() 會等到動畫結束）
+      this.modal.open = false;
       await this.modal.updateComplete;
       // aui-hide 被取消時 Modal 保持開啟，撤回這次的結果
       if (this.modal.open) {
@@ -308,11 +343,21 @@ export class AuiAlert extends LitElement {
 
   /**
    * 任何鍵盤操作都代表使用者正在處理對話框，不再自動關閉。
-   * Enter 確認：焦點在按鈕或多行輸入框上、或正在以輸入法組字時，交由原生行為處理
+   * Enter 確認：焦點在按鈕或多行輸入框上、或正在以輸入法組字時，交由原生行為處理。
+   *
+   * - 長按 Enter 的重複按鍵一律忽略（含按鈕的原生啟動）：以 Enter 開啟對話框時若按住不放，
+   *   重複的 keydown 會在使用者看到內容前就確認或取消。
+   * - Safari 以 Enter 選字時會先結束組字再分派 keydown（`isComposing` 為 false），
+   *   只能從 `keyCode === 229`（輸入法處理中）辨識。
    */
   private handleKeyDown = (event: KeyboardEvent) => {
     this.autoClose.stop();
-    if (event.key !== 'Enter' || event.isComposing) return;
+    if (event.key !== 'Enter') return;
+    if (event.repeat) {
+      event.preventDefault();
+      return;
+    }
+    if (event.isComposing || event.keyCode === 229) return;
     const origin = event.composedPath()[0];
     if (origin instanceof HTMLButtonElement || origin instanceof HTMLTextAreaElement) return;
     event.preventDefault();

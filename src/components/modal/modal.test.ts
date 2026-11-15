@@ -102,6 +102,67 @@ describe('AuiModal (<aui-modal>)', () => {
       expect(dialogOf(el).open).to.be.false;
     });
 
+    it('show() and hide() resolve after the transition has finished', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Promises"></aui-modal>`);
+      const log: string[] = [];
+      el.addEventListener('aui-after-show', () => log.push('aui-after-show'));
+      el.addEventListener('aui-after-hide', () => log.push('aui-after-hide'));
+
+      await el.show();
+      log.push('show() resolved');
+      expect(dialogOf(el).open).to.be.true;
+
+      await el.hide();
+      log.push('hide() resolved');
+      expect(dialogOf(el).open).to.be.false;
+      expect(isScrollLocked()).to.be.false;
+      expect(log).to.deep.equal([
+        'aui-after-show',
+        'show() resolved',
+        'aui-after-hide',
+        'hide() resolved',
+      ]);
+    });
+
+    it('show() and hide() resolve when cancelled, with open reflecting the result', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Cancelled"></aui-modal>`);
+      const cancelShow = (event: Event) => event.preventDefault();
+      el.addEventListener('aui-show', cancelShow);
+      await el.show();
+      expect(el.open).to.be.false;
+      el.removeEventListener('aui-show', cancelShow);
+
+      await el.show();
+      el.addEventListener('aui-hide', cancelShow);
+      await el.hide();
+      expect(el.open).to.be.true;
+      el.removeEventListener('aui-hide', cancelShow);
+      await el.hide();
+      expect(el.open).to.be.false;
+    });
+
+    it('show() resolves when a hide() supersedes the opening', async () => {
+      await emulateMedia({ reducedMotion: 'no-preference' });
+      try {
+        const el = await fixture<AuiModal>(html`<aui-modal heading="Superseded"></aui-modal>`);
+        const shown = el.show();
+        await el.updateComplete;
+        const hidden = el.hide();
+        await shown; // 不會因為 aui-after-show 不再分派而卡住
+        expect(el.open).to.be.false;
+        await hidden;
+        expect(dialogOf(el).open).to.be.false;
+      } finally {
+        await emulateMedia({ reducedMotion: 'reduce' });
+      }
+    });
+
+    it('show() resolves at once on an element that is not in the page', async () => {
+      const el = document.createElement('aui-modal');
+      await el.show();
+      expect(el.open).to.be.true; // 之後插入頁面時才開啟
+    });
+
     it('stays closed when aui-show is cancelled', async () => {
       const el = await fixture<AuiModal>(html`<aui-modal heading="Cancel show"></aui-modal>`);
       el.addEventListener('aui-show', (event) => event.preventDefault());
@@ -117,9 +178,68 @@ describe('AuiModal (<aui-modal>)', () => {
       await new Promise((resolve) => setTimeout(resolve, 20));
       expect(afterShow).to.equal(0);
     });
+
+    it('does not open or lock scrolling when removed in the same task it was opened', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Removed"></aui-modal>`);
+      const parent = el.parentElement!;
+      let shown = 0;
+      el.addEventListener('aui-show', () => shown++);
+
+      el.open = true;
+      el.remove();
+      await el.updateComplete;
+      await el.updateComplete;
+      expect(el.open).to.be.false;
+      expect(dialogOf(el).open).to.be.false;
+      expect(isScrollLocked()).to.be.false;
+      expect(getTopModalLayer()).to.be.null;
+      expect(shown).to.equal(0);
+
+      // 重新放回頁面後仍可正常開啟
+      parent.appendChild(el);
+      await openModal(el);
+      expect(isScrollLocked()).to.be.true;
+      await closeWith(el, () => el.hide());
+      expect(isScrollLocked()).to.be.false;
+    });
+
+    it('releases the scroll lock when showModal() throws', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Throws"></aui-modal>`);
+      const dialog = dialogOf(el);
+      dialog.showModal = () => {
+        throw new DOMException('test', 'InvalidStateError');
+      };
+      el.open = true;
+      let error: unknown;
+      try {
+        await el.updateComplete;
+      } catch (caught) {
+        error = caught;
+      }
+      await el.updateComplete;
+      expect((error as DOMException | undefined)?.name).to.equal('InvalidStateError');
+      expect(el.open).to.be.false;
+      expect(isScrollLocked()).to.be.false;
+      expect(getTopModalLayer()).to.be.null;
+    });
   });
 
   describe('closing', () => {
+    it('forgets the reason of a close request that was reverted in the same task', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Reverted"></aui-modal>`);
+      await openModal(el);
+      let hides = 0;
+      el.addEventListener('aui-hide', () => hides++);
+
+      part(el, 'close-button').click();
+      el.open = true; // 同一個 task 內撤回
+      await el.updateComplete;
+      expect(hides, 'nothing to close').to.equal(0);
+      expect(dialogOf(el).open).to.be.true;
+
+      expect(await closeWith(el, () => (el.open = false))).to.equal('api');
+    });
+
     it('stays open when aui-hide is cancelled, and reports the reason', async () => {
       const el = await fixture<AuiModal>(html`<aui-modal heading="Cancel hide"></aui-modal>`);
       await openModal(el);
@@ -341,18 +461,38 @@ describe('AuiModal (<aui-modal>)', () => {
       await emulateMedia({ reducedMotion: 'reduce' });
     });
 
+    it('animates in from the @starting-style state', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Entering"></aui-modal>`);
+      const shown = oneEvent(el, 'aui-after-show');
+      el.open = true;
+      await el.updateComplete;
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      const entering = Number(getComputedStyle(panelOf(el)).opacity);
+      expect(entering, 'still fading in on the first frame').to.be.below(1);
+
+      await shown;
+      const style = getComputedStyle(panelOf(el));
+      expect(style.opacity).to.equal('1');
+      // 計時器與轉場起點相差不到一幀，ease-out 的尾端可能還剩極小的位移（如 matrix(0.999996, …)）
+      const scale = new DOMMatrix(style.transform).a;
+      expect(scale).to.be.closeTo(1, 0.001);
+      await closeWith(el, () => el.hide());
+    });
+
     it('waits for the exit transition before closing the dialog', async () => {
       const el = await fixture<AuiModal>(html`<aui-modal heading="Animated"></aui-modal>`);
       await openModal(el);
-      expect(dialogOf(el).classList.contains('modal--visible')).to.be.true;
+      expect(dialogOf(el).classList.contains('modal--leaving')).to.be.false;
 
       const hidden = oneEvent(el, 'aui-after-hide');
-      await el.hide();
-      await el.updateComplete;
-      expect(dialogOf(el).classList.contains('modal--visible')).to.be.false;
+      void el.hide(); // hide() 會等到退場動畫結束，這裡要檢查動畫中的狀態
+      await el.updateComplete; // 處理 open
+      await el.updateComplete; // 加上 modal--leaving 的渲染
+      expect(dialogOf(el).classList.contains('modal--leaving')).to.be.true;
       expect(dialogOf(el).open, 'still open while animating out').to.be.true;
       await hidden;
       expect(dialogOf(el).open).to.be.false;
+      expect(dialogOf(el).classList.contains('modal--leaving')).to.be.false;
     });
 
     it('can be reopened during the exit transition', async () => {
@@ -361,13 +501,15 @@ describe('AuiModal (<aui-modal>)', () => {
       let afterHide = 0;
       el.addEventListener('aui-after-hide', () => afterHide++);
 
-      await el.hide();
+      const hiding = el.hide();
       await el.updateComplete;
       await openModal(el);
+      await hiding; // 被重新開啟取代時 resolve
       await new Promise((resolve) => setTimeout(resolve, 300));
       expect(afterHide).to.equal(0);
       expect(dialogOf(el).open).to.be.true;
-      expect(dialogOf(el).classList.contains('modal--visible')).to.be.true;
+      expect(dialogOf(el).classList.contains('modal--leaving')).to.be.false;
+      expect(getComputedStyle(panelOf(el)).opacity).to.equal('1');
 
       await closeWith(el, () => el.hide());
       expect(isScrollLocked()).to.be.false;

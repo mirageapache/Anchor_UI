@@ -31,16 +31,28 @@ export const modalStyles = css`
     justify-content: center;
   }
 
+  /*
+   * 進場以 @starting-style 定義起始狀態：showModal() 讓 dialog 從 display: none 開始渲染時，
+   * 瀏覽器自動從起始樣式轉場到一般樣式，不需要 JS 延後一幀切換 class。
+   * 退場則由元件加上 .modal--leaving，轉場結束後才 close()。
+   */
+
   /* ─── 遮罩：模糊背景，淡入淡出 ─── */
   .modal::backdrop {
     background: var(--color-backdrop, rgb(15 23 42 / 65%));
     backdrop-filter: blur(4px);
-    opacity: 0;
+    opacity: 1;
     transition: opacity 180ms ease-out;
   }
 
-  .modal--visible::backdrop {
-    opacity: 1;
+  .modal--leaving::backdrop {
+    opacity: 0;
+  }
+
+  @starting-style {
+    .modal[open]::backdrop {
+      opacity: 0;
+    }
   }
 
   /* ─── 面板：縮放彈出 ─── */
@@ -58,16 +70,23 @@ export const modalStyles = css`
     box-shadow: var(--shadow-modal, 0 25px 50px -12px rgb(0 0 0 / 35%));
     overflow: hidden;
     outline: none;
-    opacity: 0;
-    transform: scale(0.95) translateY(8px);
+    opacity: 1;
+    transform: none;
     transition:
       opacity 180ms ease-out,
       transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .modal--visible .modal__panel {
-    opacity: 1;
-    transform: none;
+  .modal--leaving .modal__panel {
+    opacity: 0;
+    transform: scale(0.95) translateY(8px);
+  }
+
+  @starting-style {
+    .modal[open] .modal__panel {
+      opacity: 0;
+      transform: scale(0.95) translateY(8px);
+    }
   }
 
   .modal__panel--sm {

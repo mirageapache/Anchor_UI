@@ -31,6 +31,8 @@ jobs:
           # PR 標題、內文等皆為外部輸入：一律由 jq 從事件檔讀取，不以 GitHub 表達式內插進 shell，避免指令注入。
           # （註：run 腳本中即使是 shell 註解，GitHub 也會先解析其中的表達式語法，因此這裡不能寫出該語法）
           # allowed_mentions.parse = [] 讓 PR 內文中的 @everyone / @here / 角色提及不會真的觸發通知。
+          # 內文的遮罩連結 [文字](網址) 會在 embed 中渲染成可點擊的文字，外部人士可藉 bot 身分貼出偽裝連結，
+          # 因此展開為「文字 <網址>」讓實際網址可見（<> 同時停用連結預覽）。
           payload=$(jq -c '
             .action as $action
             | .pull_request as $pr
@@ -40,7 +42,9 @@ jobs:
                elif $action == "reopened" then {label: "重新開啟", color: 15105570}
                elif $action == "ready_for_review" then {label: "可供審查", color: 3447003}
                else {label: "新的 PR", color: 3066993} end) as $status
-            | (($pr.body // "") | gsub("\r"; "")) as $body
+            | (($pr.body // "")
+               | gsub("\r"; "")
+               | gsub("\\[(?<text>[^\\]]*)\\]\\((?<url>[^)\\s]*)\\)"; "\(.text) <\(.url)>")) as $body
             | {
                 username: "Anchor UI",
                 allowed_mentions: {parse: []},

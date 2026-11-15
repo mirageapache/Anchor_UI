@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 40 # 含最多 20 分鐘的 CI 等待
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0 # 需要完整歷史以確認 tag 位於 main 上
 
@@ -41,11 +41,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v6
+        uses: pnpm/action-setup@73e46992e05b19abd31f2f3c20e0e7370d762115 # v6.1.1
         # 版本取自 package.json 的 packageManager 欄位（唯一來源）
 
       - name: Setup Node.js
-        uses: actions/setup-node@v7.0.0
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: '.nvmrc'
           cache: 'pnpm'

@@ -83,4 +83,25 @@ describe('PausableTimer', () => {
     await wait(20);
     expect(expired).to.equal(0);
   });
+
+  it('treats Infinity as "never expires"', async () => {
+    let expired = 0;
+    const timer = new PausableTimer(() => expired++);
+    timer.start(Infinity);
+    expect(timer.running).to.be.false;
+    await wait(20);
+    expect(expired).to.equal(0);
+  });
+
+  it('caps delays beyond the setTimeout limit instead of expiring at once', async () => {
+    let expired = 0;
+    const timer = new PausableTimer(() => expired++);
+    timer.start(2 ** 32);
+    expect(timer.running).to.be.true;
+    // remaining 由 performance.now() 推算，會有浮點誤差（例如 2147483647.0000002），只確認已被限制在上限附近
+    expect(timer.remaining).to.be.below(2 ** 31);
+    await wait(20);
+    expect(expired, 'an overflowing delay would fire immediately').to.equal(0);
+    timer.stop();
+  });
 });

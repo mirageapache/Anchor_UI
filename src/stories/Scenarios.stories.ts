@@ -1,5 +1,5 @@
-import type { Meta, StoryObj } from '@storybook/web-components';
-import { expect, userEvent, waitFor } from '@storybook/test';
+import type { Meta, StoryObj } from '@storybook/web-components-vite';
+import { expect, userEvent, waitFor } from 'storybook/test';
 import { html } from 'lit';
 import '../components/alert/index.js';
 import '../components/button/index.js';

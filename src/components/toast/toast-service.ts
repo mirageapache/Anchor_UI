@@ -4,7 +4,12 @@ import { toastViewportStyles } from './toast.styles.js';
 import type { ToastConfig, ToastHandle, ToastOptions, ToastVariant } from './toast.types.js';
 import { PausableTimer } from '../../internal/pausable-timer.js';
 import { sharedState } from '../../internal/shared-state.js';
-import { followTopModal, MODAL_OVERLAY_SLOT, raisePopover } from '../../internal/top-layer.js';
+import {
+  followTopModal,
+  isPopoverOpen,
+  MODAL_OVERLAY_SLOT,
+  raisePopover,
+} from '../../internal/top-layer.js';
 import { transitionTimeMs } from '../../internal/transition.js';
 import './toast.js';
 
@@ -19,6 +24,16 @@ const DEFAULT_DURATIONS: Record<ToastVariant, number> = {
 
 const DEFAULT_MAX_VISIBLE = 3;
 
+/** 排隊等候的上限：錯誤迴圈等情況大量呼叫時，捨棄最舊的排隊通知，避免無限累積 */
+const DEFAULT_MAX_QUEUED = 50;
+
+/** 執行期驗證：JavaScript 呼叫端或 API 回應可能傳入型別以外的值 */
+const isVariant = (value: unknown): value is ToastVariant =>
+  typeof value === 'string' && Object.hasOwn(DEFAULT_DURATIONS, value);
+
+/** 有效的自動關閉時間：非負數（Infinity 視為不自動關閉）；NaN、負數與非數字無效 */
+const isDuration = (value: unknown): value is number => typeof value === 'number' && value >= 0;
+
 interface Entry {
   readonly id: string;
   readonly element: AuiToast;
@@ -29,15 +44,6 @@ interface Entry {
   resolveClosed: () => void;
 }
 
-/** 瀏覽器不支援 :popover-open 時 matches() 會拋錯，視為未開啟 */
-function isPopoverOpen(element: HTMLElement): boolean {
-  try {
-    return element.matches(':popover-open');
-  } catch {
-    return false;
-  }
-}
-
 /**
  * Toast 的佇列與 Viewport 管理（整個頁面只有一份，見 toastManager）。
  *
@@ -45,13 +51,14 @@ function isPopoverOpen(element: HTMLElement): boolean {
  *   新通知出現時重新提升至最上層，Modal / Alert 開啟期間透過 followTopModal 移入最上層 modal 的子樹，
  *   因為 modal dialog 以外的節點都會 inert，即使視覺上在上層也無法操作與播報。
  * - 同時顯示上限之外的通知排隊等候，有通知關閉時依序補上。
- * - 指標停在通知上或焦點位於通知內時暫停所有自動關閉（WCAG 2.2.1）。
+ * - 指標停在通知上、焦點位於通知內或分頁不可見時暫停所有自動關閉（WCAG 2.2.1）。
  */
 class ToastManager {
   private viewport: HTMLElement | null = null;
   private readonly entries = new Map<string, Entry>();
   private readonly order: Entry[] = [];
   private maxVisible = DEFAULT_MAX_VISIBLE;
+  private maxQueued = DEFAULT_MAX_QUEUED;
   private durations: Record<ToastVariant, number> = { ...DEFAULT_DURATIONS };
   private hovering = false;
   /** 指標最後停留在通知上的位置，用於通知被移除後重新判斷是否仍停在通知上 */
@@ -59,16 +66,26 @@ class ToastManager {
   private focused = false;
   private nextId = 0;
 
+  /** 無效的值（NaN、負數、未知的狀態等）會被忽略，保留原本的設定 */
   configure(config: ToastConfig): void {
-    if (config.maxVisible !== undefined)
-      this.maxVisible = Math.max(1, Math.floor(config.maxVisible));
-    if (config.durations) this.durations = { ...this.durations, ...config.durations };
+    const { maxVisible, maxQueued, durations } = config;
+    if (typeof maxVisible === 'number' && Number.isFinite(maxVisible)) {
+      this.maxVisible = Math.max(1, Math.floor(maxVisible));
+    }
+    if (typeof maxQueued === 'number' && maxQueued >= 0) {
+      this.maxQueued = Math.floor(maxQueued);
+    }
+    for (const [variant, duration] of Object.entries(durations ?? {})) {
+      if (isVariant(variant) && isDuration(duration)) this.durations[variant] = duration;
+    }
     this.flush();
+    this.trimQueue();
   }
 
   /** 還原預設設定（測試或重設用） */
   resetConfig(): void {
     this.maxVisible = DEFAULT_MAX_VISIBLE;
+    this.maxQueued = DEFAULT_MAX_QUEUED;
     this.durations = { ...DEFAULT_DURATIONS };
   }
 
@@ -97,10 +114,12 @@ class ToastManager {
       state: 'queued',
       resolveClosed,
     };
-    this.apply(entry, { variant: 'info', ...options });
+    // 明確傳入 variant: undefined 時也要採用預設狀態（展開運算會以 undefined 覆寫預設值）
+    this.apply(entry, { ...options, variant: options.variant ?? 'info' });
     this.entries.set(id, entry);
     this.order.push(entry);
     this.flush();
+    this.trimQueue();
     return entry.handle;
   }
 
@@ -127,15 +146,24 @@ class ToastManager {
     if (entry.state === 'visible') this.startTimer(entry);
   }
 
-  /** 套用選項；狀態改變或指定 duration 時重新決定自動關閉時間 */
+  /**
+   * 套用選項；狀態改變或指定 duration 時重新決定自動關閉時間。
+   * 未知的狀態以 info 呈現並採用 info 的預設時間（與 <aui-toast> 的外觀一致）；無效的 duration 視為未指定
+   */
   private apply(entry: Entry, options: Omit<ToastOptions, 'id'>): void {
     const { element } = entry;
-    if (options.variant !== undefined) element.variant = options.variant;
+    const variant =
+      options.variant === undefined
+        ? undefined
+        : isVariant(options.variant)
+          ? options.variant
+          : 'info';
+    if (variant !== undefined) element.variant = variant;
     if (options.title !== undefined) element.heading = options.title;
     if (options.message !== undefined) element.message = options.message;
     if (options.noCloseButton !== undefined) element.noCloseButton = options.noCloseButton;
-    if (options.duration !== undefined) entry.duration = options.duration;
-    else if (options.variant !== undefined) entry.duration = this.durations[options.variant] ?? 0;
+    if (isDuration(options.duration)) entry.duration = options.duration;
+    else if (variant !== undefined) entry.duration = this.durations[variant];
   }
 
   private close(entry: Entry): void {
@@ -182,6 +210,13 @@ class ToastManager {
     this.flush();
   }
 
+  /** 排隊中的通知超過上限時，關閉最舊的（closed 照常 resolve），保留較新的訊息 */
+  private trimQueue(): void {
+    const queued = this.order.filter((entry) => entry.state === 'queued');
+    const excess = queued.length - this.maxQueued;
+    for (const entry of queued.slice(0, Math.max(0, excess))) this.close(entry);
+  }
+
   /** 依同時顯示上限，把排隊中的通知依序加入 Viewport */
   private flush(): void {
     let visible = this.order.filter((entry) => entry.state === 'visible').length;
@@ -207,7 +242,7 @@ class ToastManager {
 
   private startTimer(entry: Entry): void {
     entry.timer.start(entry.duration);
-    if (this.hovering || this.focused) entry.timer.pause();
+    if (this.paused) entry.timer.pause();
   }
 
   /**
@@ -222,8 +257,16 @@ class ToastManager {
     return Boolean(hit && hit !== viewport && viewport.contains(hit));
   }
 
+  /**
+   * 是否暫停所有自動關閉：指標停在通知上、焦點位於通知內，或分頁不可見
+   * （使用者切到其他分頁時看不到通知，不應在背景倒數完畢而錯過）
+   */
+  private get paused(): boolean {
+    return this.hovering || this.focused || document.visibilityState === 'hidden';
+  }
+
   private syncPause(): void {
-    const paused = this.hovering || this.focused;
+    const paused = this.paused;
     for (const entry of this.order) {
       if (entry.state !== 'visible') continue;
       if (paused) entry.timer.pause();
@@ -273,10 +316,13 @@ class ToastManager {
       this.syncPause();
     });
 
+    document.addEventListener('visibilitychange', () => this.syncPause());
+
+    // 先記錄再進行後續步驟：即使之後拋錯，下一則通知也會沿用這個 Viewport，不會每次都在 <body> 留下新的
+    this.viewport = viewport;
     document.body.appendChild(viewport);
     // Modal / Alert 開啟期間移入最上層 modal 的 overlay slot，保持可見、可操作且可被播報
     followTopModal(viewport, { slot: MODAL_OVERLAY_SLOT });
-    this.viewport = viewport;
     return viewport;
   }
 }
@@ -329,7 +375,7 @@ export const ToastService = {
   closeAll(): Promise<void> {
     return toastManager.closeAll();
   },
-  /** 設定同時顯示上限與各狀態預設的自動關閉時間 */
+  /** 設定同時顯示上限、排隊上限與各狀態預設的自動關閉時間 */
   configure(config: ToastConfig): void {
     toastManager.configure(config);
   },

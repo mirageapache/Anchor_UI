@@ -119,8 +119,10 @@ export class AuiField extends LitElement {
     // 控制項移出欄位時，撤回由欄位帶入的標題與描述
     const previous = this.control;
     if (previous) {
-      if (previous.label === this.label) previous.label = '';
-      if (previous.description === this.description) previous.description = '';
+      if (this.label && previous.label === this.label) previous.label = '';
+      if (this.description && previous.description === this.description) {
+        previous.description = '';
+      }
     }
 
     this.controlObserver.disconnect();
@@ -167,10 +169,25 @@ export class AuiField extends LitElement {
 
   override updated(changed: PropertyValues): void {
     const control = this.control;
-    if (control && (changed.has('control') || changed.has('label') || changed.has('description'))) {
-      control.label = this.label;
-      control.description = this.description;
-    }
+    if (!control) return;
+    this.pushText(control, 'label', changed);
+    this.pushText(control, 'description', changed);
+  }
+
+  /**
+   * 把欄位的標題或描述傳入控制項。欄位沒有設定時不覆寫控制項自己的值（例如 `<aui-input label="…">`）；
+   * 欄位的值被清空時，只撤回先前由欄位帶入、且未被改動的值
+   */
+  private pushText(
+    control: FieldControl,
+    key: 'label' | 'description',
+    changed: PropertyValues,
+  ): void {
+    if (!changed.has('control') && !changed.has(key)) return;
+    const value = this[key];
+    const previous = changed.get(key) as string | undefined;
+    if (value) control[key] = value;
+    else if (previous && control[key] === previous) control[key] = '';
   }
 
   override render() {

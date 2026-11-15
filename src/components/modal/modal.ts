@@ -3,17 +3,12 @@ import { property, query, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { modalStyles } from './modal.styles.js';
+import { defaultTrue } from '../../internal/converters.js';
 import { rememberFocus } from '../../internal/focus-return.js';
 import { lockScroll } from '../../internal/scroll-lock.js';
 import { MODAL_OVERLAY_SLOT, pushModalLayer } from '../../internal/top-layer.js';
 import { transitionTimeMs } from '../../internal/transition.js';
 import type { ModalCloseReason, ModalHideDetail, ModalRole, ModalSize } from './modal.types.js';
-
-/** 預設為 true 的布林屬性：只有字串 "false" 視為 false（例如 close-on-escape="false"） */
-const defaultTrue = {
-  fromAttribute: (value: string | null) => value !== 'false',
-  toAttribute: (value: boolean) => (value ? null : 'false'),
-};
 
 /**
  * Anchor UI — Modal 元件 (`<aui-modal>`)
@@ -27,6 +22,8 @@ const defaultTrue = {
  * - **初始焦點**：聚焦內容中帶有 `autofocus` 屬性的元素，否則聚焦面板本身。
  * - **巢狀浮層**：開啟期間登記為最上層 modal，Toast 等浮層會移入 dialog 內的 `overlay` slot，
  *   避免被 modal 的 inert 邊界擋住（見 note/04-top-layer.md）。
+ * - **事件冒泡**：下列事件皆 `bubbles` + `composed`，內容中 Tooltip 或巢狀 Modal 的同名事件也會傳到這裡
+ *   （且不一定帶有 `detail.reason`）；只處理自身事件時請先檢查 `event.target === event.currentTarget`。
  *
  * @element aui-modal
  *
@@ -113,9 +110,9 @@ export class AuiModal extends LitElement {
   @property({ type: Boolean, attribute: 'no-close-button' })
   noCloseButton = false;
 
-  /** 進場動畫的目標狀態（開啟後下一幀才套用，讓 transition 生效） */
+  /** 退場動畫中（套用 modal--leaving）；進場的起始狀態由 CSS @starting-style 定義 */
   @state()
-  private isVisible = false;
+  private isLeaving = false;
 
   @state()
   private hasHeaderSlot = false;
@@ -128,6 +125,10 @@ export class AuiModal extends LitElement {
 
   /** 轉場序號：延遲執行的回呼若序號已過期即放棄，避免快速開關時互相覆蓋 */
   private transitionId = 0;
+
+  /** 目前轉場的結束通知：轉場完成、被下一次轉場取代或中止時 resolve（供 show() / hide() 等待） */
+  private transitionSettled: Promise<void> = Promise.resolve();
+  private settleTransition: () => void = () => {};
 
   /** 下一次關閉的原因（由觸發關閉的操作設定） */
   private pendingReason: ModalCloseReason = 'api';
@@ -143,17 +144,40 @@ export class AuiModal extends LitElement {
   private popLayer: (() => void) | null = null;
 
   /**
-   * 開啟對話框
+   * 開啟對話框。開啟完成（`aui-after-show` 之後）、被取消（`aui-show` 被 preventDefault）
+   * 或被之後的關閉取代時 resolve；結果請以 `open` 判斷
    */
   async show(): Promise<void> {
     this.open = true;
+    await this.transitionEnd();
   }
 
   /**
-   * 關閉對話框（關閉原因為 `api`）
+   * 關閉對話框（關閉原因為 `api`）。關閉完成（`aui-after-hide` 之後）、被取消（`aui-hide` 被 preventDefault）
+   * 或被之後的開啟取代時 resolve；結果請以 `open` 判斷
    */
   async hide(): Promise<void> {
     this.requestClose('api');
+    await this.transitionEnd();
+  }
+
+  /**
+   * 等待 open 的變化處理完畢，再等待目前的轉場結束。
+   * aui-show / aui-hide 被取消時會撤回 open 而再更新一次，因此等到沒有後續更新為止。
+   * 不在頁面上的元素不會開啟（從未連接過的 Lit 元素 updateComplete 也不會 resolve），直接返回
+   */
+  private async transitionEnd(): Promise<void> {
+    if (!this.isConnected) return;
+    let done = false;
+    while (!done) done = await this.updateComplete;
+    await this.transitionSettled;
+  }
+
+  /** 開始新的轉場：前一次轉場視為已被取代（其等待者隨即 resolve），回傳新的序號 */
+  private beginTransition(): number {
+    this.settleTransition();
+    this.transitionSettled = new Promise((resolve) => (this.settleTransition = resolve));
+    return ++this.transitionId;
   }
 
   /**
@@ -169,9 +193,9 @@ export class AuiModal extends LitElement {
     // 退場動畫中：aui-hide 已分派，沿用當時的關閉原因
     const reason = wasShown ? this.pendingReason : this.hidingReason;
     this.pendingReason = 'api';
-    this.transitionId++;
+    this.beginTransition();
     this.isShown = false;
-    this.isVisible = false;
+    this.isLeaving = false;
     this.open = false;
     this.dialog.close();
     this.releaseResources({ restoreFocus: false });
@@ -186,6 +210,7 @@ export class AuiModal extends LitElement {
       );
     }
     this.dispatchAfterHide(reason);
+    this.settleTransition();
   }
 
   private requestClose(reason: ModalCloseReason): void {
@@ -205,16 +230,24 @@ export class AuiModal extends LitElement {
 
   override updated(changed: PropertyValues<this>): void {
     if (!changed.has('open')) return;
+    // 每次處理 open 的變化都取用並清除關閉原因：關閉要求在同一個 task 內被撤回（open 又設回 true）時，
+    // 殘留的原因不可套用到之後以 `open = false` 觸發的關閉
+    const reason = this.pendingReason;
+    this.pendingReason = 'api';
     if (this.open && !this.isShown) {
       this.startShow();
     } else if (!this.open && this.isShown) {
-      const reason = this.pendingReason;
-      this.pendingReason = 'api';
       this.startHide(reason);
     }
   }
 
   private startShow(): void {
+    // 不在頁面上的 dialog 無法 showModal()（例如設定 open 後在同一個 task 內被移除）：不開啟
+    if (!this.isConnected) {
+      this.open = false;
+      return;
+    }
+
     const event = new CustomEvent('aui-show', { bubbles: true, composed: true, cancelable: true });
     this.dispatchEvent(event);
     if (event.defaultPrevented) {
@@ -222,28 +255,39 @@ export class AuiModal extends LitElement {
       return;
     }
 
-    const transitionId = ++this.transitionId;
-    this.isShown = true;
-
     // 退場動畫期間重新開啟時，dialog 仍開著，沿用既有的鎖定與 modal 層
-    if (!this.dialog.open) {
-      this.restoreFocus = rememberFocus();
-      this.releaseScroll = lockScroll();
-      this.dialog.showModal();
+    const reopening = this.dialog.open;
+    if (!reopening) {
+      const restoreFocus = rememberFocus();
+      // 須在 showModal() 前鎖定（隱藏捲軸前才量得到捲軸寬度）；showModal() 失敗時立即歸還，
+      // 否則計數永遠不會歸零，整頁無法捲動
+      const releaseScroll = lockScroll();
+      try {
+        this.dialog.showModal();
+      } catch (error) {
+        releaseScroll();
+        this.open = false;
+        throw error;
+      }
+      this.restoreFocus = restoreFocus;
+      this.releaseScroll = releaseScroll;
       // 須在 showModal() 之後登記（見 pushModalLayer 說明）
       this.popLayer = pushModalLayer(this);
-      this.applyInitialFocus(transitionId);
     }
 
-    requestAnimationFrame(() => {
-      if (transitionId !== this.transitionId) return;
-      this.isVisible = true;
-      void this.updateComplete.then(() => {
-        window.setTimeout(() => {
-          if (transitionId !== this.transitionId) return;
-          this.dispatchEvent(new CustomEvent('aui-after-show', { bubbles: true, composed: true }));
-        }, transitionTimeMs(this.panel));
-      });
+    const transitionId = this.beginTransition();
+    this.isShown = true;
+    if (!reopening) this.applyInitialFocus(transitionId);
+
+    // 進場由 CSS 的 @starting-style 處理（showModal() 後自動從起始樣式轉場）；
+    // 退場動畫中重新開啟時，移除 modal--leaving 即轉場回開啟狀態
+    this.isLeaving = false;
+    void this.updateComplete.then(() => {
+      window.setTimeout(() => {
+        if (transitionId !== this.transitionId) return;
+        this.dispatchEvent(new CustomEvent('aui-after-show', { bubbles: true, composed: true }));
+        this.settleTransition();
+      }, transitionTimeMs(this.panel));
     });
   }
 
@@ -260,17 +304,19 @@ export class AuiModal extends LitElement {
       return;
     }
 
-    const transitionId = ++this.transitionId;
+    const transitionId = this.beginTransition();
     this.isShown = false;
-    this.isVisible = false;
+    this.isLeaving = true;
     this.hidingReason = reason;
 
     void this.updateComplete.then(() => {
       window.setTimeout(() => {
         if (transitionId !== this.transitionId) return;
         this.dialog.close();
+        this.isLeaving = false;
         this.releaseResources({ restoreFocus: true });
         this.dispatchAfterHide(reason);
+        this.settleTransition();
       }, transitionTimeMs(this.panel));
     });
   }
@@ -330,10 +376,10 @@ export class AuiModal extends LitElement {
    */
   private handleNativeClose = () => {
     if (this.dialog.open || (!this.isShown && !this.open)) return;
-    this.transitionId++;
+    this.beginTransition();
     const wasShown = this.isShown;
     this.isShown = false;
-    this.isVisible = false;
+    this.isLeaving = false;
     this.open = false;
     if (wasShown) {
       this.dispatchEvent(
@@ -346,6 +392,7 @@ export class AuiModal extends LitElement {
     }
     this.releaseResources({ restoreFocus: true });
     this.dispatchAfterHide('escape');
+    this.settleTransition();
   };
 
   private handlePointerDown = (event: PointerEvent) => {
@@ -376,7 +423,7 @@ export class AuiModal extends LitElement {
     return html`
       <dialog
         part="dialog"
-        class=${classMap({ modal: true, 'modal--visible': this.isVisible })}
+        class=${classMap({ modal: true, 'modal--leaving': this.isLeaving })}
         aria-labelledby=${ifDefined(this.heading ? 'title' : undefined)}
         aria-label=${ifDefined(ariaLabel)}
         aria-describedby=${ifDefined(this.description ? 'description' : undefined)}
