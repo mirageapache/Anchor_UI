@@ -10,5 +10,6 @@
 | 04  | [Top Layer、dialog 與 Popover API](./04-top-layer.md) | 瀏覽器原生的「最上層」，以及 modal 造成的 inert 邊界 | TASK-204 |
 | 05  | [共用浮層基礎模組](./05-overlay-foundation.md)        | 背景捲動鎖定與焦點返還，Modal / Alert / Drawer 共用  | TASK-204 |
 | 06  | [語意化版本與發布產物](./06-semver-release.md)        | SemVer、預覽版號、Git Tag、`npm pack` 與 yalc        | TASK-205 |
+| 07  | [部署與發布操作筆記](./07-deployment.md)              | 發布版本、在其他專案導入元件庫、yalc 的操作速查      | TASK-205 |
 
 另見：[`doc/Lit_note.md`](../doc/Lit_note.md)（Lit 語法與 Web Component 開發指南）。
