@@ -2,6 +2,7 @@ import { expect } from '@open-wc/testing';
 import type { CSSResultGroup } from 'lit';
 import { AuiAlert } from './alert/alert.js';
 import { AuiButton } from './button/button.js';
+import { AuiCard } from './card/card.js';
 import { AuiField } from './field/field.js';
 import { AuiIconButton } from './icon-button/icon-button.js';
 import { AuiInput } from './input/input.js';
@@ -111,6 +112,7 @@ describe('Design token fallbacks', () => {
     'aui-modal': AuiModal,
     'aui-alert': AuiAlert,
     'aui-toast': AuiToast,
+    'aui-card': AuiCard,
   };
 
   for (const [tagName, ctor] of Object.entries(components)) {
