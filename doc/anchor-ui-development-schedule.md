@@ -196,7 +196,7 @@
 - [✅] 元件庫 Tree-shaking 正常運作：消費端僅引用 Button 時，打包結果不含其他元件的程式碼（以自動化測試驗證）。
 - [✅] size-limit 於 CI 逐一檢查各元件入口，超出預算（基準 +10%）時 PR 檢查失敗並留言列出差異。
 - [✅] 視覺回歸測試在深淺色模式下皆通過比對，像素差異 > 0.1% 時 CI 自動阻擋；同一 commit 重跑結果一致，無偶發失敗。
-- [ ] 發布產物不含測試、stories 與 `test-utils` 檔案；`package.json` 版本與 Git Tag 對齊里程碑。（發布產物內容已由 `pnpm verify:package` 檢查；版本與 Tag 對齊待 `v0.2.0-beta` 發布後完成）
+- [✅] 發布產物不含測試、stories 與 `test-utils` 檔案；`package.json` 版本與 Git Tag 對齊里程碑。（發布產物內容由 `pnpm verify:package` 檢查；`v0.2.0-beta` 已由 PR #8 發布並建立 Git Tag）
 - [✅] PR CI 全部 job 於 8 分鐘內完成。
 
 **表單控制項**
