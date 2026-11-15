@@ -39,6 +39,10 @@
       "types": "./dist/components/field/index.d.ts",
       "import": "./dist/components/field/index.js"
     },
+    "./header": {
+      "types": "./dist/components/header/index.d.ts",
+      "import": "./dist/components/header/index.js"
+    },
     "./icon-button": {
       "types": "./dist/components/icon-button/index.d.ts",
       "import": "./dist/components/icon-button/index.js"
@@ -93,6 +97,8 @@
     "./dist/components/favorite-btn/favorite-btn.js",
     "./dist/components/field/index.js",
     "./dist/components/field/field.js",
+    "./dist/components/header/index.js",
+    "./dist/components/header/header.js",
     "./dist/components/icon-button/index.js",
     "./dist/components/icon-button/icon-button.js",
     "./dist/components/input/index.js",

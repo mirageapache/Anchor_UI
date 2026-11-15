@@ -13,3 +13,4 @@ export * from './card/index.js';
 export * from './accordion/index.js';
 export * from './dropzone/index.js';
 export * from './favorite-btn/index.js';
+export * from './header/index.js';
