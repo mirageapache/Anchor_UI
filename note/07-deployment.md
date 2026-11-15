@@ -25,6 +25,7 @@ Phase 1 做過的那次部署，就是發布 `v0.1.0-alpha`（PR #2 + tag），�
 - 這個版本的所有變更都已合併進 `main`。
 - `main` 最新 commit 的 CI 是綠燈：`gh run list --branch main --limit 3`。
 - （建議）本機預演：`pnpm release:pack`。此時版號還沒改，只是確認建置、套件驗證與體積都能通過。
+- （建議）`pnpm smoke`：重新打包一份 tarball，安裝到 `smoke/` 的 Vue 3 / Angular 專案並做正式建置，確認發布產物能被外部專案使用。
 
 ### 步驟 1：從 `main` 開 release PR（只改版號）
 
@@ -55,7 +56,7 @@ git push origin v0.2.0-beta
 
 1. 確認 tag 指向的 commit 在 `main` 上。
 2. 等該 commit 的必要 CI 檢查全部通過（最多 20 分鐘，任一失敗就中止）。
-3. 執行 `pnpm release:pack`（建置 → `verify:package` → `size` → 版號與 tag 一致性 → `npm pack`）。
+3. 執行 `pnpm release:pack`（建置 → `verify:package` → `size` → 版號與 tag 一致性 → 以 `scripts/pack.mjs` 打包）。
 4. 建立 GitHub Release 並附上 tarball；版號含 `-` 時標記為 Pre-release。
 
 查看結果：
@@ -101,16 +102,16 @@ git push origin develop
 
 ### 導入時的注意事項
 
-| 狀況                                                    | 原因與處理                                                                                                                          |
-| ------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| 安裝時提示 `@anchor-ui/core` 有 `prepare: husky` 待核准 | 發布的 `package.json` 帶著本元件庫開發用的 `prepare` 腳本。**不要核准**，略過即可，安裝本身已成功。（之後可考慮在打包時移除此腳本） |
-| TypeScript 對 CSS import 報 `TS2882`                    | 缺少 Vite 的 CSS 型別宣告，加上 `/// <reference types="vite/client" />`（Vite 範本的 `src/vite-env.d.ts` 預設已有）。               |
-| 同時載入 `tokens.css` 與 `styles.css`                   | `styles.css` 已包含 tokens，重複載入無害但多餘，只留一個。                                                                          |
-| 只想按需載入，卻需要切換主題                            | `setTheme` 等函式只在全量入口，引用會註冊所有元件。改為直接設定 `document.documentElement.dataset.theme = 'dark'`。                 |
-| 放進 `<aui-field>` 的 `<aui-input>` 沒有作用            | Field 只自動註冊自己渲染的 `<aui-icon-button>`，放進去的 Input / Output / Segmented 要另外 import。                                 |
-| Vue 出現「Failed to resolve component: aui-xxx」        | 沒有設定 `isCustomElement`。                                                                                                        |
-| Angular 範本報「'aui-xxx' is not a known element」      | 該元件沒有加 `CUSTOM_ELEMENTS_SCHEMA`。                                                                                             |
-| `npm update` 沒有升級元件庫                             | 以網址安裝的相依版本由網址決定，升級要用新版網址重新 `npm install`。                                                                |
+| 狀況                                                    | 原因與處理                                                                                                                                                                                                                 |
+| ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 安裝時提示 `@anchor-ui/core` 有 `prepare: husky` 待核准 | 只發生在 `v0.2.0-beta`（含）以前的 tarball：發布的 `package.json` 帶著本元件庫開發用的 `prepare` 腳本。**不要核准**，略過即可，安裝本身已成功。之後的版本由 `scripts/pack.mjs` 打包，已不含此腳本（`pnpm smoke` 會檢查）。 |
+| TypeScript 對 CSS import 報 `TS2882`                    | 缺少 Vite 的 CSS 型別宣告，加上 `/// <reference types="vite/client" />`（Vite 範本的 `src/vite-env.d.ts` 預設已有）。                                                                                                      |
+| 同時載入 `tokens.css` 與 `styles.css`                   | `styles.css` 已包含 tokens，重複載入無害但多餘，只留一個。                                                                                                                                                                 |
+| 只想按需載入，卻需要切換主題                            | `setTheme` 等函式只在全量入口，引用會註冊所有元件。改為直接設定 `document.documentElement.dataset.theme = 'dark'`。                                                                                                        |
+| 放進 `<aui-field>` 的 `<aui-input>` 沒有作用            | Field 只自動註冊自己渲染的 `<aui-icon-button>`，放進去的 Input / Output / Segmented 要另外 import。                                                                                                                        |
+| Vue 出現「Failed to resolve component: aui-xxx」        | 沒有設定 `isCustomElement`。                                                                                                                                                                                               |
+| Angular 範本報「'aui-xxx' is not a known element」      | 該元件沒有加 `CUSTOM_ELEMENTS_SCHEMA`。                                                                                                                                                                                    |
+| `npm update` 沒有升級元件庫                             | 以網址安裝的相依版本由網址決定，升級要用新版網址重新 `npm install`。                                                                                                                                                       |
 
 ### 本機開發時即時同步（yalc）
 

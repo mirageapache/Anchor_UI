@@ -4,6 +4,8 @@
 # 未涵蓋（需手動更新）：
 # - ci.yml 中以 docker run 執行的 rhysd/actionlint 映像（釘選 @sha256 digest）
 # - Playwright 容器映像：版本須與 package.json 的 playwright 一致，由 pnpm check:versions 把關
+# - smoke/vue3、smoke/angular 的 package-lock.json（TASK-307 冒煙測試專案，以 npm ci --ignore-scripts 安裝）：
+#   升級相依時於該目錄執行 npm install --package-lock-only 後提交
 #
 # PR 目標為 develop（與一般開發相同，經 develop → main 的 PR 執行完整 CI）。
 version: 2

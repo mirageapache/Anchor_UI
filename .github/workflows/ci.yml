@@ -95,6 +95,53 @@ jobs:
       - name: Check bundle size budgets (size-limit)
         run: pnpm size
 
+      # TASK-307: 產出與發布時相同的 tarball（不含安裝時會執行的生命週期腳本），交給 smoke job 安裝驗證
+      - name: Pack the release tarball
+        run: node scripts/pack.mjs
+
+      - name: Upload the tarball for the framework smoke tests
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: package-tarball
+          path: release/*.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  smoke:
+    name: Framework Smoke Test (${{ matrix.framework }})
+    timeout-minutes: 10
+    # TASK-307: 以 build job 產出的 tarball 安裝到獨立的 Vue 3 / Angular 專案（smoke/，不在 pnpm workspace 內）
+    # 並做型別檢查與正式建置，驗證實際發布產物的 exports、sideEffects（Tree-shaking）與型別宣告。
+    # 與 test job 的範例專案建置不同：那裡透過 workspace 連結原始套件，這裡只透過 tarball 取得。
+    # 不需要 pnpm 與 workspace 的相依：測試專案以 npm ci 安裝各自鎖定的相依。
+    needs: build
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        framework: [vue3, angular]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: smoke/${{ matrix.framework }}/package-lock.json
+
+      - name: Download the release tarball
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: package-tarball
+          path: release
+
+      - name: Install the tarball, type-check and build for production
+        run: node scripts/smoke-test.mjs "$FRAMEWORK" --tarball "$(ls release/*.tgz)"
+        env:
+          FRAMEWORK: ${{ matrix.framework }}
+
   size-report:
     name: Size Report (PR comment)
     timeout-minutes: 20
@@ -282,7 +329,8 @@ jobs:
         run: pnpm test:angular
 
       # TASK-214：範例專案的型別檢查與正式建置（Vue SFC 編譯、Angular AOT 模板編譯），
-      # 以建置後的 dist/ 驗證消費端的生產建置可通過
+      # 以建置後的 dist/ 驗證消費端的生產建置可通過；建置後由 scripts/verify-example-builds.mjs
+      # 確認產物確實註冊了所有元件（建置指令成功不代表產物有內容）
       - name: Type-check framework examples
         run: pnpm typecheck:examples
 
@@ -307,7 +355,7 @@ jobs:
     name: CI Time Budget
     # TASK-214：整體 PR CI 須在 8 分鐘內完成。所有 job 結束後把各 job 的耗時寫入 job summary，
     # 超出預算時發出警告（不讓 CI 失敗，避免 runner 偶爾變慢就擋住合併）。
-    needs: [lint-and-typecheck, build, size-report, storybook, visual, test]
+    needs: [lint-and-typecheck, build, smoke, size-report, storybook, visual, test]
     if: ${{ !cancelled() }}
     timeout-minutes: 5
     runs-on: ubuntu-latest

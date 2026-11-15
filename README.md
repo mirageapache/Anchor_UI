@@ -125,7 +125,7 @@ pnpm add https://github.com/mirageapache/Anchor_UI/releases/download/v0.2.0-beta
 ```
 
 - `package.json` 的相依會記錄成這個網址，其他人 `npm install` 時會下載同一個檔案；`lit` 與 `@floating-ui/dom` 會一併自動安裝。
-- 安裝時套件管理器可能提示 `@anchor-ui/core` 有 `prepare: husky` 腳本待核准（npm `install-scripts`、pnpm「Ignored build scripts」）：**不需核准**，那是本元件庫開發用的 Git hook，消費端用不到。
+- `v0.2.0-beta`（含）以前的 tarball 帶有本元件庫開發用的 `prepare: husky` 腳本，安裝時套件管理器可能提示有腳本待核准（npm `install-scripts`、pnpm「Ignored build scripts」）：**不需核准**，消費端用不到。之後的版本已不含此腳本。
 - 也可以先下載 tarball 再安裝：`gh release download v0.2.0-beta --repo mirageapache/Anchor_UI --pattern "*.tgz"`，接著 `npm install ./anchor-ui-core-0.2.0-beta.tgz`。這種做法需把 `.tgz` 提交進專案，否則其他人安裝不到。
 
 ### 3. 載入樣式與字型
@@ -286,15 +286,16 @@ npm install https://github.com/mirageapache/Anchor_UI/releases/download/v0.3.0/a
 | `pnpm test:visual:docker`                         | 在 Playwright 官方 Docker 映像中執行視覺回歸測試（淺色／深色主題截圖比對）                                |
 | `pnpm test:visual:docker:update`                  | 同上，但更新基準圖（`screenshots/Chromium/baseline/`），並列出變更、產生 before／after／diff 供提交前檢視 |
 | `pnpm test:vue` / `pnpm test:angular`             | Vue 3 / Angular 範例專案的整合測試（需先 build）                                                          |
-| `pnpm typecheck:examples` / `pnpm build:examples` | 範例專案的型別檢查與正式建置（Vue SFC 編譯、Angular AOT；需先 build）                                     |
+| `pnpm typecheck:examples` / `pnpm build:examples` | 範例專案的型別檢查與正式建置（Vue SFC 編譯、Angular AOT；需先 build），建置後檢查產物確實包含所有元件     |
 | `pnpm test:storybook`                             | 以 Vitest（@storybook/addon-vitest）在 Chromium 中執行所有 story 與 play function 互動情境                |
 
 **發布**
 
-| 指令                  | 說明                                                                                      |
-| --------------------- | ----------------------------------------------------------------------------------------- |
-| `pnpm release:verify` | 檢查版號是否為合法 SemVer；`--tag v<版號>` 檢查與 tag 一致，`--all-tags` 檢查所有既有 tag |
-| `pnpm release:pack`   | 發布預演：建置 → 套件驗證 → 體積 → 版號檢查 → 產出 tarball 至 `release/`                  |
+| 指令                  | 說明                                                                                                                               |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm release:verify` | 檢查版號是否為合法 SemVer；`--tag v<版號>` 檢查與 tag 一致，`--all-tags` 檢查所有既有 tag                                          |
+| `pnpm release:pack`   | 發布預演：建置 → 套件驗證 → 體積 → 版號檢查 → 產出 tarball 至 `release/`（不含安裝時會執行的生命週期腳本）                         |
+| `pnpm smoke`          | 跨框架冒煙測試：以 tarball 安裝到 `smoke/` 的 Vue 3 / Angular 專案並做型別檢查與正式建置（需先 build；可指定 `vue3` 或 `angular`） |
 
 **開發與程式碼品質**
 

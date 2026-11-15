@@ -1,0 +1,28 @@
+{
+  "name": "smoke-angular",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "TASK-307 冒煙測試：以 tarball 安裝 @anchor-ui/core 的 Angular 專案（由 scripts/smoke-test.mjs 執行）",
+  "scripts": {
+    "build": "tsc -p tsconfig.app.json --noEmit && vite build"
+  },
+  "dependencies": {
+    "@angular/common": "^19.2.0",
+    "@angular/compiler": "^19.2.0",
+    "@angular/core": "^19.2.0",
+    "@angular/forms": "^19.2.0",
+    "@angular/platform-browser": "^19.2.0",
+    "@floating-ui/dom": "^1.8.0",
+    "lit": "^3.3.3",
+    "rxjs": "~7.8.0",
+    "zone.js": "~0.15.0"
+  },
+  "devDependencies": {
+    "@analogjs/vite-plugin-angular": "^2.8.0",
+    "@angular/build": "^19.2.0",
+    "@angular/compiler-cli": "^19.2.0",
+    "typescript": "~5.8.2",
+    "vite": "^8.3.1"
+  }
+}

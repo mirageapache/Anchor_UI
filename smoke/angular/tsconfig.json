@@ -1,0 +1,18 @@
+{
+  // 不可在此設定 "noEmit": true：AnalogJS 的 Angular 外掛會依此對每個模組輸出空內容，
+  // vite build 仍顯示成功，產物卻不含任何應用程式碼。型別檢查改在指令中加上 --noEmit。
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": false,
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "skipLibCheck": false,
+    "strict": true,
+    "experimentalDecorators": true,
+    "isolatedModules": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts"]
+}
