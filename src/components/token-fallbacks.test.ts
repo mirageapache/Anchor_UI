@@ -5,6 +5,7 @@ import { AuiAlert } from './alert/alert.js';
 import { AuiButton } from './button/button.js';
 import { AuiCard } from './card/card.js';
 import { AuiDropzone } from './dropzone/dropzone.js';
+import { AuiFavoriteBtn } from './favorite-btn/favorite-btn.js';
 import { AuiField } from './field/field.js';
 import { AuiIconButton } from './icon-button/icon-button.js';
 import { AuiInput } from './input/input.js';
@@ -117,6 +118,7 @@ describe('Design token fallbacks', () => {
     'aui-card': AuiCard,
     'aui-accordion': AuiAccordion,
     'aui-dropzone': AuiDropzone,
+    'aui-favorite-btn': AuiFavoriteBtn,
   };
 
   for (const [tagName, ctor] of Object.entries(components)) {

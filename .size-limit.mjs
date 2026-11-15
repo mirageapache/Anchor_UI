@@ -10,7 +10,7 @@ import { listComponents } from './scripts/components.mjs';
 
 /** 各入口的體積基準（bytes，gzip；TASK-202 建立於 2026-10-09） */
 const BASELINES = {
-  index: 42841, // TASK-303 加入 Dropzone（Phase 2 結束時 35507，Phase 1 為 20838）
+  index: 44050, // TASK-304 加入 Favorite Toggle（Phase 2 結束時 35507，Phase 1 為 20838）
   button: 3189,
   'icon-button': 16704, // 含相依的 Tooltip 與 @floating-ui/dom
   tag: 3390,
@@ -25,6 +25,7 @@ const BASELINES = {
   card: 3384, // TASK-301
   accordion: 2665, // TASK-302
   dropzone: 4616, // TASK-303
+  'favorite-btn': 2423, // TASK-304
 };
 
 const TOLERANCE = 0.1;
