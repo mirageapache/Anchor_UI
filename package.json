@@ -11,6 +11,10 @@
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
+    "./accordion": {
+      "types": "./dist/components/accordion/index.d.ts",
+      "import": "./dist/components/accordion/index.js"
+    },
     "./alert": {
       "types": "./dist/components/alert/index.d.ts",
       "import": "./dist/components/alert/index.js"
@@ -67,6 +71,8 @@
   "sideEffects": [
     "**/*.css",
     "./dist/index.js",
+    "./dist/components/accordion/index.js",
+    "./dist/components/accordion/accordion.js",
     "./dist/components/alert/index.js",
     "./dist/components/alert/alert.js",
     "./dist/components/button/index.js",

@@ -10,3 +10,4 @@ export * from './modal/index.js';
 export * from './alert/index.js';
 export * from './toast/index.js';
 export * from './card/index.js';
+export * from './accordion/index.js';

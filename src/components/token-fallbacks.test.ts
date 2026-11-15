@@ -1,5 +1,6 @@
 import { expect } from '@open-wc/testing';
 import type { CSSResultGroup } from 'lit';
+import { AuiAccordion } from './accordion/accordion.js';
 import { AuiAlert } from './alert/alert.js';
 import { AuiButton } from './button/button.js';
 import { AuiCard } from './card/card.js';
@@ -113,6 +114,7 @@ describe('Design token fallbacks', () => {
     'aui-alert': AuiAlert,
     'aui-toast': AuiToast,
     'aui-card': AuiCard,
+    'aui-accordion': AuiAccordion,
   };
 
   for (const [tagName, ctor] of Object.entries(components)) {
