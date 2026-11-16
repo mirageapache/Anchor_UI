@@ -27,7 +27,7 @@ const meta: Meta<ToastStoryArgs> = {
 **Anchor UI — Toast 通知 (\`<aui-toast>\`, \`ToastService\`)**
 
 堆疊的全域通知（Popover API 進入 Top Layer），支援 Success、Error、Warning、Info、Loading 5 種狀態。
-位置以 \`ToastService.configure({ placement })\` 設定：\`top-left\`、\`top-center\`、\`top-right\`、\`bottom-left\`、\`bottom-center\`、\`bottom-right\`（預設）；新通知出現在靠近螢幕邊緣的一側。寬度 480px 以下的螢幕一律顯示在中間上方。
+位置以 \`ToastService.configure({ placement })\` 設定：\`top-left\`、\`top-center\`、\`top-right\`、\`bottom-left\`、\`bottom-center\`、\`bottom-right\`（預設）；新通知出現在靠近螢幕邊緣的一側。手機（寬度 480px 以下，或橫放時高度 480px 以下）一律顯示在中間上方。
 \`ToastService\` 為全頁單例（\`globalThis[Symbol.for('anchor-ui.toast@1')]\`）：佇列與同時顯示上限、各狀態預設停留時間、
 以 \`handle.update()\` 或相同 \`id\` 更新既有通知（如 Loading 轉 Success）。
 以 live region 播報（Error 為 \`role="alert"\`，其餘為 \`role="status"\`）；滑鼠停在通知上或焦點位於通知內時暫停自動關閉。
@@ -111,7 +111,7 @@ const PLACEMENTS: ToastPlacement[] = [
 
 /**
  * 六種位置：點擊按鈕切換位置並顯示一則通知。新通知出現在靠近螢幕邊緣的一側，
- * 進場與退場的方向也跟著位置改變。把視窗縮到 480px 以下時，一律顯示在中間上方。
+ * 進場與退場的方向也跟著位置改變。把視窗寬度縮到 480px 以下（或橫向時高度縮到 480px 以下）時，一律顯示在中間上方。
  */
 export const Placement: Story = {
   render: () => html`

@@ -1241,7 +1241,7 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
 
 預設固定於視窗右下角堆疊，支援 5 種狀態（Success、Error、Warning、Info、Loading），彈出 cubic-bezier 平滑滑入。
 
-位置可由 `ToastService.configure({ placement })` 設定為 `top-left`、`top-center`、`top-right`、`bottom-left`、`bottom-center`、`bottom-right`（預設）：新通知出現在靠近螢幕邊緣的一側（上方位置時最新的在最上面），進場與退場的方向隨位置改變。寬度 480px 以下的螢幕（手機）一律顯示在中間上方並橫向撐滿。以下為預設位置的樣式：
+位置可由 `ToastService.configure({ placement })` 設定為 `top-left`、`top-center`、`top-right`、`bottom-left`、`bottom-center`、`bottom-right`（預設）：新通知出現在靠近螢幕邊緣的一側（上方位置時最新的在最上面），進場與退場的方向隨位置改變。手機一律顯示在中間上方：寬度 480px 以下時橫向撐滿；橫放（高度 480px 以下的橫向畫面）時維持一般寬度並置中。以下為預設位置的樣式：
 
 ```scss
 .toast-viewport {

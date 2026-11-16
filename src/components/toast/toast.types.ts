@@ -9,7 +9,7 @@ export type ToastVariant = 'success' | 'error' | 'warning' | 'info' | 'loading';
 
 /**
  * 通知在視窗中的位置（`ToastService.configure({ placement })`）。
- * 寬度 480px 以下的螢幕（手機）一律顯示在中間上方，不受此設定影響。
+ * 手機（寬度 480px 以下，或橫放時高度 480px 以下）一律顯示在中間上方，不受此設定影響。
  */
 export type ToastPlacement =
   'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
@@ -66,7 +66,7 @@ export interface ToastConfig {
   /**
    * 通知的位置（預設 `bottom-right`）。新通知出現在靠近螢幕邊緣的一側：
    * 上方位置時最新的在最上面，下方位置時最新的在最下面。可隨時變更，顯示中的通知會一起移動。
-   * 寬度 480px 以下的螢幕一律顯示在中間上方。
+   * 手機（寬度 480px 以下，或橫放時高度 480px 以下）一律顯示在中間上方。
    */
   placement?: ToastPlacement;
 }

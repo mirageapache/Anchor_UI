@@ -363,6 +363,88 @@ describe('ToastService', () => {
       });
     });
 
+    describe('phones in landscape (height ≤ 480px)', () => {
+      const ALL: ToastPlacement[] = [
+        'top-left',
+        'top-center',
+        'top-right',
+        'bottom-left',
+        'bottom-center',
+        'bottom-right',
+      ];
+
+      /** 橫向手機的版面：貼齊上方、維持一般寬度並置中，最新的在最上面 */
+      function expectTopCentre(label: string): void {
+        const rect = viewportEl()!.getBoundingClientRect();
+        expect(rect.top, label).to.be.closeTo(16, 1);
+        expect(rect.width, label).to.be.closeTo(WIDTH, 1);
+        expect(centerX(rect), label).to.be.closeTo(window.innerWidth / 2, 1);
+        expect(visualOrder(), label).to.deep.equal(['Two', 'One']);
+      }
+
+      async function showTwo(placement: ToastPlacement): Promise<void> {
+        ToastService.configure({ placement, maxVisible: 5 });
+        for (const message of ['One', 'Two']) ToastService.info(message, { duration: 0 });
+        await rendered();
+      }
+
+      for (const placement of ALL) {
+        it(`always shows toasts at the top centre (configured: ${placement})`, async () => {
+          await setViewport({ width: 844, height: 390 });
+          await showTwo(placement);
+          expectTopCentre(placement);
+          expect(viewportEl()!.getAttribute('data-placement')).to.equal(placement);
+        });
+      }
+
+      it('applies at exactly 480px of height', async () => {
+        await setViewport({ width: 900, height: 480 });
+        await showTwo('bottom-left');
+        expectTopCentre('480px');
+      });
+
+      it('uses the placement just above the breakpoint', async () => {
+        await setViewport({ width: 900, height: 481 });
+        await showTwo('bottom-left');
+        const rect = viewportEl()!.getBoundingClientRect();
+        expect(rect.left).to.be.closeTo(EDGE, 1);
+        expect(window.innerHeight - rect.bottom).to.be.closeTo(EDGE, 1);
+      });
+
+      it('stays centred under a global reset', async () => {
+        const reset = document.createElement('style');
+        reset.textContent = '* { margin: 0; } *, *::before, *::after { box-sizing: border-box; }';
+        document.head.appendChild(reset);
+        try {
+          await setViewport({ width: 844, height: 390 });
+          await showTwo('bottom-right');
+          expectTopCentre('reset');
+        } finally {
+          reset.remove();
+        }
+      });
+
+      it('stretches across the screen when the landscape screen is also narrow', async () => {
+        await setViewport({ width: 480, height: 400 });
+        await showTwo('bottom-right');
+        const rect = viewportEl()!.getBoundingClientRect();
+        expect(rect.top).to.be.closeTo(16, 1);
+        expect(rect.left).to.be.closeTo(16, 1);
+        expect(window.innerWidth - rect.right).to.be.closeTo(16, 1);
+      });
+
+      it('returns to the configured placement when the phone is turned upright on a wide screen', async () => {
+        await setViewport({ width: 844, height: 390 });
+        await showTwo('bottom-left');
+        expectTopCentre('landscape');
+
+        await setViewport({ width: 1024, height: 768 });
+        const rect = viewportEl()!.getBoundingClientRect();
+        expect(rect.left).to.be.closeTo(EDGE, 1);
+        expect(window.innerHeight - rect.bottom).to.be.closeTo(EDGE, 1);
+      });
+    });
+
     describe('animation direction', () => {
       /**
        * Viewport 傳給通知卡片的動畫位移（CSS 自訂屬性會繼承進 <aui-toast>）。
@@ -439,6 +521,11 @@ describe('ToastService', () => {
         await setViewport({ width: 400, height: 700 });
         expect(await offsets('bottom-right')).to.deep.equal(EXPECTED['top-center']);
       });
+
+      it('uses the top-centre animation on phones in landscape', async () => {
+        await setViewport({ width: 844, height: 390 });
+        expect(await offsets('bottom-right')).to.deep.equal(EXPECTED['top-center']);
+      });
     });
 
     describe('right-to-left pages', () => {
@@ -465,7 +552,8 @@ describe('ToastService', () => {
 
       for (const placement of ['top-right', 'bottom-right'] as const) {
         it(`keeps the newest toast on screen and lets the oldest overflow (${placement})`, async () => {
-          await setViewport({ width: 1024, height: 320 });
+          // 高度需大於 480px：更矮的橫向畫面會被視為橫放的手機，一律顯示在中間上方
+          await setViewport({ width: 1024, height: 500 });
           ToastService.configure({ placement, maxVisible: 6 });
           for (let index = 1; index <= 6; index++) {
             ToastService.info(`${index} ${tall}`, { duration: 0 });

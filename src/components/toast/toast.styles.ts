@@ -178,8 +178,11 @@ export const toastStyles = css`
  *   都是最新通知所在的那一側，溢出的部分因此落在最舊的那一端）。
  * - 動畫方向：以 CSS 變數傳給通知卡片（自訂屬性會繼承進 <aui-toast> 的 Shadow DOM）。
  *   進場從所在的邊緣滑入；退場時靠左往左、靠右往右，置中沒有左右方向，改往所在的邊緣（上或下）滑出。
- * - 小螢幕（寬度 480px 以下）：不論設定為何，一律顯示在中間上方並橫向撐滿
+ * - 小螢幕（手機）：不論設定為何，一律顯示在中間上方
  *   （下方常被瀏覽器工具列、虛擬鍵盤或主要操作按鈕佔用），並避開瀏海等安全區域。
+ *   直向以寬度 480px 以下判斷，通知橫向撐滿；橫向以「高度 480px 以下且為橫向」判斷
+ *   （手機橫放時寬度超過 480px，但高度只有 360–430px；平板的短邊至少 600px，不受影響），
+ *   此時寬度足夠，通知維持一般寬度並置中，不撐滿整個畫面。
  *   媒體查詢內的選擇器列出 [data-placement]，讓優先度不低於依位置設定的規則。
  *
  * 說明集中寫在這裡而不是樣式內：css 範本中的註解會原樣進入發布產物。
@@ -259,22 +262,30 @@ export const toastViewportStyles = css`
     --_aui-toast-exit-y: 12px;
   }
 
-  @media (max-width: 480px) {
+  @media (max-width: 480px), (max-height: 480px) and (orientation: landscape) {
     :host,
     :host([data-placement]) {
       --_aui-toast-edge: var(--space-md, 16px);
 
       top: max(var(--_aui-toast-edge), env(safe-area-inset-top, 0px));
-      right: var(--_aui-toast-edge);
+      right: auto;
       bottom: auto;
-      left: var(--_aui-toast-edge);
+      left: calc((100% - var(--_aui-toast-width)) / 2);
       flex-direction: column-reverse;
       justify-content: flex-end;
-      width: auto;
 
       --_aui-toast-enter-y: -12px;
       --_aui-toast-exit-x: 0px;
       --_aui-toast-exit-y: -12px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    :host,
+    :host([data-placement]) {
+      right: var(--_aui-toast-edge);
+      left: var(--_aui-toast-edge);
+      width: auto;
     }
   }
 `;
