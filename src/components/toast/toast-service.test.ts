@@ -2,6 +2,7 @@ import { expect, fixture, html, oneEvent } from '@open-wc/testing';
 import { emulateMedia, resetMouse, sendMouse, setViewport } from '@web/test-runner-commands';
 import { ToastService } from './toast-service.js';
 import type { AuiToast } from './toast.js';
+import type { ToastPlacement } from './toast.types.js';
 import '../modal/index.js';
 import '../alert/index.js';
 import { AlertService } from '../alert/alert-service.js';
@@ -119,6 +120,408 @@ describe('ToastService', () => {
       ToastService.info('b');
       await rendered();
       expect(document.querySelectorAll('[data-aui-toast-viewport]')).to.have.length(1);
+    });
+  });
+
+  describe('placement', () => {
+    const EDGE = 24;
+    const WIDTH = 380;
+
+    afterEach(async () => {
+      await setViewport({ width: 1024, height: 768 });
+    });
+
+    /** 顯示一則通知並回傳 Viewport 的位置 */
+    async function viewportRect(): Promise<DOMRect> {
+      ToastService.info('Placed', { duration: 0 });
+      await rendered();
+      return viewportEl()!.getBoundingClientRect();
+    }
+
+    const centerX = (rect: DOMRect) => rect.left + rect.width / 2;
+
+    const placements: [placement: ToastPlacement, check: (rect: DOMRect) => void][] = [
+      [
+        'top-left',
+        (rect) => {
+          expect(rect.top).to.be.closeTo(EDGE, 1);
+          expect(rect.left).to.be.closeTo(EDGE, 1);
+        },
+      ],
+      [
+        'top-center',
+        (rect) => {
+          expect(rect.top).to.be.closeTo(EDGE, 1);
+          expect(centerX(rect)).to.be.closeTo(window.innerWidth / 2, 1);
+        },
+      ],
+      [
+        'top-right',
+        (rect) => {
+          expect(rect.top).to.be.closeTo(EDGE, 1);
+          expect(window.innerWidth - rect.right).to.be.closeTo(EDGE, 1);
+        },
+      ],
+      [
+        'bottom-left',
+        (rect) => {
+          expect(window.innerHeight - rect.bottom).to.be.closeTo(EDGE, 1);
+          expect(rect.left).to.be.closeTo(EDGE, 1);
+        },
+      ],
+      [
+        'bottom-center',
+        (rect) => {
+          expect(window.innerHeight - rect.bottom).to.be.closeTo(EDGE, 1);
+          expect(centerX(rect)).to.be.closeTo(window.innerWidth / 2, 1);
+        },
+      ],
+      [
+        'bottom-right',
+        (rect) => {
+          expect(window.innerHeight - rect.bottom).to.be.closeTo(EDGE, 1);
+          expect(window.innerWidth - rect.right).to.be.closeTo(EDGE, 1);
+        },
+      ],
+    ];
+
+    for (const [placement, check] of placements) {
+      it(`places the viewport at ${placement}`, async () => {
+        ToastService.configure({ placement });
+        const rect = await viewportRect();
+        expect(viewportEl()!.getAttribute('data-placement')).to.equal(placement);
+        expect(rect.width).to.be.closeTo(WIDTH, 1);
+        check(rect);
+      });
+    }
+
+    it('stays centred and at the edge when the page applies a global margin reset', async () => {
+      // 本套件的 styles.css 含 * { margin: 0 }；頁面樣式套用在 Viewport 元素上時優先於 :host 的規則
+      const reset = document.createElement('style');
+      reset.textContent = '* { margin: 0; } *, *::before, *::after { box-sizing: border-box; }';
+      document.head.appendChild(reset);
+      try {
+        for (const placement of ['top-center', 'bottom-center'] as const) {
+          ToastService.configure({ placement });
+          const rect = await viewportRect();
+          expect(centerX(rect), placement).to.be.closeTo(window.innerWidth / 2, 1);
+          expect(rect.width, placement).to.be.closeTo(WIDTH, 1);
+          await ToastService.closeAll();
+        }
+        ToastService.configure({ placement: 'top-right' });
+        const rect = await viewportRect();
+        expect(window.innerWidth - rect.right).to.be.closeTo(EDGE, 1);
+        expect(rect.top).to.be.closeTo(EDGE, 1);
+      } finally {
+        reset.remove();
+      }
+    });
+
+    it('defaults to bottom-right and returns to it on resetConfig()', async () => {
+      const rect = await viewportRect();
+      expect(viewportEl()!.getAttribute('data-placement')).to.equal('bottom-right');
+      expect(window.innerWidth - rect.right).to.be.closeTo(EDGE, 1);
+
+      ToastService.configure({ placement: 'top-left' });
+      ToastService.resetConfig();
+      expect(viewportEl()!.getAttribute('data-placement')).to.equal('bottom-right');
+    });
+
+    it('moves toasts that are already visible when the placement changes', async () => {
+      ToastService.info('Moving', { duration: 0 });
+      await rendered();
+      const [toast] = toasts();
+      const before = toast.getBoundingClientRect();
+
+      ToastService.configure({ placement: 'top-left' });
+      const after = toast.getBoundingClientRect();
+      expect(after.left).to.be.closeTo(EDGE, 1);
+      expect(after.top).to.be.closeTo(EDGE, 1);
+      expect(after.left).to.be.below(before.left);
+      expect(after.top).to.be.below(before.top);
+    });
+
+    it('ignores an invalid placement and keeps the previous one', async () => {
+      ToastService.configure({ placement: 'top-center' });
+      for (const invalid of ['middle', 'TOP-LEFT', '', null, 3]) {
+        ToastService.configure({ placement: invalid as unknown as ToastPlacement });
+      }
+      await viewportRect();
+      expect(viewportEl()!.getAttribute('data-placement')).to.equal('top-center');
+    });
+
+    /** 由上到下的訊息順序（依畫面位置，不是 DOM 順序） */
+    const visualOrder = () =>
+      toasts()
+        .map((toast) => ({ message: toast.message, top: toast.getBoundingClientRect().top }))
+        .sort((a, b) => a.top - b.top)
+        .map(({ message }) => message);
+
+    it('shows the newest toast nearest the screen edge: on top for top placements', async () => {
+      ToastService.configure({ placement: 'top-right', maxVisible: 5 });
+      for (const message of ['One', 'Two', 'Three']) ToastService.info(message, { duration: 0 });
+      await rendered();
+
+      // DOM 順序維持由舊到新（鍵盤與閱讀順序不變），只有視覺上的堆疊方向相反
+      expect(toasts().map((toast) => toast.message)).to.deep.equal(['One', 'Two', 'Three']);
+      expect(visualOrder()).to.deep.equal(['Three', 'Two', 'One']);
+      expect(toasts()[2].getBoundingClientRect().top).to.be.closeTo(EDGE, 1);
+
+      const rects = toasts().map((toast) => toast.getBoundingClientRect());
+      for (let i = 1; i < rects.length; i++) {
+        expect(rects[i].bottom, 'no overlap').to.be.at.most(rects[i - 1].top);
+      }
+    });
+
+    it('shows the newest toast at the bottom for bottom placements', async () => {
+      ToastService.configure({ placement: 'bottom-left', maxVisible: 5 });
+      for (const message of ['One', 'Two', 'Three']) ToastService.info(message, { duration: 0 });
+      await rendered();
+
+      expect(visualOrder()).to.deep.equal(['One', 'Two', 'Three']);
+      expect(window.innerHeight - toasts()[2].getBoundingClientRect().bottom).to.be.closeTo(
+        EDGE,
+        1,
+      );
+    });
+
+    describe('small screens (≤ 480px)', () => {
+      const ALL: ToastPlacement[] = [
+        'top-left',
+        'top-center',
+        'top-right',
+        'bottom-left',
+        'bottom-center',
+        'bottom-right',
+      ];
+
+      /** 小螢幕的版面：貼齊上方、左右各 16px、橫向撐滿，最新的在最上面 */
+      function expectTopCentre(label: string): void {
+        const rect = viewportEl()!.getBoundingClientRect();
+        expect(rect.top, label).to.be.closeTo(16, 1);
+        expect(rect.left, label).to.be.closeTo(16, 1);
+        expect(window.innerWidth - rect.right, label).to.be.closeTo(16, 1);
+        expect(centerX(rect), label).to.be.closeTo(window.innerWidth / 2, 1);
+        expect(visualOrder(), label).to.deep.equal(['Two', 'One']);
+      }
+
+      for (const placement of ALL) {
+        it(`always shows toasts at the top centre, full width (configured: ${placement})`, async () => {
+          await setViewport({ width: 400, height: 700 });
+          ToastService.configure({ placement, maxVisible: 5 });
+          for (const message of ['One', 'Two']) ToastService.info(message, { duration: 0 });
+          await rendered();
+
+          expectTopCentre(placement);
+          // 設定值保留，螢幕變寬後回到設定的位置
+          expect(viewportEl()!.getAttribute('data-placement')).to.equal(placement);
+        });
+      }
+
+      it('applies at exactly 480px', async () => {
+        await setViewport({ width: 480, height: 700 });
+        ToastService.configure({ placement: 'bottom-center', maxVisible: 5 });
+        for (const message of ['One', 'Two']) ToastService.info(message, { duration: 0 });
+        await rendered();
+        expectTopCentre('480px');
+      });
+
+      it('applies when the placement attribute is missing or invalid', async () => {
+        await setViewport({ width: 400, height: 700 });
+        ToastService.configure({ maxVisible: 5 });
+        for (const message of ['One', 'Two']) ToastService.info(message, { duration: 0 });
+        await rendered();
+        const viewport = viewportEl()!;
+        const original = viewport.getAttribute('data-placement')!;
+        try {
+          viewport.removeAttribute('data-placement');
+          expectTopCentre('missing');
+          viewport.setAttribute('data-placement', 'nonsense');
+          expectTopCentre('invalid');
+        } finally {
+          viewport.setAttribute('data-placement', original);
+        }
+      });
+
+      it('returns to the configured placement when the screen becomes wide again', async () => {
+        ToastService.configure({ placement: 'bottom-left' });
+        await setViewport({ width: 400, height: 700 });
+        await viewportRect();
+        expect(viewportEl()!.getBoundingClientRect().top).to.be.closeTo(16, 1);
+
+        await setViewport({ width: 1024, height: 768 });
+        const rect = viewportEl()!.getBoundingClientRect();
+        expect(rect.left).to.be.closeTo(EDGE, 1);
+        expect(window.innerHeight - rect.bottom).to.be.closeTo(EDGE, 1);
+      });
+
+      it('uses the placement just above the breakpoint', async () => {
+        await setViewport({ width: 481, height: 700 });
+        ToastService.configure({ placement: 'bottom-right' });
+        const rect = await viewportRect();
+        expect(window.innerHeight - rect.bottom).to.be.closeTo(EDGE, 1);
+      });
+    });
+
+    describe('animation direction', () => {
+      /**
+       * Viewport 傳給通知卡片的動畫位移（CSS 自訂屬性會繼承進 <aui-toast>）。
+       * 回傳原始字串：變數沒有設定時是空字串，不可被當成 0 而讓「預期為 0」的案例誤通過。
+       */
+      async function offsets(placement: ToastPlacement) {
+        ToastService.configure({ placement });
+        ToastService.info('Animated', { duration: 0 });
+        await rendered();
+        const style = getComputedStyle(toasts()[0]);
+        const read = (name: string) => style.getPropertyValue(name).trim();
+        return {
+          enterY: read('--_aui-toast-enter-y'),
+          exitX: read('--_aui-toast-exit-x'),
+          exitY: read('--_aui-toast-exit-y'),
+        };
+      }
+
+      const EXPECTED: Record<ToastPlacement, { enterY: string; exitX: string; exitY: string }> = {
+        'top-left': { enterY: '-12px', exitX: '-16px', exitY: '0px' },
+        'top-center': { enterY: '-12px', exitX: '0px', exitY: '-12px' },
+        'top-right': { enterY: '-12px', exitX: '16px', exitY: '0px' },
+        'bottom-left': { enterY: '12px', exitX: '-16px', exitY: '0px' },
+        'bottom-center': { enterY: '12px', exitX: '0px', exitY: '12px' },
+        'bottom-right': { enterY: '12px', exitX: '16px', exitY: '0px' },
+      };
+
+      it('enters from the edge it sits on and leaves towards the nearest side', async () => {
+        for (const [placement, offset] of Object.entries(EXPECTED)) {
+          expect(await offsets(placement as ToastPlacement), placement).to.deep.equal(offset);
+          await ToastService.closeAll();
+        }
+      });
+
+      /** 等卡片上的動畫全部播完（播放期間 transform 由動畫控制） */
+      const animationsFinished = (card: Element) =>
+        Promise.all(card.getAnimations().map((animation) => animation.finished));
+
+      for (const placement of Object.keys(EXPECTED) as ToastPlacement[]) {
+        it(`the card really animates in those directions (${placement})`, async () => {
+          await emulateMedia({ reducedMotion: 'no-preference' });
+          try {
+            ToastService.configure({ placement });
+            const handle = ToastService.info('Animated', { duration: 0 });
+            await rendered();
+            const [element] = toasts();
+            const card = element.shadowRoot!.querySelector<HTMLElement>('[part="base"]')!;
+            const expected = EXPECTED[placement];
+
+            // 進場：讀取實際套用在卡片上的第一個影格
+            const [enter] = card.getAnimations();
+            const [from] = (enter.effect as KeyframeEffect).getKeyframes();
+            expect(new DOMMatrix(String(from.transform)).m42, 'enter offset').to.equal(
+              parseFloat(expected.enterY),
+            );
+
+            await animationsFinished(card);
+            card.style.transition = 'none';
+            handle.close();
+            await element.updateComplete;
+
+            // 退場：卡片計算後的 transform（含 scale(0.97)，只看位移）
+            const leaving = new DOMMatrix(getComputedStyle(card).transform);
+            expect(leaving.m41, 'exit x').to.equal(parseFloat(expected.exitX));
+            expect(leaving.m42, 'exit y').to.equal(parseFloat(expected.exitY));
+            await handle.closed;
+          } finally {
+            await emulateMedia({ reducedMotion: 'reduce' });
+          }
+        });
+      }
+
+      it('uses the top-centre animation on small screens', async () => {
+        await setViewport({ width: 400, height: 700 });
+        expect(await offsets('bottom-right')).to.deep.equal(EXPECTED['top-center']);
+      });
+    });
+
+    describe('right-to-left pages', () => {
+      afterEach(() => document.documentElement.removeAttribute('dir'));
+
+      it('keeps physical left / right placements where their names say', async () => {
+        document.documentElement.setAttribute('dir', 'rtl');
+        ToastService.configure({ placement: 'bottom-right' });
+        let rect = await viewportRect();
+        expect(window.innerWidth - rect.right, 'bottom-right').to.be.closeTo(EDGE, 1);
+
+        ToastService.configure({ placement: 'top-left' });
+        rect = viewportEl()!.getBoundingClientRect();
+        expect(rect.left, 'top-left').to.be.closeTo(EDGE, 1);
+
+        ToastService.configure({ placement: 'top-center' });
+        rect = viewportEl()!.getBoundingClientRect();
+        expect(centerX(rect), 'top-center').to.be.closeTo(window.innerWidth / 2, 1);
+      });
+    });
+
+    describe('more toasts than fit in the window', () => {
+      const tall = 'A fairly long message that wraps onto several lines. '.repeat(4);
+
+      for (const placement of ['top-right', 'bottom-right'] as const) {
+        it(`keeps the newest toast on screen and lets the oldest overflow (${placement})`, async () => {
+          await setViewport({ width: 1024, height: 320 });
+          ToastService.configure({ placement, maxVisible: 6 });
+          for (let index = 1; index <= 6; index++) {
+            ToastService.info(`${index} ${tall}`, { duration: 0 });
+          }
+          await rendered();
+
+          const items = toasts();
+          const total = items.reduce((sum, toast) => sum + toast.getBoundingClientRect().height, 0);
+          expect(total, 'the stack is taller than the window').to.be.greaterThan(
+            window.innerHeight,
+          );
+
+          const newest = items[items.length - 1].getBoundingClientRect();
+          expect(newest.top, 'newest is inside the window').to.be.at.least(0);
+          expect(newest.bottom, 'newest is inside the window').to.be.at.most(window.innerHeight);
+
+          const oldest = items[0].getBoundingClientRect();
+          const oldestOffScreen = oldest.top < 0 || oldest.bottom > window.innerHeight;
+          expect(oldestOffScreen, 'the oldest is the one that overflows').to.be.true;
+        });
+      }
+    });
+
+    describe('hover pause after moving', () => {
+      it('resumes the timers when a placement change moves the stack away from the pointer', async () => {
+        const handle = ToastService.info('Hovered', { duration: 200 });
+        await rendered();
+        const [toast] = toasts();
+        await sendMouse({ type: 'move', position: centerOf(toast) });
+        await wait(300);
+        expect(toast.isConnected, 'paused while hovered').to.be.true;
+
+        // 通知移到另一個角落，指標留在原地：不可繼續維持暫停
+        ToastService.configure({ placement: 'top-left' });
+        await handle.closed;
+        expect(toast.isConnected).to.be.false;
+      });
+    });
+
+    describe('exit transition', () => {
+      it('still plays the exit transition before removing the toast at a non-default placement', async () => {
+        await emulateMedia({ reducedMotion: 'no-preference' });
+        try {
+          ToastService.configure({ placement: 'top-center' });
+          const handle = ToastService.info('Leaving', { duration: 0 });
+          await rendered();
+          const [element] = toasts();
+          handle.close();
+          await element.updateComplete;
+          expect(element.isConnected, 'still in the viewport while fading out').to.be.true;
+          await handle.closed;
+          expect(element.isConnected).to.be.false;
+        } finally {
+          await emulateMedia({ reducedMotion: 'reduce' });
+        }
+      });
     });
   });
 

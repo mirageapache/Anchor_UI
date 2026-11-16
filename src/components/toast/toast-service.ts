@@ -1,7 +1,13 @@
 import { adoptStyles } from 'lit';
 import type { AuiToast } from './toast.js';
 import { toastViewportStyles } from './toast.styles.js';
-import type { ToastConfig, ToastHandle, ToastOptions, ToastVariant } from './toast.types.js';
+import type {
+  ToastConfig,
+  ToastHandle,
+  ToastOptions,
+  ToastPlacement,
+  ToastVariant,
+} from './toast.types.js';
 import { PausableTimer } from '../../internal/pausable-timer.js';
 import { sharedState } from '../../internal/shared-state.js';
 import {
@@ -27,6 +33,20 @@ const DEFAULT_MAX_VISIBLE = 3;
 /** 排隊等候的上限：錯誤迴圈等情況大量呼叫時，捨棄最舊的排隊通知，避免無限累積 */
 const DEFAULT_MAX_QUEUED = 50;
 
+const DEFAULT_PLACEMENT: ToastPlacement = 'bottom-right';
+
+const PLACEMENTS: ReadonlySet<string> = new Set<ToastPlacement>([
+  'top-left',
+  'top-center',
+  'top-right',
+  'bottom-left',
+  'bottom-center',
+  'bottom-right',
+]);
+
+const isPlacement = (value: unknown): value is ToastPlacement =>
+  typeof value === 'string' && PLACEMENTS.has(value);
+
 /** 執行期驗證：JavaScript 呼叫端或 API 回應可能傳入型別以外的值 */
 const isVariant = (value: unknown): value is ToastVariant =>
   typeof value === 'string' && Object.hasOwn(DEFAULT_DURATIONS, value);
@@ -50,6 +70,7 @@ interface Entry {
  * - Viewport 為 `<div popover="manual">`（以 Shadow DOM 套用樣式，不額外註冊元素），進入 Top Layer；
  *   新通知出現時重新提升至最上層，Modal / Alert 開啟期間透過 followTopModal 移入最上層 modal 的子樹，
  *   因為 modal dialog 以外的節點都會 inert，即使視覺上在上層也無法操作與播報。
+ * - 位置可設定為六個角落／邊緣之一（預設右下角），小螢幕一律顯示在中間上方；新通知出現在靠近螢幕邊緣的一側。
  * - 同時顯示上限之外的通知排隊等候，有通知關閉時依序補上。
  * - 指標停在通知上、焦點位於通知內或分頁不可見時暫停所有自動關閉（WCAG 2.2.1）。
  */
@@ -60,6 +81,7 @@ class ToastManager {
   private maxVisible = DEFAULT_MAX_VISIBLE;
   private maxQueued = DEFAULT_MAX_QUEUED;
   private durations: Record<ToastVariant, number> = { ...DEFAULT_DURATIONS };
+  private placement: ToastPlacement = DEFAULT_PLACEMENT;
   private hovering = false;
   /** 指標最後停留在通知上的位置，用於通知被移除後重新判斷是否仍停在通知上 */
   private lastPointer: { x: number; y: number } | null = null;
@@ -68,7 +90,8 @@ class ToastManager {
 
   /** 無效的值（NaN、負數、未知的狀態等）會被忽略，保留原本的設定 */
   configure(config: ToastConfig): void {
-    const { maxVisible, maxQueued, durations } = config;
+    const { maxVisible, maxQueued, durations, placement } = config;
+    if (isPlacement(placement)) this.setPlacement(placement);
     if (typeof maxVisible === 'number' && Number.isFinite(maxVisible)) {
       this.maxVisible = Math.max(1, Math.floor(maxVisible));
     }
@@ -87,6 +110,18 @@ class ToastManager {
     this.maxVisible = DEFAULT_MAX_VISIBLE;
     this.maxQueued = DEFAULT_MAX_QUEUED;
     this.durations = { ...DEFAULT_DURATIONS };
+    this.setPlacement(DEFAULT_PLACEMENT);
+  }
+
+  /** 位置以屬性標示在 Viewport 上，由樣式決定對齊、堆疊方向與動畫方向；顯示中的通知會一起移動 */
+  private setPlacement(placement: ToastPlacement): void {
+    this.placement = placement;
+    const viewport = this.viewport;
+    if (!viewport || viewport.getAttribute('data-placement') === placement) return;
+    viewport.setAttribute('data-placement', placement);
+    // 通知移走後不會觸發 pointerout：依最後的指標位置重新判斷是否仍停在通知上，否則會一直維持暫停
+    this.hovering = this.isPointerOverToast();
+    this.syncPause();
   }
 
   show(options: ToastOptions): ToastHandle {
@@ -286,6 +321,7 @@ class ToastManager {
     viewport.setAttribute('role', 'region');
     viewport.setAttribute('aria-label', '通知');
     viewport.setAttribute('data-aui-toast-viewport', '');
+    viewport.setAttribute('data-placement', this.placement);
     const root = viewport.attachShadow({ mode: 'open' });
     adoptStyles(root, [toastViewportStyles]);
     root.appendChild(document.createElement('slot'));
@@ -340,6 +376,7 @@ type VariantOptions = Omit<ToastOptions, 'variant' | 'message'>;
  * const upload = ToastService.loading('上傳中…');
  * upload.update({ variant: 'success', message: '上傳完成' });
  * ToastService.error('連線逾時', { title: '上傳失敗', duration: 0 });
+ * ToastService.configure({ placement: 'top-center' }); // 位置：六選一，預設 bottom-right
  * ```
  */
 export const ToastService = {
@@ -375,7 +412,7 @@ export const ToastService = {
   closeAll(): Promise<void> {
     return toastManager.closeAll();
   },
-  /** 設定同時顯示上限、排隊上限與各狀態預設的自動關閉時間 */
+  /** 設定通知的位置、同時顯示上限、排隊上限與各狀態預設的自動關閉時間 */
   configure(config: ToastConfig): void {
     toastManager.configure(config);
   },
