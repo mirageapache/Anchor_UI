@@ -28,6 +28,7 @@ const ALLOWED_COMPONENT_DEPS = {
   'icon-button': ['tooltip'],
   field: ['icon-button'],
   alert: ['button', 'input', 'modal'],
+  header: ['favorite-btn', 'tag'],
 };
 
 // ── 共用工具 ──

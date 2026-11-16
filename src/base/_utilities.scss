@@ -34,6 +34,27 @@
   }
 }
 
+// 卡片自適應格線 (TASK-301)：依容器寬度自動決定欄數，不需 Media Query；搭配 <aui-card> 使用
+// min(100%, 270px) 讓容器窄於 270px 時退為單欄而不溢位
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 270px), 1fr));
+  gap: var(--space-md);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+
+  // grid 項目預設 min-width: auto，超長字串會撐破欄寬
+  > * {
+    min-width: 0;
+  }
+
+  // 卡片包在格線項目（如 <li>）內時撐滿列高，讓同一列的卡片等高
+  > * > aui-card {
+    height: 100%;
+  }
+}
+
 // 無障礙動態偏好降級
 @media (prefers-reduced-motion: reduce) {
   *,

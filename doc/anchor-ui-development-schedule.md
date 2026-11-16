@@ -196,7 +196,7 @@
 - [✅] 元件庫 Tree-shaking 正常運作：消費端僅引用 Button 時，打包結果不含其他元件的程式碼（以自動化測試驗證）。
 - [✅] size-limit 於 CI 逐一檢查各元件入口，超出預算（基準 +10%）時 PR 檢查失敗並留言列出差異。
 - [✅] 視覺回歸測試在深淺色模式下皆通過比對，像素差異 > 0.1% 時 CI 自動阻擋；同一 commit 重跑結果一致，無偶發失敗。
-- [ ] 發布產物不含測試、stories 與 `test-utils` 檔案；`package.json` 版本與 Git Tag 對齊里程碑。（發布產物內容已由 `pnpm verify:package` 檢查；版本與 Tag 對齊待 `v0.2.0-beta` 發布後完成）
+- [✅] 發布產物不含測試、stories 與 `test-utils` 檔案；`package.json` 版本與 Git Tag 對齊里程碑。（發布產物內容由 `pnpm verify:package` 檢查；`v0.2.0-beta` 已由 PR #8 發布並建立 Git Tag）
 - [✅] PR CI 全部 job 於 8 分鐘內完成。
 
 **表單控制項**
@@ -232,16 +232,16 @@
 
 #### 任務拆解 (Task Breakdown)
 
-| 任務代號     | 類別 | 工作項目                                        | 說明與具體內容                                                                                                                                                                                                                                                              |
-| ------------ | :--: | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **TASK-301** | 元件 | `Card & Grid` 元件 (`<aui-card>`, `.card-grid`) | 支援內在自適應格線（`auto-fill, minmax(270px, 1fr)`）；Hover 微浮凸（`translateY(-2px)`）；HOT 邊框變體；描述兩行裁切。                                                                                                                                                     |
-| **TASK-302** | 元件 | `Accordion / Doc` 元件 (`<aui-accordion>`)      | 原生 `<details>`/`<summary>` 語意封裝；展開時外框平滑高亮；提供 FAQ 與使用指南預設排版。                                                                                                                                                                                    |
-| **TASK-303** | 元件 | `Dropzone` 元件 (`<aui-dropzone>`)              | 虛線框拖曳上傳；Dragover 狀態琥珀金染色；點擊觸發原生檔案選取器；檔案格式過濾與提示。                                                                                                                                                                                       |
-| **TASK-304** | 元件 | `Favorite Toggle Button` (`<aui-favorite-btn>`) | 星號收藏按鈕；點擊微縮放彈跳動態；已收藏狀態實心琥珀金高亮與事件拋出。                                                                                                                                                                                                      |
-| **TASK-305** | 元件 | `Header` 複合元件 (`<aui-header>`)              | 整合 Tag 標籤、HOT 徽標、H1 主標題、我的最愛收藏鈕與簡述文字的統一頁首容器。                                                                                                                                                                                                |
-| **TASK-306** | 元件 | `Kbd` 鍵帽微元件 (`<aui-kbd>`)                  | 鍵盤按鍵微元件，等寬字體微立體邊框風格，用於介面操作指引。                                                                                                                                                                                                                  |
-| **TASK-307** | 工程 | **跨框架 CI 整合冒煙測試**                      | 範例專案的生產建置已於 Phase 2 TASK-214 納入 CI；本任務於 GitHub Actions 建立矩陣工作流（Matrix Workflow），每次發起 PR 時以 `npm pack` 產出的 tarball 安裝至 Vue 3 與 Angular 小型專案並建置，驗證實際發布產物（`exports`、`sideEffects`、型別宣告），提早抓出破壞性變更。 |
-| **TASK-308** | 工程 | **Storybook 自動化預覽部署 (Preview CD)**       | 建置 GitHub Actions 部署腳本：<br>1. PR 建立時自動建置 Storybook 並發布至預覽環境（如 GitHub Pages 或臨時預覽站點），自動留言 PR 預覽連結。<br>2. `main` 分支更新時自動發布最新版線上元件文檔庫。                                                                           |
+| 任務代號     | 類別 | 工作項目                                             | 說明與具體內容                                                                                                                                                                                                                                                              |
+| ------------ | :--: | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **TASK-301** | 元件 | `Card & Grid` 元件 (`<aui-card>`, `.card-grid`) [✅] | 支援內在自適應格線（`auto-fill, minmax(270px, 1fr)`）；Hover 微浮凸（`translateY(-2px)`）；HOT 邊框變體；描述兩行裁切。                                                                                                                                                     |
+| **TASK-302** | 元件 | `Accordion / Doc` 元件 (`<aui-accordion>`) [✅]      | 原生 `<details>`/`<summary>` 語意封裝；展開時外框平滑高亮；提供 FAQ 與使用指南預設排版。                                                                                                                                                                                    |
+| **TASK-303** | 元件 | `Dropzone` 元件 (`<aui-dropzone>`) [✅]              | 虛線框拖曳上傳；Dragover 狀態琥珀金染色；點擊觸發原生檔案選取器；檔案格式過濾與提示。                                                                                                                                                                                       |
+| **TASK-304** | 元件 | `Favorite Toggle Button` (`<aui-favorite-btn>`) [✅] | 星號收藏按鈕；點擊微縮放彈跳動態；已收藏狀態實心琥珀金高亮與事件拋出。                                                                                                                                                                                                      |
+| **TASK-305** | 元件 | `Header` 複合元件 (`<aui-header>`) [✅]              | 整合 Tag 標籤、HOT 徽標、H1 主標題、我的最愛收藏鈕與簡述文字的統一頁首容器。                                                                                                                                                                                                |
+| **TASK-306** | 元件 | `Kbd` 鍵帽微元件 (`<aui-kbd>`) [✅]                  | 鍵盤按鍵微元件，等寬字體微立體邊框風格，用於介面操作指引。                                                                                                                                                                                                                  |
+| **TASK-307** | 工程 | **跨框架 CI 整合冒煙測試** [✅]                      | 範例專案的生產建置已於 Phase 2 TASK-214 納入 CI；本任務於 GitHub Actions 建立矩陣工作流（Matrix Workflow），每次發起 PR 時以 `npm pack` 產出的 tarball 安裝至 Vue 3 與 Angular 小型專案並建置，驗證實際發布產物（`exports`、`sideEffects`、型別宣告），提早抓出破壞性變更。 |
+| **TASK-308** | 工程 | **Storybook 自動化預覽部署 (Preview CD)** [✅]       | 建置 GitHub Actions 部署腳本：<br>1. PR 建立時自動建置 Storybook 並發布至預覽環境（如 GitHub Pages 或臨時預覽站點），自動留言 PR 預覽連結。<br>2. `main` 分支更新時自動發布最新版線上元件文檔庫。                                                                           |
 
 #### 交付成果 (Deliverables)
 
@@ -252,10 +252,10 @@
 
 #### 驗收條件 (Acceptance Criteria)
 
-- [ ] `Card` 在不同容器寬度下自動排版填滿，縮放視窗無橫向溢位破版。
-- [ ] `FileUpload Dropzone` 拖放外部檔案（如 JSON、圖片）能正確截獲 File 物件並拋出 `file-drop` 事件。
-- [ ] 每個 PR 均會自動產生獨立的 Storybook 預覽連結，供團隊即時檢驗視覺與互動。
-- [ ] 跨框架 CI 冒煙測試成功跑過 Vue 3 與 Angular 的生產編譯。
+- [✅] `Card` 在不同容器寬度下自動排版填滿，縮放視窗無橫向溢位破版。（`.card-grid` 於 200px～1200px 容器寬度下的欄數、等寬填滿與無橫向溢位皆以自動化測試驗證）
+- [✅] `FileUpload Dropzone` 拖放外部檔案（如 JSON、圖片）能正確截獲 File 物件並拋出 `aui-file-drop` 事件。（自訂事件一律使用 `aui-` 前綴；以合成的拖放事件於自動化測試驗證，`detail.files` 為可讀取內容的 File 物件）
+- [✅] 每個 PR 均會自動產生獨立的 Storybook 預覽連結，供團隊即時檢驗視覺與互動。（已於 PR #9 實測：部署至 `pr-preview/pr-9/` 並由機器人留言連結。限制：只處理以 `main` 為目標的 PR，來自 fork 的 PR 因權杖唯讀不會部署預覽）
+- [✅] 跨框架 CI 冒煙測試成功跑過 Vue 3 與 Angular 的生產編譯。（已於 PR #9 實測：`Framework Smoke Test (vue3)`、`Framework Smoke Test (angular)` 通過，並已加入 `main` Ruleset 的必要檢查。CI 只在以 `main` 為目標的 PR 與 `main` 的 push 執行，與其他 job 相同）
 
 ---
 

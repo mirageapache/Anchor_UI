@@ -102,6 +102,48 @@ const cases: Case[] = [
     property: 'backgroundColor',
     token: '--color-base',
   },
+  {
+    tag: 'aui-card',
+    template: html`<aui-card heading="Card" description="Body"></aui-card>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.card')!,
+    property: 'backgroundColor',
+    token: '--color-base',
+  },
+  {
+    tag: 'aui-accordion',
+    template: html`<aui-accordion heading="Accordion" open><p>Body</p></aui-accordion>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.accordion')!,
+    property: 'backgroundColor',
+    token: '--color-base',
+  },
+  {
+    tag: 'aui-dropzone',
+    template: html`<aui-dropzone></aui-dropzone>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.dropzone')!,
+    property: 'backgroundColor',
+    token: '--color-base',
+  },
+  {
+    tag: 'aui-favorite-btn',
+    template: html`<aui-favorite-btn favorite></aui-favorite-btn>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.fav-btn')!,
+    property: 'color',
+    token: '--color-accent-hover',
+  },
+  {
+    tag: 'aui-header',
+    template: html`<aui-header heading="Header" description="Body"></aui-header>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.header__title')!,
+    property: 'color',
+    token: '--color-text-primary',
+  },
+  {
+    tag: 'aui-kbd',
+    template: html`<aui-kbd>K</aui-kbd>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.kbd')!,
+    property: 'backgroundColor',
+    token: '--color-surface',
+  },
 ];
 
 /** 以探針元素把 token 值正規化為瀏覽器計算後的色值 */
@@ -146,7 +188,7 @@ describe('Phase 1 acceptance: Shadow DOM encapsulation & theming', () => {
         const hostile = document.createElement('style');
         hostile.textContent = `
           button, span, div, input, .btn, .btn--primary, .tag, .tag--brand, .tooltip__popup,
-          .icon-btn, .icon-btn--ghost, .control, .field__label, .output, .output--error, .segmented, .option, .modal__panel, .alert__title, .toast {
+          .icon-btn, .icon-btn--ghost, .control, .field__label, .output, .output--error, .segmented, .option, .modal__panel, .alert__title, .toast, .card, .accordion, .dropzone, .fav-btn, .header__title, .kbd {
             color: rgb(255, 0, 0) !important;
             background-color: rgb(255, 0, 0) !important;
           }

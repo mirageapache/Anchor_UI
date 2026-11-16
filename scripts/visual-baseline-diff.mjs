@@ -6,7 +6,14 @@
 // screenshots/Chromium/changes/（不納入版控）；於 GitHub Actions 中另寫入 job summary。
 // 結束碼：0 = 無變更，0 且印出清單 = 有變更（是否接受由審查者決定），1 = 執行錯誤。
 import { execFileSync } from 'node:child_process';
-import { appendFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  appendFileSync,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import pixelmatch from 'pixelmatch';
 import { PNG } from 'pngjs';

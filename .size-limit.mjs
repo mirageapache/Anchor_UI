@@ -10,7 +10,7 @@ import { listComponents } from './scripts/components.mjs';
 
 /** 各入口的體積基準（bytes，gzip；TASK-202 建立於 2026-10-09） */
 const BASELINES = {
-  index: 35507, // TASK-206～212 加入 Input、Field、Output、Segmented、Modal、Alert 與 Toast（原 20838）
+  index: 45497, // TASK-306 加入 Kbd（Phase 2 結束時 35507，Phase 1 為 20838）
   button: 3189,
   'icon-button': 16704, // 含相依的 Tooltip 與 @floating-ui/dom
   tag: 3390,
@@ -22,6 +22,12 @@ const BASELINES = {
   modal: 4531,
   alert: 11141, // 含相依的 Modal、Button 與 Input
   toast: 5750,
+  card: 3384, // TASK-301
+  accordion: 2665, // TASK-302
+  dropzone: 4616, // TASK-303
+  'favorite-btn': 2423, // TASK-304
+  header: 6503, // TASK-305
+  kbd: 1497, // TASK-306
 };
 
 const TOLERANCE = 0.1;

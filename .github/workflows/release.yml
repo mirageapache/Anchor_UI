@@ -1,6 +1,7 @@
 name: Release
 
-# TASK-205: 推送 v* tag 時，驗證版號與產物後建立 GitHub Release，並附上 npm pack 產出的 tarball。
+# TASK-205: 推送 v* tag 時，驗證版號與產物後建立 GitHub Release，並附上 tarball
+# （由 scripts/pack.mjs 產出：內容同 npm pack，但發布的 package.json 不含 prepare 等安裝時會執行的腳本）。
 # Phase 4 導入 Changesets 前，測試專案以此 tarball（或 yalc）安裝；流程見 doc/anchor-ui-release-guide.md。
 on:
   push:
@@ -53,7 +54,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # 建置 → verify:package → size → 版號與 tag 一致性 → npm pack
+      # 建置 → verify:package → size → 版號與 tag 一致性 → scripts/pack.mjs 打包
       - name: Build, verify and pack tarball
         run: pnpm release:pack
 

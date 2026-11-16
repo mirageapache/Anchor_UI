@@ -103,27 +103,126 @@ pnpm build-storybook
 pnpm verify:package
 ```
 
-### 4. 在專案中使用
+---
 
-先載入 Design Tokens 與全域樣式，再選擇載入元件的方式：
+## 在其他專案中導入 (Installation)
+
+> 正式發布到 npm registry 之前（Phase 4 TASK-405），透過 [GitHub Releases](https://github.com/mirageapache/Anchor_UI/releases) 的 tarball 安裝。以下以 `v0.2.0-beta` 為例，換成需要的版本即可。
+
+### 1. 前置需求
+
+- **需要打包工具**（Vite、Angular CLI、webpack 等）：套件為純 ESM，並以 bare import 引用 `lit`，需由打包工具解析，無法直接用 `<script>` 載入 `dist/`。
+- **TypeScript** 的 `moduleResolution` 需為 `"bundler"`、`"node16"` 或 `"nodenext"`，才能解析 `@anchor-ui/core/button` 這類子路徑入口（Vite 與 Angular 新專案的預設值皆符合）。
+
+### 2. 安裝
+
+直接以 Release 附檔的網址安裝（repo 為公開，不需登入）：
+
+```bash
+npm install https://github.com/mirageapache/Anchor_UI/releases/download/v0.2.0-beta/anchor-ui-core-0.2.0-beta.tgz
+# 或
+pnpm add https://github.com/mirageapache/Anchor_UI/releases/download/v0.2.0-beta/anchor-ui-core-0.2.0-beta.tgz
+```
+
+- `package.json` 的相依會記錄成這個網址，其他人 `npm install` 時會下載同一個檔案；`lit` 與 `@floating-ui/dom` 會一併自動安裝。
+- `v0.2.0-beta`（含）以前的 tarball 帶有本元件庫開發用的 `prepare: husky` 腳本，安裝時套件管理器可能提示有腳本待核准（npm `install-scripts`、pnpm「Ignored build scripts」）：**不需核准**，消費端用不到。之後的版本已不含此腳本。
+- 也可以先下載 tarball 再安裝：`gh release download v0.2.0-beta --repo mirageapache/Anchor_UI --pattern "*.tgz"`，接著 `npm install ./anchor-ui-core-0.2.0-beta.tgz`。這種做法需把 `.tgz` 提交進專案，否則其他人安裝不到。
+
+### 3. 載入樣式與字型
+
+在應用程式進入點載入**其中一個**樣式檔：
+
+| 檔案                         | 內容                                                                                                | 何時使用                             |
+| ---------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------ |
+| `@anchor-ui/core/styles.css` | Design Tokens + 全域 reset 與基礎樣式（`box-sizing`、`margin: 0`、`body` 字型與背景色、focus 樣式） | 新專案（推薦）                       |
+| `@anchor-ui/core/tokens.css` | 只有 Design Tokens（CSS 變數，含深色主題）                                                          | 既有專案已有自己的 reset，不想被覆蓋 |
 
 ```ts
-import '@anchor-ui/core/tokens.css';
+// main.ts
 import '@anchor-ui/core/styles.css';
+```
 
-// 方式 A — 全量載入：一次註冊所有元件
-import '@anchor-ui/core';
+- `styles.css` 已包含 tokens，不需要再載入 `tokens.css`。
+- SCSS 專案也可改用原始碼：`@use '@anchor-ui/core/tokens';`、`@use '@anchor-ui/core/reset';`。
+- 字型檔不隨套件提供，請依 [字體載入](#字體載入-font-loading) 自行引入 Inter 與 JetBrains Mono，否則會退回系統字型。
+- TypeScript 專案若對 CSS import 報 `TS2882`（找不到型別宣告），代表缺少 `/// <reference types="vite/client" />`；Vite 範本預設已有（`src/vite-env.d.ts`）。
 
-// 方式 B — 按需載入（推薦）：只註冊用到的元件，未引用的元件不會進入打包結果
+### 4. 註冊元件
+
+```ts
+// 方式 A — 按需載入（推薦）：只註冊用到的元件，未引用的元件不會進入打包結果
 import '@anchor-ui/core/button';
 import '@anchor-ui/core/tooltip';
+
+// 方式 B — 全量載入：一次註冊所有元件
+import '@anchor-ui/core';
 ```
+
+載入後即可在 HTML / 範本中使用 `<aui-button>` 等標籤。
 
 - 元件依賴會自動帶入，例如 `@anchor-ui/core/icon-button` 會一併註冊 `<aui-tooltip>`。元件只會自動註冊自己渲染的元件：`@anchor-ui/core/field` 會帶入 `<aui-icon-button>`，但放進欄位的 `<aui-input>` / `<aui-output>` / `<aui-segmented>` 需另行載入。
 - 型別可從全量入口或個別入口取得，例如 `import type { ButtonVariant } from '@anchor-ui/core/button'`。
-- `lit` 與 `@floating-ui/dom` 不打包進元件庫，由消費端的打包工具處理（`@floating-ui/dom` 隨套件相依自動安裝）。
+- 全域服務從各自的入口取得：`import { ToastService } from '@anchor-ui/core/toast'`、`import { AlertService } from '@anchor-ui/core/alert'`。
+- 主題切換函式 `setTheme` / `getTheme` / `toggleTheme` 只由全量入口 `@anchor-ui/core` 匯出，引用它們會一併註冊所有元件。只想按需載入時，可直接設定 `document.documentElement.dataset.theme = 'dark'`（移除該屬性即回到淺色）。
+- `lit` 與 `@floating-ui/dom` 不打包進元件庫，由消費端的打包工具處理。
 
-### 5. 在 Vue / Angular 中綁定表單元件
+### 5. 框架設定（Vue 3 / Angular）
+
+**Vue 3（Vite）**：告訴 Vue 編譯器 `aui-` 開頭的標籤是自訂元素，否則會出現「Failed to resolve component」警告：
+
+```ts
+// vite.config.ts
+import { defineConfig } from 'vite';
+import vue from '@vitejs/plugin-vue';
+
+export default defineConfig({
+  plugins: [
+    vue({
+      template: {
+        compilerOptions: { isCustomElement: (tag) => tag.startsWith('aui-') },
+      },
+    }),
+  ],
+});
+```
+
+```ts
+// src/main.ts
+import { createApp } from 'vue';
+import App from './App.vue';
+import '@anchor-ui/core/styles.css';
+import '@anchor-ui/core/button';
+
+createApp(App).mount('#app');
+```
+
+**Angular**：在使用 `aui-` 標籤的元件（或 NgModule）加上 `CUSTOM_ELEMENTS_SCHEMA`，樣式加進 `angular.json`，元件在 `main.ts` 註冊：
+
+```ts
+// app.component.ts
+import { Component, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
+})
+export class AppComponent {}
+```
+
+```jsonc
+// angular.json → projects.<app>.architect.build.options
+"styles": ["node_modules/@anchor-ui/core/dist/styles.css", "src/styles.css"]
+```
+
+```ts
+// src/main.ts
+import '@anchor-ui/core/button';
+```
+
+完整可執行的設定可參考 [`examples/vue3`](examples/vue3) 與 [`examples/angular`](examples/angular)。
+
+### 6. 在 Vue / Angular 中綁定表單元件
 
 `<aui-input>` 與 `<aui-segmented>` 會在 host 上分派原生 `input` / `change`（觸發時 `value` 已更新），可直接使用框架的雙向綁定：
 
@@ -141,7 +240,7 @@ import '@anchor-ui/core/tooltip';
 - 與原生 `<input>` 相同，同一個元素不可同時設定 `value` 屬性與 `v-model`。
 - 以 Vitest + happy-dom 測試 Angular 時，zone.js 無法正確包裝 happy-dom 的 `MutationObserver`，需在 zone.js 之前載入修正（參考 `examples/angular/src/test-setup-happy-dom.ts`）。happy-dom 也不會把 Shadow DOM 內的事件 retarget 到 host，輸入法組字這類依賴 `event.target` 的行為請在真實瀏覽器驗證。
 
-### 6. 監聽 `aui-` 自訂事件
+### 7. 監聽 `aui-` 自訂事件
 
 `aui-show` / `aui-hide` / `aui-after-show` / `aui-after-hide` 等事件皆會冒泡並穿出 Shadow DOM（`bubbles` + `composed`），以便在外層統一監聽。代價是**內層元件的同名事件也會傳到外層**：例如 Modal 內容中的 Tooltip（包含 `<aui-icon-button>`、`<aui-field>` 複製鈕的提示）或巢狀 Modal 關閉時，外層 Modal 的 `aui-hide` 監聽器同樣會收到，且這些事件不一定帶有 `detail.reason`。只處理元件自身的事件時，請先比對事件來源：
 
@@ -151,6 +250,17 @@ modal.addEventListener('aui-hide', (event) => {
   console.log((event as CustomEvent<{ reason: string }>).detail.reason);
 });
 ```
+
+### 8. 升級版本
+
+到 [GitHub Releases](https://github.com/mirageapache/Anchor_UI/releases) 查看新版本的變更說明，再以新版本的網址重新安裝：
+
+```bash
+npm install https://github.com/mirageapache/Anchor_UI/releases/download/v0.3.0/anchor-ui-core-0.3.0.tgz
+```
+
+- 以網址安裝的相依不會被 `npm update` 自動升級，版本完全由網址決定，需手動更換。
+- `v1.0.0` 之前屬於 `0.x` 階段，任何版本都可能有不相容的變更，升級後請重新建置並檢查畫面。
 
 ---
 
@@ -176,15 +286,17 @@ modal.addEventListener('aui-hide', (event) => {
 | `pnpm test:visual:docker`                         | 在 Playwright 官方 Docker 映像中執行視覺回歸測試（淺色／深色主題截圖比對）                                |
 | `pnpm test:visual:docker:update`                  | 同上，但更新基準圖（`screenshots/Chromium/baseline/`），並列出變更、產生 before／after／diff 供提交前檢視 |
 | `pnpm test:vue` / `pnpm test:angular`             | Vue 3 / Angular 範例專案的整合測試（需先 build）                                                          |
-| `pnpm typecheck:examples` / `pnpm build:examples` | 範例專案的型別檢查與正式建置（Vue SFC 編譯、Angular AOT；需先 build）                                     |
+| `pnpm typecheck:examples` / `pnpm build:examples` | 範例專案的型別檢查與正式建置（Vue SFC 編譯、Angular AOT；需先 build），建置後檢查產物確實包含所有元件     |
 | `pnpm test:storybook`                             | 以 Vitest（@storybook/addon-vitest）在 Chromium 中執行所有 story 與 play function 互動情境                |
 
 **發布**
 
-| 指令                  | 說明                                                                                      |
-| --------------------- | ----------------------------------------------------------------------------------------- |
-| `pnpm release:verify` | 檢查版號是否為合法 SemVer；`--tag v<版號>` 檢查與 tag 一致，`--all-tags` 檢查所有既有 tag |
-| `pnpm release:pack`   | 發布預演：建置 → 套件驗證 → 體積 → 版號檢查 → 產出 tarball 至 `release/`                  |
+| 指令                  | 說明                                                                                                                               |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm release:verify` | 檢查版號是否為合法 SemVer；`--tag v<版號>` 檢查與 tag 一致，`--all-tags` 檢查所有既有 tag                                          |
+| `pnpm release:pack`   | 發布預演：建置 → 套件驗證 → 體積 → 版號檢查 → 產出 tarball 至 `release/`（不含安裝時會執行的生命週期腳本）                         |
+| `pnpm smoke`          | 跨框架冒煙測試：以 tarball 安裝到 `smoke/` 的 Vue 3 / Angular 專案並做型別檢查與正式建置（需先 build；可指定 `vue3` 或 `angular`） |
+| `pnpm test:scripts`   | 部署腳本的測試（`scripts/*.test.mjs`：gh-pages 發布與 PR 預覽留言，對本機暫存 repo 與假 API 驗證）                                 |
 
 **開發與程式碼品質**
 
@@ -221,6 +333,17 @@ pnpm dev:yalc          # 或手動：pnpm yalc:push
 - 若 Vite 預打包快取未更新，請於消費端執行 `vite --force`。
 - 結束後以 `npx yalc remove @anchor-ui/core`（或 `--all`）還原依賴，避免把 `file:.yalc` 提交進版控。
 - `.yalc/` 與 `yalc.lock` 已列入 `.gitignore`。
+
+---
+
+## 線上文件與 PR 預覽
+
+Storybook 由 `.github/workflows/storybook-preview.yml` 自動部署到 GitHub Pages：
+
+- **線上元件文件**（`main` 的最新內容）：<https://mirageapache.github.io/Anchor_UI/>
+- **PR 預覽**：以 `main` 為目標的 PR 會自動部署到 `…/pr-preview/pr-<編號>/`，並在 PR 留言連結；PR 關閉後自動移除。
+
+啟用方式、限制（來自 fork 的 PR 沒有預覽）與常見狀況見 [`note/07-deployment.md`](note/07-deployment.md) 第 6 節。
 
 ---
 

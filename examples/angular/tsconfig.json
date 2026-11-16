@@ -1,4 +1,7 @@
 {
+  // 不可在此設定 "noEmit": true：AnalogJS 的 Angular 外掛會依此對每個模組輸出空內容，
+  // vite build 仍顯示成功，產物卻不含任何應用程式碼（由 scripts/verify-example-builds.mjs 把關）。
+  // 型別檢查的指令已自行加上 --noEmit。
   "compilerOptions": {
     "target": "ES2022",
     "useDefineForClassFields": false,
@@ -9,8 +12,7 @@
     "strict": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "isolatedModules": true,
-    "noEmit": true
+    "isolatedModules": true
   },
   "include": ["src/**/*.ts", "src/**/*.d.ts", "tests/**/*.ts"]
 }

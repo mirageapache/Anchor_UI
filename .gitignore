@@ -39,5 +39,9 @@ screenshots/*/changes/
 # 發布用 tarball（pnpm release:pack 產出，由 GitHub Release 交付，不納入版控）
 release/
 
+# 冒煙測試專案（scripts/smoke-test.mjs 會複製到暫存目錄執行；手動在此安裝時不納入版控）
+smoke/*/node_modules/
+smoke/*/dist/
+
 # Vitest browser mode 失敗時的截圖
 __screenshots__/

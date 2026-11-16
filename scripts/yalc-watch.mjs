@@ -21,7 +21,10 @@ async function rebuildAndPush() {
   }
   running = true;
   console.log('\n[yalc-watch] 重新建置中…');
-  if ((await run('pnpm', ['build'])) && (await run('pnpm', ['exec', 'yalc', 'push', '--no-scripts']))) {
+  if (
+    (await run('pnpm', ['build'])) &&
+    (await run('pnpm', ['exec', 'yalc', 'push', '--no-scripts']))
+  ) {
     console.log('[yalc-watch] 已推送至所有已連結的專案');
   } else {
     console.error('[yalc-watch] 建置或推送失敗，等待下次變更');
