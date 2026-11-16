@@ -8,6 +8,7 @@ type VariantOptions = Omit<ToastOptions, 'variant' | 'message'>;
  * const upload = ToastService.loading('上傳中…');
  * upload.update({ variant: 'success', message: '上傳完成' });
  * ToastService.error('連線逾時', { title: '上傳失敗', duration: 0 });
+ * ToastService.configure({ placement: 'top-center' }); // 位置：六選一，預設 bottom-right
  * ```
  */
 export declare const ToastService: {
@@ -25,7 +26,7 @@ export declare const ToastService: {
     close(id: string): void;
     /** 關閉所有通知（含排隊中的），全部移除後 resolve */
     closeAll(): Promise<void>;
-    /** 設定同時顯示上限、排隊上限與各狀態預設的自動關閉時間 */
+    /** 設定通知的位置、同時顯示上限、排隊上限與各狀態預設的自動關閉時間 */
     configure(config: ToastConfig): void;
     /** 還原預設設定 */
     resetConfig(): void;

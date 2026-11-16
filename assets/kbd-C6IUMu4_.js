@@ -38,9 +38,9 @@ import{h as e,n as t,s as n,t as r}from"./lit-MXP2jLr5.js";import{i,m as a,r as 
   }
 
   .kbd--sm {
-    min-width: 16px;
-    height: 16px;
-    padding: 0 4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
     font-size: var(--text-2xs, 0.6875rem);
   }
 `})))()}var f,p;function m(){return(m=l((()=>{r(),c(),o(),d(),f=new Set([`sm`,`md`]),p=class extends t{static{this.styles=u}constructor(){super(),this.size=`md`,this.label=``,this.internals=typeof this.attachInternals==`function`?this.attachInternals():null}willUpdate(e){e.has(`label`)&&this.applyLabel()}applyLabel(){let e=this.label.trim();if(this.internals){this.internals.role=e?`img`:null,this.internals.ariaLabel=e||null;return}e?(this.setAttribute(`role`,`img`),this.setAttribute(`aria-label`,e)):(this.removeAttribute(`role`),this.removeAttribute(`aria-label`))}render(){let e=f.has(this.size)?this.size:`md`;return n`<kbd class=${i({kbd:!0,[`kbd--${e}`]:!0})} part="base"

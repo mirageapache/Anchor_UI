@@ -1,4 +1,4 @@
-import{h as e,i as t,n,s as r,t as i}from"./lit-MXP2jLr5.js";import{m as a,t as o,u as s}from"./decorate-BSUctFxX.js";import{r as c,t as l}from"./live-DpoR_L0T.js";import{n as u,r as d,t as f}from"./heading-YvnLNOwD.js";import{n as p,r as m,t as h}from"./slot-byr6JIFV.js";import{t as g}from"./tag-DIJX3Qfm.js";import{t as _}from"./favorite-btn-t_5TzQ9_.js";import{t as v}from"./rolldown-runtime-Dh6celcD.js";var y;function b(){return(b=v((()=>{i(),y=e`
+import{h as e,i as t,n,s as r,t as i}from"./lit-MXP2jLr5.js";import{m as a,t as o,u as s}from"./decorate-BSUctFxX.js";import{r as c,t as l}from"./live-NNdQTRRa.js";import{n as u,r as d,t as f}from"./heading-YvnLNOwD.js";import{n as p,r as m,t as h}from"./slot-byr6JIFV.js";import{t as g}from"./tag-DIJX3Qfm.js";import{t as _}from"./favorite-btn-t_5TzQ9_.js";import{t as v}from"./rolldown-runtime-Dh6celcD.js";var y;function b(){return(b=v((()=>{i(),y=e`
   :host {
     display: block;
     min-width: 0;

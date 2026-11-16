@@ -4,7 +4,7 @@ import { ToastVariant } from './toast.types.js';
  * Anchor UI — Toast 元件 (`<aui-toast>`)
  *
  * 通知卡片：狀態圖示、標題、訊息與關閉鈕，支援 Success、Error、Warning、Info、Loading 5 種狀態。
- * 一般請使用 `ToastService`（右下角堆疊、佇列、自動關閉與懸停暫停）；直接放在頁面上時為靜態卡片，
+ * 一般請使用 `ToastService`（可設定位置的堆疊、佇列、自動關閉與懸停暫停）；直接放在頁面上時為靜態卡片，
  * 點擊關閉鈕只會分派 `aui-close`，由使用端自行移除。
  *
  * - **播報**：文字區為 live region（Error 為 `role="alert"`，其餘為 `role="status"`），前綴狀態文字（如「錯誤：」）。
