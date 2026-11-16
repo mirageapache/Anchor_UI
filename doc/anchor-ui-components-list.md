@@ -71,7 +71,7 @@ _非獨立 UI 元件，但為所有元件實作之外觀基礎與依賴單一事
 
 9. **Toast Notification System（吐司通知系統）**
    - **自訂標籤 / 服務**：`<aui-toast>`, `ToastService`
-   - **說明**：固定於螢幕右下角的堆疊式全域通知元件，支援單一實例廣播呼叫。
+   - **說明**：堆疊式全域通知元件，支援單一實例廣播呼叫。位置可設定為左上、中間上方、右上、左下、中間下方、右下（預設）；手機（寬度 480px 以下，或橫放時高度 480px 以下）一律顯示在中間上方。
    - **狀態與能力**：支援 5 種狀態（Success、Error、Warning、Info、Loading），平滑滑入滑出動畫、自動定時關閉、手動關閉。
 
 10. **Modal（通用彈窗外框容器）**
@@ -152,7 +152,7 @@ _非獨立 UI 元件，但為所有元件實作之外觀基礎與依賴單一事
 |  6   | **Input & Form Field**   | `<aui-input>`, `<aui-field>`  |      Atom       | 單行/多行等寬輸入框，整合標籤與右側快捷操作鈕。                                                    |
 |  7   | **Output**               | `<aui-output>`                |      Atom       | 結果輸出展示框，4px 左側語意指示條與安全換行防禦。                                                 |
 |  8   | **Tooltip**              | `<aui-tooltip>`               |     Overlay     | Shadcn 風格冷黑浮層氣泡，微縮放動態與全域定位。                                                    |
-|  9   | **Toast Notification**   | `<aui-toast>`, `ToastService` |     Overlay     | 右下角堆疊全域通知，5 種語意狀態與 TS 單例調用 API。                                               |
+|  9   | **Toast Notification**   | `<aui-toast>`, `ToastService` |     Overlay     | 可設定位置（預設右下角）的堆疊全域通知，5 種語意狀態與 TS 單例調用 API。                           |
 |  10  | **Modal**                | `<aui-modal>`                 |     Overlay     | 通用彈窗外框容器（大/中/小尺寸），具備 Header/Body/Footer 插槽供自訂業務功能，似 Bootstrap Modal。 |
 |  11  | **Alert**                | `<aui-alert>`, `AlertService` |     Overlay     | 提示與確認彈窗（SweetAlert2 風格），專注於語意圖示、標題、訊息與確認/取消。                        |
 |  12  | **Card**                 | `<aui-card>`                  |    Molecule     | 卡片，自適應 Grid、Hover 微浮凸與 HOT 邊框。                                                       |

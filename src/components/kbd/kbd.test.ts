@@ -74,6 +74,52 @@ describe('AuiKbd (<aui-kbd>)', () => {
     }
   });
 
+  it('keeps single-character keys at least square', async () => {
+    const el = await fixture<AuiKbd>(html`<aui-kbd>K</aui-kbd>`);
+    const rect = base(el).getBoundingClientRect();
+    expect(rect.height).to.equal(20);
+    expect(rect.width).to.be.at.least(rect.height - 0.5);
+  });
+
+  it('supports the small size and falls back to md for unknown values', async () => {
+    const el = await fixture<AuiKbd>(html`<aui-kbd size="sm">K</aui-kbd>`);
+    expect(base(el).classList.contains('kbd--sm')).to.be.true;
+    expect(base(el).getBoundingClientRect().height).to.equal(18);
+    expect(base(el).getBoundingClientRect().width).to.be.at.least(18);
+    expect(getComputedStyle(base(el)).fontSize).to.equal('11px');
+
+    el.size = 'xl' as AuiKbd['size'];
+    await el.updateComplete;
+    expect(base(el).classList.contains('kbd--md')).to.be.true;
+    expect(base(el).getBoundingClientRect().height).to.equal(20);
+  });
+
+  it('leaves room around the glyph in both sizes so symbols do not touch the border', async () => {
+    for (const size of ['sm', 'md'] as const) {
+      const el = await fixture<AuiKbd>(html`<aui-kbd .size=${size}>⌘</aui-kbd>`);
+      const style = getComputedStyle(base(el));
+      const inner =
+        base(el).getBoundingClientRect().height -
+        parseFloat(style.borderTopWidth) -
+        parseFloat(style.borderBottomWidth);
+      // 內容高度至少比字級多 4px（上下各約 2px），符號才不會貼到邊框
+      expect(inner - parseFloat(style.fontSize), size).to.be.at.least(4);
+      expect(parseFloat(style.paddingLeft), size).to.be.at.least(5);
+    }
+  });
+
+  it('never wraps a key label across lines', async () => {
+    const wrapper = await fixture<HTMLDivElement>(
+      html`<div style="width: 40px"><aui-kbd>Ctrl + Shift</aui-kbd></div>`,
+    );
+    const el = wrapper.querySelector('aui-kbd')!;
+    // 容器只有 40px：鍵帽維持單行並超出容器，而不是在按鍵名稱中間換行
+    expect(base(el).getBoundingClientRect().width).to.be.greaterThan(40);
+    const range = document.createRange();
+    range.selectNodeContents(el);
+    expect(range.getClientRects(), 'text stays on one line').to.have.lengthOf(1);
+  });
+
   it('sits inline in body text without stretching the line (14px × 1.5 = 21px)', async () => {
     // 設計系統的標準內文行高比鍵帽略高一點；含鍵帽的行不可被撐高，否則多行段落的行距會不一致
     for (const size of ['md', 'sm'] as const) {

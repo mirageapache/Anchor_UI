@@ -1,4 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/web-components-vite';
+import { expect, waitFor } from 'storybook/test';
 import { html } from 'lit';
 import '../components/toast/index.js';
 import '../components/button/index.js';
@@ -6,7 +7,8 @@ import '../components/modal/index.js';
 import { ToastService } from '../components/toast/toast-service.js';
 import { AlertService } from '../components/alert/alert-service.js';
 import type { AuiModal } from '../components/modal/modal.js';
-import type { ToastVariant } from '../components/toast/toast.types.js';
+import type { ToastPlacement, ToastVariant } from '../components/toast/toast.types.js';
+import { clickButton, query, toastViewport, visibleToasts } from './play-utils.js';
 
 interface ToastStoryArgs {
   variant: ToastVariant;
@@ -24,7 +26,8 @@ const meta: Meta<ToastStoryArgs> = {
         component: `
 **Anchor UI — Toast 通知 (\`<aui-toast>\`, \`ToastService\`)**
 
-右下角堆疊的全域通知（Popover API 進入 Top Layer），支援 Success、Error、Warning、Info、Loading 5 種狀態。
+堆疊的全域通知（Popover API 進入 Top Layer），支援 Success、Error、Warning、Info、Loading 5 種狀態。
+位置以 \`ToastService.configure({ placement })\` 設定：\`top-left\`、\`top-center\`、\`top-right\`、\`bottom-left\`、\`bottom-center\`、\`bottom-right\`（預設）；新通知出現在靠近螢幕邊緣的一側。手機（寬度 480px 以下，或橫放時高度 480px 以下）一律顯示在中間上方。
 \`ToastService\` 為全頁單例（\`globalThis[Symbol.for('anchor-ui.toast@1')]\`）：佇列與同時顯示上限、各狀態預設停留時間、
 以 \`handle.update()\` 或相同 \`id\` 更新既有通知（如 Loading 轉 Success）。
 以 live region 播報（Error 為 \`role="alert"\`，其餘為 \`role="status"\`）；滑鼠停在通知上或焦點位於通知內時暫停自動關閉。
@@ -95,6 +98,66 @@ export const Variants: Story = {
       >
     </div>
   `,
+};
+
+const PLACEMENTS: ToastPlacement[] = [
+  'top-left',
+  'top-center',
+  'top-right',
+  'bottom-left',
+  'bottom-center',
+  'bottom-right',
+];
+
+/**
+ * 六種位置：點擊按鈕切換位置並顯示一則通知。新通知出現在靠近螢幕邊緣的一側，
+ * 進場與退場的方向也跟著位置改變。把視窗寬度縮到 480px 以下（或橫向時高度縮到 480px 以下）時，一律顯示在中間上方。
+ */
+export const Placement: Story = {
+  render: () => html`
+    <div
+      style="display: grid; grid-template-columns: repeat(3, max-content); gap: 8px; justify-content: center; padding-block: 120px;"
+    >
+      ${PLACEMENTS.map(
+        (placement) => html`
+          <aui-button
+            variant="ghost"
+            data-placement=${placement}
+            @click=${() => {
+              ToastService.configure({ placement });
+              ToastService.info(`位置：${placement}`);
+            }}
+            >${placement}</aui-button
+          >
+        `,
+      )}
+    </div>
+  `,
+  play: async ({ canvasElement, step }) => {
+    const button = (placement: ToastPlacement) =>
+      query(canvasElement, `[data-placement="${placement}"]`);
+
+    try {
+      await step('切換到左上：Viewport 貼齊左上角', async () => {
+        await clickButton(button('top-left'));
+        await waitFor(() => expect(visibleToasts(toastViewport()).length).toBe(1));
+        const rect = toastViewport()!.getBoundingClientRect();
+        await expect(Math.round(rect.left)).toBe(24);
+        await expect(Math.round(rect.top)).toBe(24);
+      });
+
+      await step('切換到中間下方：顯示中的通知一起移動並水平置中', async () => {
+        await clickButton(button('bottom-center'));
+        await waitFor(() => expect(visibleToasts(toastViewport()).length).toBe(2));
+        const rect = toastViewport()!.getBoundingClientRect();
+        await expect(Math.round(window.innerHeight - rect.bottom)).toBe(24);
+        await expect(Math.abs(rect.left + rect.width / 2 - window.innerWidth / 2)).toBeLessThan(1);
+      });
+    } finally {
+      await ToastService.closeAll();
+      ToastService.resetConfig();
+    }
+  },
 };
 
 export const LoadingToSuccess: Story = {

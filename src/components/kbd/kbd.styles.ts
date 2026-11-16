@@ -1,5 +1,8 @@
 import { css } from 'lit';
 
+/**
+ * sm 的高度為 18px：扣掉上下邊框（1px + 2px）後內容高度 15px，11px 的字與符號（如 ⌘）上下才不會貼到邊框。
+ */
 export const kbdStyles = css`
   :host {
     /* inline-flex：host 的大小等於鍵帽本身，不受所在行的字級與行高影響 */
@@ -40,9 +43,9 @@ export const kbdStyles = css`
   }
 
   .kbd--sm {
-    min-width: 16px;
-    height: 16px;
-    padding: 0 4px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
     font-size: var(--text-2xs, 0.6875rem);
   }
 `;
