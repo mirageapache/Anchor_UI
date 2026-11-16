@@ -7,12 +7,12 @@
 
 Anchor UI 是元件庫，不是網站，所以沒有「部署到伺服器」這件事。目前的部署指的是**發布一個版本**：
 
-| 項目                         | 現況                                                                              |
-| ---------------------------- | --------------------------------------------------------------------------------- |
-| 版本發布                     | ✅ 推送 `v*` tag → GitHub Actions 自動建立 GitHub Release 並附上 tarball          |
-| 交付給其他專案               | ✅ 以 Release 的 tarball 網址安裝（見第 3 節），或本機用 yalc                     |
-| Storybook 線上文件與 PR 預覽 | ⏳ workflow 已建置（Phase 3 TASK-308，見第 6 節）；需先啟用 GitHub Pages 才會生效 |
-| 發布到 npm registry          | ❌ 尚未建置（Phase 4 TASK-405，Changesets）                                       |
+| 項目                         | 現況                                                                                           |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| 版本發布                     | ✅ 推送 `v*` tag → GitHub Actions 自動建立 GitHub Release 並附上 tarball                       |
+| 交付給其他專案               | ✅ 以 Release 的 tarball 網址安裝（見第 3 節），或本機用 yalc                                  |
+| Storybook 線上文件與 PR 預覽 | ✅ 已啟用（Phase 3 TASK-308，見第 6 節）：PR 預覽自動部署並留言連結，`main` 更新時發布線上文件 |
+| 發布到 npm registry          | ❌ 尚未建置（Phase 4 TASK-405，Changesets）                                                    |
 
 Phase 1 做過的那次部署，就是發布 `v0.1.0-alpha`（PR #2 + tag），產物在 [GitHub Releases](https://github.com/mirageapache/Anchor_UI/releases)。
 

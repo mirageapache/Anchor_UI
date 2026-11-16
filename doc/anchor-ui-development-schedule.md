@@ -254,8 +254,8 @@
 
 - [✅] `Card` 在不同容器寬度下自動排版填滿，縮放視窗無橫向溢位破版。（`.card-grid` 於 200px～1200px 容器寬度下的欄數、等寬填滿與無橫向溢位皆以自動化測試驗證）
 - [✅] `FileUpload Dropzone` 拖放外部檔案（如 JSON、圖片）能正確截獲 File 物件並拋出 `aui-file-drop` 事件。（自訂事件一律使用 `aui-` 前綴；以合成的拖放事件於自動化測試驗證，`detail.files` 為可讀取內容的 File 物件）
-- [ ] 每個 PR 均會自動產生獨立的 Storybook 預覽連結，供團隊即時檢驗視覺與互動。（workflow 與部署腳本已完成並於本機以暫存 repo 驗證；需啟用 GitHub Pages 並待 PR 實際執行後勾選。限制：只處理以 `main` 為目標的 PR，來自 fork 的 PR 因權杖唯讀不會部署預覽）
-- [ ] 跨框架 CI 冒煙測試成功跑過 Vue 3 與 Angular 的生產編譯。（`pnpm smoke` 已於本機通過；CI 的 `Framework Smoke Test` matrix job 待 PR 實際執行後勾選。CI 只在以 `main` 為目標的 PR 與 `main` 的 push 執行，與其他 job 相同；另需在 `main` 的 Ruleset 將 `Framework Smoke Test (vue3)`、`Framework Smoke Test (angular)` 加入必要檢查，冒煙測試才會阻擋合併）
+- [✅] 每個 PR 均會自動產生獨立的 Storybook 預覽連結，供團隊即時檢驗視覺與互動。（已於 PR #9 實測：部署至 `pr-preview/pr-9/` 並由機器人留言連結。限制：只處理以 `main` 為目標的 PR，來自 fork 的 PR 因權杖唯讀不會部署預覽）
+- [✅] 跨框架 CI 冒煙測試成功跑過 Vue 3 與 Angular 的生產編譯。（已於 PR #9 實測：`Framework Smoke Test (vue3)`、`Framework Smoke Test (angular)` 通過，並已加入 `main` Ruleset 的必要檢查。CI 只在以 `main` 為目標的 PR 與 `main` 的 push 執行，與其他 job 相同）
 
 ---
 
