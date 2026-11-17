@@ -349,9 +349,9 @@ Storybook 由 `.github/workflows/storybook-preview.yml` 自動部署到 GitHub P
 
 ## 版本與發布
 
-- 版號遵循 SemVer，每個 Phase 結束時發布里程碑版本（Phase 1：`v0.1.0-alpha`、Phase 2：`v0.2.0-beta`…）。
-- 推送 `v*` tag 後，CI 會自動建立 [GitHub Release](https://github.com/mirageapache/Anchor_UI/releases) 並附上 tarball，測試專案可直接安裝：`npm install ./anchor-ui-core-<版號>.tgz`。
-- 完整流程與檢查清單見 [`doc/anchor-ui-release-guide.md`](doc/anchor-ui-release-guide.md)。
+- 版號遵循 SemVer，每個 Phase 先發布 `-beta` 預覽版，測試通過後再發布正式版（例如 `v0.3.0-beta` → `v0.3.0`）。
+- 發布由 [release-please](https://github.com/googleapis/release-please) 自動化：變更合併進 `main` 後，會依 Conventional Commits 自動開啟或更新一個 release PR（版號與 `CHANGELOG.md`）；合併該 PR 即自動打 tag，並建立附上 tarball 的 [GitHub Release](https://github.com/mirageapache/Anchor_UI/releases)。
+- 完整流程、預覽版切換為正式版的方式與檢查清單見 [`doc/anchor-ui-release-guide.md`](doc/anchor-ui-release-guide.md)。
 
 ---
 

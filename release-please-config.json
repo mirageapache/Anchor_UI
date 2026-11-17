@@ -1,0 +1,33 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "bootstrap-sha": "c8af10548f8dc05db7aa838f39ed4104326c8a66",
+  "always-update": true,
+  "packages": {
+    ".": {
+      "release-type": "node",
+      "package-name": "@anchor-ui/core",
+      "include-component-in-tag": false,
+      "pull-request-title-pattern": "chore(release): v${version}",
+      "pull-request-header": "合併這個 PR 即發布下一個版本：自動打 tag，建置、驗證並打包後建立附上 tarball 的 GitHub Release。尚未合併前，之後合併進 `main` 的變更會持續累積到這個 PR。",
+      "bump-minor-pre-major": true,
+      "versioning": "prerelease",
+      "prerelease": true,
+      "prerelease-type": "beta",
+      "draft": true,
+      "force-tag-creation": true,
+      "changelog-sections": [
+        { "type": "feat", "section": "新功能" },
+        { "type": "fix", "section": "錯誤修正" },
+        { "type": "perf", "section": "效能改進" },
+        { "type": "revert", "section": "還原" },
+        { "type": "docs", "section": "文件", "hidden": true },
+        { "type": "style", "section": "樣式", "hidden": true },
+        { "type": "refactor", "section": "重構", "hidden": true },
+        { "type": "test", "section": "測試", "hidden": true },
+        { "type": "build", "section": "建置", "hidden": true },
+        { "type": "ci", "section": "CI", "hidden": true },
+        { "type": "chore", "section": "雜項", "hidden": true }
+      ]
+    }
+  }
+}

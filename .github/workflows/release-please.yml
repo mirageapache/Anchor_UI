@@ -1,0 +1,99 @@
+name: Release Please
+
+# TASK-405：自動發布流程（release-please，設定見 release-please-config.json，流程見 doc/anchor-ui-release-guide.md）。
+# main 每次更新時：
+# 1. 合併進 main 的變更依 Conventional Commits 計算下一個版號，開啟或更新唯一的 release PR
+#    （更新 package.json、.release-please-manifest.json 與 CHANGELOG.md）。
+# 2. release PR 被合併時，打 tag 並建立草稿 Release，再交給 release.yml 等待 CI、建置驗證、附上 tarball 後公開。
+# 3. 發布後把 main 合併回 develop。
+#
+# 以 GITHUB_TOKEN 建立或更新的 PR 不會觸發 pull_request 事件，release PR 的必要檢查因此不會自動執行。
+# workflow_dispatch 是例外，所以每次更新 release PR 後以 gh workflow run 在 release PR 的分支執行 CI，
+# 產生的檢查會掛在該分支最新的 commit 上，滿足 main Ruleset 的必要檢查。
+# 前提：Settings → Actions → General 勾選「Allow GitHub Actions to create and approve pull requests」。
+on:
+  push:
+    branches: [main]
+
+permissions: {}
+
+jobs:
+  release-please:
+    name: Release PR & tag
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # 依序處理 main 的更新；同一組最多保留一個等候中的 run，被取代的 run 的變更會由較新的 run 一併處理
+    concurrency:
+      group: release-please
+      cancel-in-progress: false
+    permissions:
+      contents: write # 更新 release PR 分支、打 tag、建立 Release
+      pull-requests: write # 開啟與更新 release PR
+      issues: write # 建立與設定 autorelease: pending / tagged 標籤
+      actions: write # 以 workflow_dispatch 在 release PR 分支執行 CI
+    outputs:
+      release_created: ${{ steps.release.outputs.release_created }}
+      tag_name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - name: Create or update the release PR, or tag a merged one
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # always-update 讓 release PR 每次都以最新的 main 重建，因此每次都要重新執行 CI
+      - name: Run CI on the release PR branch
+        if: steps.release.outputs.pr
+        run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$HEAD_BRANCH"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_BRANCH: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+
+  release:
+    name: Publish release
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    permissions:
+      contents: write
+      checks: read
+    uses: ./.github/workflows/release.yml
+    with:
+      tag: ${{ needs.release-please.outputs.tag_name }}
+
+  sync-develop:
+    name: Merge main back into develop
+    needs: release-please
+    if: needs.release-please.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout develop
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: develop
+          fetch-depth: 0
+
+      # develop 只受一般的推送保護；有衝突或 develop 在這期間被更新時失敗並提示手動處理
+      - name: Merge main into develop and push
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main
+          if git merge-base --is-ancestor origin/main HEAD; then
+            echo "develop 已包含 main，不需合併"
+            exit 0
+          fi
+          if ! git merge --no-ff --no-edit -m "chore(release): 將 ${TAG} 合併回 develop" origin/main; then
+            git merge --abort
+            echo "::error::main 合併回 develop 時發生衝突，請手動執行：git switch develop && git merge origin/main"
+            exit 1
+          fi
+          if ! git push origin HEAD:develop; then
+            echo "::error::推送 develop 失敗（可能在這期間有新的推送），請手動執行：git switch develop && git pull && git merge origin/main && git push"
+            exit 1
+          fi
+        env:
+          TAG: ${{ needs.release-please.outputs.tag_name }}

@@ -2,7 +2,8 @@
 //   node scripts/verify-release.mjs                     檢查 package.json 版號格式
 //   node scripts/verify-release.mjs --tag v0.2.0-beta   另檢查 tag 與 package.json 版號一致（亦可寫成 --tag=…）
 //   node scripts/verify-release.mjs --all-tags          檢查每個既有 v* tag 所指 commit 的版號都與 tag 一致
-// 於 GitHub Actions 的 tag 觸發中，未指定 --tag 時會自動讀取 GITHUB_REF_NAME。
+// 未指定 --tag 時依序讀取環境變數 RELEASE_TAG（release.yml 以此傳入要發布的 tag，供 pnpm release:pack 使用），
+// 以及 GitHub Actions 由 tag 觸發時的 GITHUB_REF_NAME。
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -37,9 +38,11 @@ const tagOption = readOption('tag');
 const tag =
   tagOption !== undefined
     ? tagOption
-    : process.env.GITHUB_REF_TYPE === 'tag'
-      ? process.env.GITHUB_REF_NAME
-      : undefined;
+    : process.env.RELEASE_TAG !== undefined
+      ? process.env.RELEASE_TAG
+      : process.env.GITHUB_REF_TYPE === 'tag'
+        ? process.env.GITHUB_REF_NAME
+        : undefined;
 
 if (tag !== undefined) {
   if (!tag) failures.push('--tag 需要指定 tag 名稱，例如 --tag v0.2.0-beta');
