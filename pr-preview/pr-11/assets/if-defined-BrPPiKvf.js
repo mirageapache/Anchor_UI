@@ -1,0 +1,1 @@
+import{c as e,i as t}from"./lit-MXP2jLr5.js";import{t as n}from"./rolldown-runtime-Dh6celcD.js";var r;function i(){return(i=n((()=>{e(),r=e=>e??t})))()}function a(){return(a=n((()=>{i()})))()}export{i as n,r,a as t};
