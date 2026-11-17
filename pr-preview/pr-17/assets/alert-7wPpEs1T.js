@@ -1,0 +1,1 @@
+import{n as e,r as t}from"./alert-service-BsvvLxgn.js";import{t as n}from"./rolldown-runtime-Dh6celcD.js";function r(){return(r=n((()=>{t(),e()})))()}export{r as t};
