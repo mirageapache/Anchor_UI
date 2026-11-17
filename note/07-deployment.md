@@ -1,6 +1,6 @@
 # 部署與發布操作筆記
 
-> 對應任務：Phase 2 TASK-205（發布）；Phase 3 TASK-308（Storybook 預覽部署，尚未建置）；Phase 4 TASK-405（npm registry 自動發布，尚未建置）
+> 對應任務：Phase 2 TASK-205（發布）；Phase 3 TASK-308（Storybook 預覽部署）；Phase 4 TASK-405（自動發布流程 release-please；npm registry 發布尚未建置）
 > 正式流程規範見 [`doc/anchor-ui-release-guide.md`](../doc/anchor-ui-release-guide.md)，版號觀念見 [06-semver-release.md](./06-semver-release.md)。本篇是「忘記怎麼做時照著做」的操作速查。
 
 ## 1. 這個專案的「部署」是什麼
@@ -9,75 +9,32 @@ Anchor UI 是元件庫，不是網站，所以沒有「部署到伺服器」這�
 
 | 項目                         | 現況                                                                                           |
 | ---------------------------- | ---------------------------------------------------------------------------------------------- |
-| 版本發布                     | ✅ 推送 `v*` tag → GitHub Actions 自動建立 GitHub Release 並附上 tarball                       |
+| 版本發布                     | ✅ 合併 release-please 開的 release PR → 自動打 tag、建立 GitHub Release 並附上 tarball        |
 | 交付給其他專案               | ✅ 以 Release 的 tarball 網址安裝（見第 3 節），或本機用 yalc                                  |
 | Storybook 線上文件與 PR 預覽 | ✅ 已啟用（Phase 3 TASK-308，見第 6 節）：PR 預覽自動部署並留言連結，`main` 更新時發布線上文件 |
-| 發布到 npm registry          | ❌ 尚未建置（Phase 4 TASK-405，Changesets）                                                    |
+| 發布到 npm registry          | ❌ 尚未建置                                                                                    |
 
 Phase 1 做過的那次部署，就是發布 `v0.1.0-alpha`（PR #2 + tag），產物在 [GitHub Releases](https://github.com/mirageapache/Anchor_UI/releases)。
 
-## 2. 發布一個版本（以 `v0.2.0-beta` 為例）
+## 2. 發布一個版本
 
-整體流程：`develop` → PR 合併進 `main` → release PR 改版號 → 打 tag → 自動產生 Release → `main` 合併回 `develop`。
+自 `v0.3.0-beta` 之後由 release-please 自動處理，不再手動改版號、打 tag（手動建立的版本會讓 release-please 的版號計算錯亂）。完整說明見 [`doc/anchor-ui-release-guide.md`](../doc/anchor-ui-release-guide.md) 第二節。
 
-### 步驟 0：確認前置條件
+1. 變更照常經 `develop` → PR 合併進 `main`。
+2. Release Please workflow 會開啟或更新唯一的 release PR「`chore(release): v<下一版>`」，並在該分支執行 CI。
+3. 要發布時，檢查 release PR 的版號與 CHANGELOG，CI 通過後合併。
+4. 之後自動完成：打 tag → 草稿 Release → 等 CI、`pnpm release:pack` → 附上 tarball 並公開 → `main` 合併回 `develop`。本機記得 `git pull`。
+5. 查看結果：
 
-- 這個版本的所有變更都已合併進 `main`。
-- `main` 最新 commit 的 CI 是綠燈：`gh run list --branch main --limit 3`。
-- （建議）本機預演：`pnpm release:pack`。此時版號還沒改，只是確認建置、套件驗證與體積都能通過。
-- （建議）`pnpm smoke`：重新打包一份 tarball，安裝到 `smoke/` 的 Vue 3 / Angular 專案並做正式建置，確認發布產物能被外部專案使用。
+   ```bash
+   gh run list --workflow release-please.yml --limit 3
+   gh release view v<版號>
+   ```
 
-### 步驟 1：從 `main` 開 release PR（只改版號）
+6. 預覽版測試通過、要發正式版時：把 `release-please-config.json` 的 `"prerelease"` 改為 `false` 並合併進 `main`，release PR 就會改成正式版號；發布後再改回 `true`。
+7. 發布後更新 `doc/anchor-ui-release-guide.md` 的里程碑表格。
 
-```bash
-git fetch origin
-git switch -c release/v0.2.0-beta origin/main
-npm version 0.2.0-beta --no-git-tag-version
-git commit -am "chore(release): v0.2.0-beta"
-git push -u origin release/v0.2.0-beta
-gh pr create --base main --title "chore(release): v0.2.0-beta"
-```
-
-等 PR 的 CI 通過後合併。
-
-### 步驟 2：在合併 commit 上打 tag
-
-```bash
-git fetch origin main
-git tag -a v0.2.0-beta origin/main -m "v0.2.0-beta — Phase 2：高頻互動控制項、核心回饋與視覺回歸"
-git push origin v0.2.0-beta
-```
-
-必須是 annotated tag（`-a`），名稱是 `v` + `package.json` 的版號。
-
-### 步驟 3：等 Release workflow 跑完
-
-推送 tag 會觸發 `.github/workflows/release.yml`，它會依序：
-
-1. 確認 tag 指向的 commit 在 `main` 上。
-2. 等該 commit 的必要 CI 檢查全部通過（最多 20 分鐘，任一失敗就中止）。
-3. 執行 `pnpm release:pack`（建置 → `verify:package` → `size` → 版號與 tag 一致性 → 以 `scripts/pack.mjs` 打包）。
-4. 建立 GitHub Release 並附上 tarball；版號含 `-` 時標記為 Pre-release。
-
-查看結果：
-
-```bash
-gh run list --workflow release.yml --limit 3
-gh release view v0.2.0-beta
-```
-
-### 步驟 4：把 `main` 合併回 `develop`
-
-```bash
-git switch develop
-git merge origin/main
-git push origin develop
-```
-
-### 步驟 5：更新文件
-
-- `doc/anchor-ui-release-guide.md` 的里程碑表格，把該版本改成「已發布」。
-- `doc/anchor-ui-development-schedule.md` 勾選「版本與 Git Tag 對齊里程碑」的驗收條件。
+（建議）合併 release PR 前在本機預演：`pnpm release:pack` 與 `pnpm smoke`。
 
 ## 3. 在其他專案導入元件庫
 
@@ -130,21 +87,20 @@ pnpm dev:yalc
 
 ## 4. 常見陷阱
 
-| 狀況                                        | 原因與處理                                                                                                           |
-| ------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Release workflow 在版號檢查失敗             | tag 名稱與該 commit 的 `package.json` 版號不一致。tag 要打在 release PR 的**合併 commit**上，不是之前的 commit。     |
-| Release workflow 說 tag 不在 `main` 上      | tag 打在 release 分支或 `develop` 上了。刪除 tag 後重新打在 `origin/main`。                                          |
-| Release workflow 等 CI 逾時或中止           | `main` 上該 commit 的 CI 失敗或還沒跑完。修好後重跑 workflow；Release 已存在時只會覆蓋上傳 tarball。                 |
-| 打錯 tag 要重來                             | `git tag -d v0.2.0-beta`、`git push origin :refs/tags/v0.2.0-beta`，若 Release 已建立也要一併刪除。                  |
-| Windows 建置時找不到 `#module-sync-enabled` | 目錄太深超過 260 字元路徑限制，換到路徑較短的目錄建置。                                                              |
-| 手動 `npm pack` 產出壞掉的 tarball          | 建置失敗時 `npm pack` 仍會打包。一律用 `pnpm release:pack`，任一步驟失敗就不會打包。                                 |
-| release PR 夾帶其他變更                     | release PR 只改 `package.json` 版號；其他變更走一般 PR 先進 `main`。                                                 |
-| 工作區還有其他未 commit 的修改              | `git commit -am` 會把它們一起帶進 release PR，改用 `git commit package.json -m "..."` 只提交版號。                   |
-| 發布後切回 `develop` 時 `package.json` 擋住 | commit 時 lint-staged 的 prettier 改寫了換行符號，內容沒變；`git diff` 確認無實質差異後 `git restore package.json`。 |
+| 狀況                                        | 原因與處理                                                                                                                                                                                                      |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 手動建立了 tag 或 Release                   | 不要這樣做：release-please 不知道這個版本，版號計算與 CI 的 `release:verify --all-tags` 都會出錯。刪除該 Release 與 tag（`gh release delete <tag> --cleanup-tag --yes`、`git tag -d <tag>`），改走 release PR。 |
+| release-please 沒有開 release PR            | Settings → Actions → General 未勾選「Allow GitHub Actions to create and approve pull requests」（log 會顯示權限錯誤）；或自上次發布以來沒有符合 Conventional Commits 的 commit。                                |
+| release PR 的必要檢查一直是「Expected」     | 以 `GITHUB_TOKEN` 更新的 PR 不會觸發 CI，要靠 Release Please workflow 以 `workflow_dispatch` 執行。到 Actions → CI → Run workflow 選 release PR 的分支，或重跑 Release Please。                                 |
+| `Publish release` job 失敗                  | Release 仍是草稿，消費端看不到。修正後重跑失敗的 job，或 Actions → Release → Run workflow 輸入 tag；Release 已存在時只會覆蓋上傳 tarball 並公開。                                                               |
+| `Merge main back into develop` job 失敗     | 有衝突或 `develop` 剛好被更新。手動 `git switch develop && git pull && git merge origin/main && git push`。                                                                                                     |
+| Windows 建置時找不到 `#module-sync-enabled` | 目錄太深超過 260 字元路徑限制，換到路徑較短的目錄建置。                                                                                                                                                         |
+| 手動 `npm pack` 產出壞掉的 tarball          | 建置失敗時 `npm pack` 仍會打包。一律用 `pnpm release:pack`，任一步驟失敗就不會打包。                                                                                                                            |
+| 發布後切回 `develop` 時 `package.json` 擋住 | commit 時 lint-staged 的 prettier 改寫了換行符號，內容沒變；`git diff` 確認無實質差異後 `git restore package.json`。                                                                                            |
 
 ## 5. 之後會改變的部分
 
-- **Phase 4 TASK-405**：導入 Changesets，版號、CHANGELOG、tag 與 `npm publish` 全自動，第 2 節的手動流程屆時作廢。
+- **發布到 npm registry / GitHub Packages**：在 `release.yml` 公開 Release 後加上 `npm publish release/<檔名>.tgz`（必須發布 `scripts/pack.mjs` 產出的 tarball）。
 
 ## 6. Storybook 線上文件與 PR 預覽（GitHub Pages）
 
