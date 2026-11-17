@@ -93,6 +93,7 @@ npm pack --dry-run       # 只列出會包含哪些檔案，不產出檔案
   - 若直接在 Phase 1 的 commit 打 tag，版號會對不上；若在 `develop` 改版號打 tag，tag 會包含 Phase 2 進行中的內容——兩者都不理想。
 - **自動化**：推送 `v*` tag 後由 `.github/workflows/release.yml` 檢查 tag 位於 `main`、執行 `pnpm release:pack`（含 `scripts/verify-release.mjs` 的版號與 tag 一致性檢查），並建立附有 tarball 的 GitHub Release。
 - **v0.1.0-alpha 是手動發布的**：該 tag 指向的 commit 還沒有 `release.yml`，因此由人工在乾淨的 worktree 中建置、`npm pack` 並建立 Release。自 v0.2.0-beta 起改由 workflow 自動處理。
+- **自 v0.3.0-beta 之後改由 release-please 自動發布（TASK-405）**：合併進 `main` 的 commit 決定下一個版號並累積成 release PR，合併 release PR 即打 tag 並由 `release.yml` 附上 tarball 公開 Release；不再手動改版號或打 tag。
 - 完整流程見 [`doc/anchor-ui-release-guide.md`](../doc/anchor-ui-release-guide.md)。
 
 ### 發布時踩到的坑

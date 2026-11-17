@@ -5,13 +5,16 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # TASK-405：release-please 以 GITHUB_TOKEN 更新的 release PR 不會觸發 pull_request，
+  # 改由 release-please.yml 以 workflow_dispatch 在 release PR 的分支執行（檢查掛在該分支最新的 commit 上）
+  workflow_dispatch:
 
-# TASK-214：同一個 PR 推送新 commit 時取消仍在執行的舊 run，讓最新一次不必排隊等候。
-# main 的 push 每次自成一組、互不影響：同一組最多只保留一個等候中的 run，連續合併時較早的等候 run
-# 會被取消，該 commit 便缺少必要檢查（release.yml 依此判斷能否發布）
+# TASK-214：同一個 PR（或以 workflow_dispatch 執行的同一個分支）推送新 commit 時取消仍在執行的舊 run，
+# 讓最新一次不必排隊等候。main 的 push 每次自成一組、互不影響：同一組最多只保留一個等候中的 run，
+# 連續合併時較早的等候 run 會被取消，該 commit 便缺少必要檢查（release.yml 依此判斷能否發布）
 concurrency:
-  group: ci-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  group: ci-${{ github.event.pull_request.number || (github.event_name == 'workflow_dispatch' && github.ref) || github.run_id }}
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 jobs:
   lint-and-typecheck:
