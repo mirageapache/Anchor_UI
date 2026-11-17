@@ -11,7 +11,7 @@
       "pull-request-header": "合併這個 PR 即發布下一個版本：自動打 tag，建置、驗證並打包後建立附上 tarball 的 GitHub Release。尚未合併前，之後合併進 `main` 的變更會持續累積到這個 PR。",
       "bump-minor-pre-major": true,
       "versioning": "prerelease",
-      "prerelease": true,
+      "prerelease": false,
       "prerelease-type": "beta",
       "draft": true,
       "force-tag-creation": true,
