@@ -53,10 +53,12 @@ develop ──PR──▶ main（CI 通過後合併）
 | 上一版是正式版，只有 `fix`、`perf` 等        | 下一個 patch 的預覽版：`0.3.0` → `0.3.1-beta`                          | `0.3.0` → `0.3.1`     |
 | 破壞性變更（`feat!:` 或 `BREAKING CHANGE:`） | `1.0.0` 之前與 `feat` 相同（`bump-minor-pre-major`），不會跳到 `1.0.0` | 同左                  |
 
-- 任何符合 Conventional Commits 的 commit 都會讓 release PR 出現或更新；CHANGELOG 只列出 `feat`（新功能）、`fix`（錯誤修正）、`perf`（效能改進）與 `revert`（還原），`docs`、`chore`、`ci` 等不列入。
+- CHANGELOG 只列出 `feat`（新功能）、`fix`（錯誤修正）、`perf`（效能改進）、`revert`（還原）與 `chore(release)`（發布），其他的 `chore`、`docs`、`ci` 等不列入。
+- **只有會列入 CHANGELOG 的 commit 才會讓 release PR 出現**：自上次發布以來若只有 `docs`、`ci`、`chore` 等，release-please 會略過（log 顯示 `No user facing commits found … skipping`），不開 PR；已開啟的 release PR 仍會以最新的 `main` 重建。
+- `chore(release)` 保留給發布相關的 commit（例如第 3 點的切換正式版），不要用在其他地方：它會列入 CHANGELOG，並在預覽模式下觸發新的預覽版。
 - `Merge pull request …` 這類合併 commit 不符合格式，會被略過；`develop` 上的各個 commit 仍會被逐一讀取。
 - **commit 訊息就是 CHANGELOG 的內容**，請寫成使用者看得懂的描述。
-- 想指定版號時，在 commit 訊息最後加上 footer `Release-As: <版號>`（例如 `Release-As: 1.0.0-beta`）。
+- 想指定版號時，在 commit 訊息最後加上 footer `Release-As: <版號>`（例如 `Release-As: 1.0.0-beta`）。這個 commit 本身必須會列入 CHANGELOG（例如 `chore(release): 準備發布 1.0.0`），否則同樣會被略過。
 
 ### 2. 發布：合併 release PR
 
@@ -64,7 +66,7 @@ develop ──PR──▶ main（CI 通過後合併）
 2. CI 通過後合併。之後全部自動完成：
    - 在合併 commit 打 tag `v<版號>`，建立草稿 Release。
    - `release.yml` 確認 tag 在 `main` 上、等待該 commit 的必要 CI 檢查（清單取自 `main` 的 Ruleset，最多 20 分鐘）、執行 `pnpm release:pack`（建置 → `verify:package` → `size` → 版號與 tag 一致性 → `scripts/pack.mjs` 打包），附上 tarball 後公開 Release；版號含 `-` 時標記為 Pre-release。
-   - 把 `main` 合併回 `develop`（`chore(release): 將 v<版號> 合併回 develop`）。之後本機請先 `git pull` 再繼續開發。
+   - 把 `main` 合併回 `develop`（`Merge v<版號> from main into develop`；刻意不用 Conventional Commits 格式，避免列入下一版的 CHANGELOG）。之後本機請先 `git pull` 再繼續開發。
 3. 查看結果：`gh run list --workflow release-please.yml --limit 3`、`gh release view v<版號>`。
 
 > release PR 的內容由 release-please 產生，每次 `main` 更新都會被覆蓋，請勿手動修改；要調整 CHANGELOG 的文字，請修正 commit 訊息的寫法或在下一版補充。
@@ -78,7 +80,7 @@ develop ──PR──▶ main（CI 通過後合併）
 
 beta 測試通過、要發布正式版時：
 
-1. 開一個 PR（經 `develop` 合併進 `main`）把 `"prerelease"` 改為 `false`，commit 訊息例如 `chore(release): 結束 0.3.0 的 beta 測試`。
+1. 開一個 PR（經 `develop` 合併進 `main`）把 `"prerelease"` 改為 `false`，commit 訊息例如 `chore(release): 結束 0.3.0 的 beta 測試`。**type 與 scope 必須是 `chore(release)`**：從預覽版到正式版之間通常沒有新的功能或修正，只有這個 commit 會列入 CHANGELOG，否則 release-please 會因沒有可見的變更而不開 PR。
 2. release PR 會改為正式版號（例如 `0.3.0-beta.2` → `0.3.0`），合併即發布正式版。
 3. 開始下一輪開發時，再把 `"prerelease"` 改回 `true`，下一個 `feat` 就會發布 `0.4.0-beta`。
 
@@ -86,13 +88,14 @@ beta 測試通過、要發布正式版時：
 
 ### 4. 發布失敗時
 
-| 狀況                                       | 處理方式                                                                                                                                                                     |
-| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Publish release` job 失敗                 | Release 仍是草稿，消費端看不到。修正原因後重跑該 workflow 的失敗 job，或在 Actions → Release → Run workflow 輸入 tag 手動執行；Release 已存在時只會覆蓋上傳 tarball 並公開。 |
-| `Merge main back into develop` job 失敗    | 有衝突或 `develop` 在這期間被更新。手動執行 `git switch develop && git pull && git merge origin/main && git push`。                                                          |
-| release PR 沒有執行 CI                     | 在 Actions → CI → Run workflow 選擇 release PR 的分支（名稱以 `release-please--branches--main` 開頭），或重跑最近一次的 Release Please workflow。                            |
-| release PR 顯示落後 `main`                 | 按 PR 的「Update branch」，或重跑 Release Please workflow 重建。                                                                                                             |
-| release-please 沒有開 PR，log 顯示權限錯誤 | 尚未完成第三節的一次性設定。                                                                                                                                                 |
+| 狀況                                                              | 處理方式                                                                                                                                                                     |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Publish release` job 失敗                                        | Release 仍是草稿，消費端看不到。修正原因後重跑該 workflow 的失敗 job，或在 Actions → Release → Run workflow 輸入 tag 手動執行；Release 已存在時只會覆蓋上傳 tarball 並公開。 |
+| `Merge main back into develop` job 失敗                           | 有衝突或 `develop` 在這期間被更新。手動執行 `git switch develop && git pull && git merge origin/main && git push`。                                                          |
+| release PR 沒有執行 CI                                            | 在 Actions → CI → Run workflow 選擇 release PR 的分支（名稱以 `release-please--branches--main` 開頭），或重跑最近一次的 Release Please workflow。                            |
+| release PR 顯示落後 `main`                                        | 按 PR 的「Update branch」，或重跑 Release Please workflow 重建。                                                                                                             |
+| release-please 沒有開 PR，log 顯示權限錯誤                        | 尚未完成第三節的一次性設定。                                                                                                                                                 |
+| release-please 沒有開 PR，log 顯示 `No user facing commits found` | 正常：自上次發布以來沒有會列入 CHANGELOG 的 commit（見第二節第 1 點）。                                                                                                      |
 
 ---
 

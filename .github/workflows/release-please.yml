@@ -42,13 +42,17 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # always-update 讓 release PR 每次都以最新的 main 重建，因此每次都要重新執行 CI
+      # always-update 讓 release PR 每次都以最新的 main 重建，因此每次都要重新執行 CI。
+      # 沒有使用者可見的變更時 release-please 不會開 PR，pr 輸出為空；步驟的 env 在 if 之前就會求值，
+      # 所以不能在 env 中寫 fromJSON(...)（空字串會讓整個 job 失敗），改在 shell 中以 jq 解析
       - name: Run CI on the release PR branch
-        if: steps.release.outputs.pr
-        run: gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$HEAD_BRANCH"
+        if: steps.release.outputs.pr != ''
+        run: |
+          head_branch=$(jq -r '.headBranchName' <<< "$RELEASE_PR")
+          gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$head_branch"
         env:
           GH_TOKEN: ${{ github.token }}
-          HEAD_BRANCH: ${{ fromJSON(steps.release.outputs.pr).headBranchName }}
+          RELEASE_PR: ${{ steps.release.outputs.pr }}
 
   release:
     name: Publish release
@@ -86,7 +90,9 @@ jobs:
             echo "develop 已包含 main，不需合併"
             exit 0
           fi
-          if ! git merge --no-ff --no-edit -m "chore(release): 將 ${TAG} 合併回 develop" origin/main; then
+          # 訊息刻意不用 Conventional Commits 格式：這個合併 commit 之後會隨 develop 進入 main，
+          # 寫成 chore(release) 會被列進下一版的 CHANGELOG 並觸發 release PR；Merge 開頭的訊息會被 release-please 略過
+          if ! git merge --no-ff --no-edit -m "Merge ${TAG} from main into develop" origin/main; then
             git merge --abort
             echo "::error::main 合併回 develop 時發生衝突，請手動執行：git switch develop && git merge origin/main"
             exit 1

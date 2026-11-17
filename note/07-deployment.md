@@ -21,7 +21,7 @@ Phase 1 做過的那次部署，就是發布 `v0.1.0-alpha`（PR #2 + tag），�
 自 `v0.3.0-beta` 之後由 release-please 自動處理，不再手動改版號、打 tag（手動建立的版本會讓 release-please 的版號計算錯亂）。完整說明見 [`doc/anchor-ui-release-guide.md`](../doc/anchor-ui-release-guide.md) 第二節。
 
 1. 變更照常經 `develop` → PR 合併進 `main`。
-2. Release Please workflow 會開啟或更新唯一的 release PR「`chore(release): v<下一版>`」，並在該分支執行 CI。
+2. Release Please workflow 會開啟或更新唯一的 release PR「`chore(release): v<下一版>`」，並在該分支執行 CI。只有 `docs`、`ci`、`chore` 等不列入 CHANGELOG 的變更時不會開 PR。
 3. 要發布時，檢查 release PR 的版號與 CHANGELOG，CI 通過後合併。
 4. 之後自動完成：打 tag → 草稿 Release → 等 CI、`pnpm release:pack` → 附上 tarball 並公開 → `main` 合併回 `develop`。本機記得 `git pull`。
 5. 查看結果：
@@ -31,7 +31,7 @@ Phase 1 做過的那次部署，就是發布 `v0.1.0-alpha`（PR #2 + tag），�
    gh release view v<版號>
    ```
 
-6. 預覽版測試通過、要發正式版時：把 `release-please-config.json` 的 `"prerelease"` 改為 `false` 並合併進 `main`，release PR 就會改成正式版號；發布後再改回 `true`。
+6. 預覽版測試通過、要發正式版時：把 `release-please-config.json` 的 `"prerelease"` 改為 `false`，以 `chore(release): …` 的 commit 合併進 `main`（必須是這個 type 與 scope，才會列入 CHANGELOG 並開出 release PR），release PR 就會改成正式版號；發布後再改回 `true`。
 7. 發布後更新 `doc/anchor-ui-release-guide.md` 的里程碑表格。
 
 （建議）合併 release PR 前在本機預演：`pnpm release:pack` 與 `pnpm smoke`。

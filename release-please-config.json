@@ -20,6 +20,7 @@
         { "type": "fix", "section": "錯誤修正" },
         { "type": "perf", "section": "效能改進" },
         { "type": "revert", "section": "還原" },
+        { "type": "chore", "scope": "release", "section": "發布" },
         { "type": "docs", "section": "文件", "hidden": true },
         { "type": "style", "section": "樣式", "hidden": true },
         { "type": "refactor", "section": "重構", "hidden": true },
