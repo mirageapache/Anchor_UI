@@ -1,1 +1,0 @@
-import{t as e}from"./rolldown-runtime-Dh6celcD.js";function t(e){let t=getComputedStyle(e),n=e=>{let t=parseFloat(e);return Number.isNaN(t)?0:e.trim().endsWith(`ms`)?t:t*1e3},r=t.transitionDuration.split(`,`).map(n),i=t.transitionDelay.split(`,`).map(n);return Math.max(0,...r.map((e,t)=>e+i[t%i.length]))}function n(){return(n=e((()=>{})))()}export{t as n,n as t};
