@@ -32,6 +32,8 @@ export class LightContentController implements ReactiveController {
   }
 
   hostConnected(): void {
+    // 脫離頁面期間不觀察 light DOM，而 Lit 重新連接時不會自動渲染：補一次，反映期間的變動
+    this.host.requestUpdate();
     if (typeof MutationObserver === 'undefined') return;
     this.observer ??= new MutationObserver(() => this.host.requestUpdate());
     this.observer.observe(this.host, {

@@ -20,7 +20,7 @@ const BASELINES = {
   output: 2501,
   segmented: 3722,
   modal: 5021, // 開關生命週期抽出為與 Drawer 共用的 internal/modal-dialog（+63；重構前實測 4958，原基準 4531）
-  alert: 11141, // 含相依的 Modal、Button 與 Input
+  alert: 12265, // 含相依的 Modal、Button 與 Input（Input 的 Enter 送出、Button 的表單動作與 fieldset 停用後 +1124；原 11141）
   toast: 6437, // 新增 placement（六種位置與對應的堆疊、動畫方向；原 5750）
   card: 3384, // TASK-301
   accordion: 2665, // TASK-302

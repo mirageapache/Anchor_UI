@@ -879,6 +879,24 @@ describe('ToastService', () => {
       await handle.closed;
     });
 
+    it('keeps focus inside a toast (and stays paused) when another toast arrives', async () => {
+      // 新通知會讓 Viewport 重新進入 Top Layer（先移出再放回），其中的焦點不可因此掉回 <body>
+      const first = ToastService.info('Focused', { duration: 200 });
+      await rendered();
+      const close =
+        toasts()[0].shadowRoot!.querySelector<HTMLButtonElement>('[part~="close-button"]')!;
+      close.focus();
+
+      const second = ToastService.info('Arrives later', { duration: 200 });
+      await rendered();
+      expect(toasts()[0].shadowRoot!.activeElement === close, 'focus is kept').to.be.true;
+      await wait(350);
+      expect(toasts(), 'still paused').to.have.length(2);
+
+      close.blur();
+      await Promise.all([first.closed, second.closed]);
+    });
+
     it('resumes the others when the hovered toast is closed and nothing is under the pointer', async () => {
       // Viewport 由右下角往上堆疊：關閉最上面那則後，指標下方不再有通知（關閉下方那則時，上方通知會移到指標下並保持暫停）
       const hovered = ToastService.info('Hovered (top)', { duration: 0 });

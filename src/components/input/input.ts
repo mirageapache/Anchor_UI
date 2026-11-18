@@ -268,6 +268,11 @@ export class AuiInput extends LitElement {
     const previous = this.currentValue;
     this.currentValue = String(next ?? '');
     this.formControl.setValue(this.currentValue);
+    // 驗證以內部控制項為準：先把值寫入控制項再同步，設定 value 後立刻 checkValidity() 才是最新結果
+    // （否則要等下一次渲染）。首次渲染前還沒有控制項，由 updated() 同步
+    const control = this.control;
+    if (control && control.value !== this.currentValue) control.value = this.currentValue;
+    this.syncValidity();
     this.requestUpdate('value', previous);
   }
 

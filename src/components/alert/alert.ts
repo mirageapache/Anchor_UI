@@ -318,7 +318,8 @@ export class AuiAlert extends LitElement {
   };
 
   private closeByTimer(): void {
-    if (!this.open) return;
+    // Modal 已在關閉中（遮罩或 ESC 觸發的退場動畫期間）：這次關閉的原因以當時的操作為準
+    if (!this.open || !this.modal.open) return;
     this.decision = { confirmed: false, reason: 'timer' };
     this.open = false;
   }

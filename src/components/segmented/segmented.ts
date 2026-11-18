@@ -99,6 +99,8 @@ export class AuiSegmented extends LitElement {
     this.optionItems = items.every(isNormalizedOption)
       ? items
       : items.filter(isOptionLike).map(normalizeOption);
+    // 選項改變可能讓目前的值對應或不再對應到選項：同步更新表單值，設定後立刻讀取 FormData 即為最新結果
+    this.syncFormValue();
     this.requestUpdate('options', previous);
   }
 

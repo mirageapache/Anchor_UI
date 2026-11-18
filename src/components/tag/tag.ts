@@ -83,7 +83,8 @@ export class AuiTag extends LitElement {
   };
 
   private handleActionKeyDown = (event: KeyboardEvent): void => {
-    if (this.interactive && (event.key === 'Enter' || event.key === ' ')) {
+    // 按住不放的重複按鍵不重複觸發
+    if (this.interactive && !event.repeat && (event.key === 'Enter' || event.key === ' ')) {
       // 避免空白鍵滾動頁面
       event.preventDefault();
       this.click();
@@ -102,6 +103,9 @@ export class AuiTag extends LitElement {
   };
 
   override render() {
+    // 移除鈕的滑鼠懸停提示放在 SVG 的 <title>，而不是按鈕的 title 屬性：後者即使與 aria-label 相同，
+    // 瀏覽器仍會把它當成額外的描述，螢幕閱讀器會重複念兩次（與 <aui-favorite-btn> 相同的做法）。
+    // SVG 已 aria-hidden，不進入無障礙樹；透明的 rect 讓整個圖示範圍都能觸發提示。
     return html`
       <span
         part="base"
@@ -143,10 +147,11 @@ export class AuiTag extends LitElement {
                   class="tag__remove"
                   part="remove-button"
                   aria-label=${this.removeLabel}
-                  title=${this.removeLabel}
                   @click=${this.handleRemoveClick}
                 >
                   <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                    <title>${this.removeLabel}</title>
+                    <rect width="16" height="16" fill="transparent" />
                     <path
                       d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"
                     />

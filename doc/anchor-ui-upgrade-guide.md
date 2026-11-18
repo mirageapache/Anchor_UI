@@ -60,6 +60,7 @@
 - **Modal 的內部重構**：`<aui-modal>` 的開關邏輯移到與 Drawer 共用的基底類別，屬性、事件、slot 與 CSS part 都沒有改變。
   只有一個型別層面的差異：`AuiModal` 的父類別由 `LitElement` 變為 `ModalDialogElement`（仍繼承自 `LitElement`）。
   一般使用不受影響；若專案自行繼承 `AuiModal` 並宣告了與基底同名的成員，需要改名。
+- **關閉鈕的名稱可設定**：`<aui-modal>`、`<aui-drawer>` 新增 `close-label`（預設「關閉」），供多語系頁面使用。
 - **授權**：套件附上 MIT `LICENSE`。
 
 行為修正（多數專案不需要改動，下列情況請檢查）：
@@ -79,6 +80,10 @@
 - **連結只接受安全的協定**：`<aui-card href>`、`<aui-navbar brand-href>` 與 `<aui-footer>` 的 `columns[].links[].href`
   只接受 http(s)、`mailto:`、`tel:` 與相對路徑。其他協定（`javascript:`、`data:` 等）不會輸出 `href`，
   該元素顯示為沒有連結的內容。
+- **`<aui-tag>` 移除鈕不再有 `title` 屬性**：滑鼠懸停的提示改放在圖示的 SVG `<title>`，
+  避免螢幕閱讀器把名稱念兩次。以 `[title]` 選取移除鈕的樣式或測試請改用 `::part(remove-button)`。
+- **`<aui-tooltip>` 停用中設定 `open` 會被撤回**：先前會停在 `open` 為 true 卻沒有顯示的狀態，
+  解除停用後也無法再開啟。
 - **全域樣式（`styles.css`）不再清除非鍵盤聚焦元素的 `box-shadow`**：先前滑鼠點擊可聚焦的元素後，
   它自己的陰影會消失到失焦為止。若專案依賴這個行為來移除點擊後的陰影，請自行加上樣式。
 

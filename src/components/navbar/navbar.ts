@@ -193,6 +193,11 @@ export class AuiNavbar extends LitElement {
     window.addEventListener('scroll', this.handleScroll, { passive: true });
     document.addEventListener('keydown', this.handleShortcut);
     document.addEventListener('aui-after-show', this.handleDrawerShown);
+    // 重新插入頁面時（斷開時已停止追蹤），抽屜可能仍開著：重新同步 aria-expanded
+    if (this.hasUpdated) {
+      const drawer = this.resolveMenuDrawer();
+      this.trackOpenDrawer(drawer?.open ? drawer : null);
+    }
   }
 
   override disconnectedCallback(): void {
@@ -272,7 +277,11 @@ export class AuiNavbar extends LitElement {
       return;
     }
     const modifier = this.apple ? event.metaKey && !event.ctrlKey : event.ctrlKey && !event.metaKey;
-    if (!modifier || event.altKey || event.shiftKey || event.key?.toLowerCase() !== 'k') return;
+    if (!modifier || event.altKey || event.shiftKey) return;
+    // 以 key 判斷（Dvorak 等配置下 K 不在 KeyK 的位置）；非拉丁字母的鍵盤配置（注音、西里爾字母等）
+    // 按下同一顆鍵時 key 不是英文字母，才退回以實體鍵位判斷
+    const key = event.key?.toLowerCase() ?? '';
+    if (key !== 'k' && (/^[a-z]$/.test(key) || event.code !== 'KeyK')) return;
     // 其他 modal 開啟時 Navbar 被 inert，不應回應快捷鍵（Navbar 位於該 modal 內時除外）
     const topModal = getTopModalLayer();
     if (topModal && !composedContains(topModal, this)) return;

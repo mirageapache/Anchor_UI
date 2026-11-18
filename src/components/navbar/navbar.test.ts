@@ -232,6 +232,30 @@ describe('AuiNavbar (<aui-navbar>)', () => {
       expect(button().getAttribute('aria-expanded')).to.equal('false');
     });
 
+    it('re-syncs aria-expanded when the navbar is reinserted while the drawer is open', async () => {
+      const wrapper = await fixture<HTMLDivElement>(html`
+        <div>
+          <aui-navbar brand="Anchor UI" menu-drawer="site-menu"></aui-navbar>
+          <aui-drawer id="site-menu" heading="Menu"></aui-drawer>
+        </div>
+      `);
+      const el = wrapper.querySelector<AuiNavbar>('aui-navbar')!;
+      const drawer = wrapper.querySelector<AuiDrawer>('aui-drawer')!;
+      await drawer.show();
+      await el.updateComplete;
+      expect(part(el, 'menu-button')!.getAttribute('aria-expanded')).to.equal('true');
+
+      // 框架重排節點等情況：移出後重新插入
+      el.remove();
+      wrapper.prepend(el);
+      await el.updateComplete;
+      expect(part(el, 'menu-button')!.getAttribute('aria-expanded')).to.equal('true');
+
+      await drawer.hide();
+      await el.updateComplete;
+      expect(part(el, 'menu-button')!.getAttribute('aria-expanded')).to.equal('false');
+    });
+
     it('keeps aria-expanded while dialogs inside the drawer close, and resets it when the drawer is removed', async () => {
       const wrapper = await fixture<HTMLDivElement>(html`
         <div>
@@ -335,6 +359,32 @@ describe('AuiNavbar (<aui-navbar>)', () => {
       const searched = oneEvent(el, 'aui-search');
       button.click();
       expect(((await searched) as CustomEvent<NavbarSearchDetail>).detail.source).to.equal('click');
+    });
+
+    it('matches the shortcut by key, falling back to the physical key on non-Latin layouts', async () => {
+      const el = await fixture<AuiNavbar>(html`<aui-navbar brand="Anchor UI"></aui-navbar>`);
+      let searches = 0;
+      el.addEventListener('aui-search', () => searches++);
+      const press = (key: string, code: string) =>
+        document.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            key,
+            code,
+            metaKey: apple,
+            ctrlKey: !apple,
+            bubbles: true,
+            cancelable: true,
+          }),
+        );
+      // 注音等非拉丁配置：同一顆鍵的 key 不是英文字母
+      press('ㄜ', 'KeyK');
+      expect(searches, 'non-Latin layout, physical K').to.equal(1);
+      // Dvorak：K 在 KeyV 的位置
+      press('k', 'KeyV');
+      expect(searches, 'Latin layout, key is k').to.equal(2);
+      // Dvorak：KeyK 的位置是 t，不可觸發（否則 Ctrl+T 會變成搜尋）
+      press('t', 'KeyK');
+      expect(searches, 'Latin layout, another letter on KeyK').to.equal(2);
     });
 
     it('emits aui-search on the keyboard shortcut and prevents the browser default', async () => {

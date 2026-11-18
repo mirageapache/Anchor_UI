@@ -117,10 +117,6 @@ export class AuiCard extends LitElement {
         style=${styleMap({ '--_aui-card-lines': lines > 0 ? String(lines) : undefined })}
         ?hidden=${!hasDescription}
       >
-        <!--
-          不使用 slot 的 fallback 內容：只要 host 內有任何節點（包含換行空白、其他具名 slot 的元素之間的空白），
-          預設 slot 就視為已指派，fallback 不會顯示。
-        -->
         <slot></slot>${hasSlottedDescription ? nothing : this.description}
       </div>
       <div class="card__tags" part="tags" id="tags" ?hidden=${!hasTags}>
@@ -128,6 +124,9 @@ export class AuiCard extends LitElement {
       </div>
     `;
 
+    // 簡介不使用 slot 的 fallback 內容（見上方範本）：只要 host 內有任何節點（包含換行空白、其他具名 slot 的
+    // 元素之間的空白），預設 slot 就視為已指派，fallback 不會顯示。
+    // （說明寫在這裡而不是範本內的 HTML 註解，避免註解進入發布產物。）
     const classes = classMap({ card: true, 'card--hot': this.hot, 'card--link': isLink });
 
     if (!isLink) {

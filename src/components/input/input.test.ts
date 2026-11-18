@@ -450,6 +450,25 @@ describe('AuiInput (<aui-input>)', () => {
     });
   });
 
+  describe('validity after programmatic changes', () => {
+    it('reports validity synchronously after setting value', async () => {
+      const form = await fixture<HTMLFormElement>(html`
+        <form><aui-input name="q" required value="filled"></aui-input></form>
+      `);
+      const el = form.querySelector<AuiInput>('aui-input')!;
+      expect(form.checkValidity()).to.be.true;
+
+      el.value = '';
+      // 不等待渲染
+      expect(el.validity!.valueMissing, 'valueMissing right away').to.be.true;
+      expect(form.checkValidity()).to.be.false;
+
+      el.value = 'again';
+      expect(el.validity!.valid).to.be.true;
+      expect(form.checkValidity()).to.be.true;
+    });
+  });
+
   describe('implicit submission (Enter)', () => {
     /** 表單與送出次數；submit 一律 preventDefault 以免頁面導走 */
     async function formWith(content: unknown) {

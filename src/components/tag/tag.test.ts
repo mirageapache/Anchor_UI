@@ -92,7 +92,9 @@ describe('AuiTag (<aui-tag>)', () => {
     const removeBtn = el.shadowRoot?.querySelector<HTMLButtonElement>('.tag__remove');
     expect(removeBtn).to.exist;
     expect(removeBtn?.getAttribute('aria-label')).to.equal('移除標籤');
-    expect(removeBtn?.getAttribute('title')).to.equal('移除標籤');
+    // 提示文字在 SVG 的 <title>；按鈕本身不設 title，避免螢幕閱讀器重複念兩次
+    expect(removeBtn?.hasAttribute('title')).to.be.false;
+    expect(removeBtn?.querySelector('svg title')?.textContent).to.equal('移除標籤');
 
     const base = el.shadowRoot?.querySelector('.tag');
     expect(base?.classList.contains('tag--removable')).to.be.true;
@@ -109,7 +111,7 @@ describe('AuiTag (<aui-tag>)', () => {
     );
     const removeBtn = el.shadowRoot?.querySelector<HTMLButtonElement>('.tag__remove');
     expect(removeBtn?.getAttribute('aria-label')).to.equal('Delete item');
-    expect(removeBtn?.getAttribute('title')).to.equal('Delete item');
+    expect(removeBtn?.querySelector('svg title')?.textContent).to.equal('Delete item');
   });
 
   describe('interactive hover feedback', () => {
@@ -145,5 +147,18 @@ describe('AuiTag (<aui-tag>)', () => {
         }
       });
     }
+  });
+
+  it('does not repeat the click while Enter or Space is held down', async () => {
+    const el = await fixture<AuiTag>(html`<aui-tag interactive>Tag</aui-tag>`);
+    let clicks = 0;
+    el.addEventListener('click', () => clicks++);
+    const target = el.shadowRoot!.querySelector<HTMLElement>('[part="action"]')!;
+    for (const repeat of [false, true, true]) {
+      target.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', repeat, bubbles: true, composed: true }),
+      );
+    }
+    expect(clicks).to.equal(1);
   });
 });

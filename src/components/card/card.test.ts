@@ -44,6 +44,23 @@ describe('AuiCard (<aui-card>)', () => {
       expect(link.classList.contains('card--link')).to.be.true;
     });
 
+    it('reflects light DOM changes made while detached once reinserted', async () => {
+      const wrapper = await fixture<HTMLDivElement>(
+        html`<div><aui-card heading="X"></aui-card></div>`,
+      );
+      const el = wrapper.querySelector<AuiCard>('aui-card')!;
+      expect(part(el, 'tags')!.hidden).to.be.true;
+
+      el.remove();
+      const tag = document.createElement('span');
+      tag.slot = 'tags';
+      tag.textContent = 'new';
+      el.append(tag);
+      wrapper.append(el);
+      await el.updateComplete;
+      expect(part(el, 'tags')!.hidden, 'tags wrapper is shown').to.be.false;
+    });
+
     it('renders a static container for an unsafe href protocol', async () => {
       const el = await fixture<AuiCard>(html`<aui-card heading="X"></aui-card>`);
       for (const href of ['javascript:alert(1)', ' JavaScript:alert(1)', 'data:text/html,x']) {
