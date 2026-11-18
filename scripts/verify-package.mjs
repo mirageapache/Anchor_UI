@@ -285,9 +285,12 @@ function checkPublishedFiles(publishedFiles) {
   const leaked = publishedFiles.filter((p) =>
     /\.test\.|(^|\/)stories\/|(^|\/)test-utils\//.test(p),
   );
-  return leaked.length
+  const failures = leaked.length
     ? [`發布內容包含不應發布的檔案（${leaked.length} 個），例如：${leaked.slice(0, 3).join(', ')}`]
     : [];
+  // TASK-409：授權檔須隨套件發布（npm pack 一律收錄根目錄的 LICENSE）
+  if (!publishedFiles.includes('LICENSE')) failures.push('發布內容缺少 LICENSE');
+  return failures;
 }
 
 // ── 6. 外部相依 ──

@@ -403,3 +403,9 @@ import '@fontsource/jetbrains-mono/400.css';
 - [樣式系統與 Design Tokens 字典 (`design-system.md`)](file:///c:/Users/user/Documents/my_repo/Anchor_UI/doc/design-system.md)
 - [共用元件規格清單 (`anchor-ui-components-list.md`)](file:///c:/Users/user/Documents/my_repo/Anchor_UI/doc/anchor-ui-components-list.md)
 - [開發排程與里程碑 (`anchor-ui-development-schedule.md`)](file:///c:/Users/user/Documents/my_repo/Anchor_UI/doc/anchor-ui-development-schedule.md)
+
+---
+
+## 授權 (License)
+
+本專案以 [MIT License](./LICENSE) 授權，Copyright (c) 2026 mirageapache。發布的套件（GitHub Release 的 tarball）也附有同一份 `LICENSE`。

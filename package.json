@@ -200,7 +200,7 @@
     "design-system",
     "design-tokens"
   ],
-  "author": "",
+  "author": "mirageapache",
   "license": "MIT",
   "dependencies": {
     "@floating-ui/dom": "^1.8.0",
