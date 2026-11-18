@@ -7,7 +7,9 @@
   box-shadow: 0 0 0 4px color-mix(in srgb, var(--color-brand-500) 25%, transparent);
 }
 
+/* 滑鼠點擊等非鍵盤聚焦：只移除瀏覽器預設的 outline。                    */
+/* 不重設 box-shadow：光暈只在 :focus-visible 套用，這裡重設會把使用端元素 */
+/* 自己的陰影（卡片、按鈕的立體感）在點擊後一併清掉。                      */
 :focus:not(:focus-visible) {
   outline: none;
-  box-shadow: none;
 }

@@ -76,6 +76,11 @@
   `active` 屬性維持使用端設定的值。先前成功時 `active` 會變成 `true`、回饋結束後一律重設為 `false`；
   以 `[active]` 選取成功狀態的樣式請改用 `[status='success']`。
 - **`<aui-icon-button>` 下載同源檔案不再導走頁面**：未設定 `download-filename` 時也一律以下載處理。
+- **連結只接受安全的協定**：`<aui-card href>`、`<aui-navbar brand-href>` 與 `<aui-footer>` 的 `columns[].links[].href`
+  只接受 http(s)、`mailto:`、`tel:` 與相對路徑。其他協定（`javascript:`、`data:` 等）不會輸出 `href`，
+  該元素顯示為沒有連結的內容。
+- **全域樣式（`styles.css`）不再清除非鍵盤聚焦元素的 `box-shadow`**：先前滑鼠點擊可聚焦的元素後，
+  它自己的陰影會消失到失焦為止。若專案依賴這個行為來移除點擊後的陰影，請自行加上樣式。
 
 ### `0.3.0-beta` / `0.3.0`
 
