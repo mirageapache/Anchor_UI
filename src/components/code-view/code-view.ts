@@ -1,10 +1,14 @@
 import { LitElement, html, nothing, type PropertyValues } from 'lit';
 import { property, state } from 'lit/decorators.js';
+import { repeat } from 'lit/directives/repeat.js';
 import { styleMap } from 'lit/directives/style-map.js';
 import { codeViewStyles } from './code-view.styles.js';
 import { computeFoldRanges, maxColumns, splitLines } from './fold-ranges.js';
 
-/** 每個分段的行數：分段以 content-visibility: auto 讓瀏覽器略過畫面外的排版與繪製 */
+/**
+ * 每個分段涵蓋的原始行數：分段以 content-visibility: auto 讓瀏覽器略過畫面外的排版與繪製。
+ * 以原始行號分段（第 0–199 行為第 0 段…），摺疊只會改變受影響分段的內容，其餘分段的 DOM 不變
+ */
 const CHUNK_SIZE = 200;
 
 /** 摺疊鈕的箭頭（展開時朝下、摺疊時朝右，由 CSS 旋轉） */
@@ -76,8 +80,7 @@ export class AuiCodeView extends LitElement {
   }
 
   private setCollapsed(collapsed: Set<number>): void {
-    const focused = this.renderRoot.querySelector?.(':focus');
-    this.refocusFold = !!focused?.matches('.code-view__fold');
+    this.refocusFold = !!this.shadowRoot?.activeElement?.matches('.code-view__fold');
     this.collapsed = collapsed;
   }
 
@@ -115,9 +118,10 @@ export class AuiCodeView extends LitElement {
     this.activeFold = start;
   }
 
-  private handleFoldClick = (event: Event) => {
-    const start = Number((event.currentTarget as HTMLElement).dataset.line);
-    this.toggleFold(start);
+  /** 摺疊鈕的點擊：委派在捲動容器上（萬行內容可能有數千個摺疊鈕，不逐一綁定監聽） */
+  private handleClick = (event: Event) => {
+    const button = (event.target as Element).closest?.<HTMLElement>('.code-view__fold');
+    if (button) this.toggleFold(Number(button.dataset.line));
   };
 
   /** 摺疊鈕之間的鍵盤移動（roving tabindex） */
@@ -153,7 +157,6 @@ export class AuiCodeView extends LitElement {
             tabindex=${i === activeFold ? 0 : -1}
             aria-expanded=${String(!isCollapsed)}
             aria-label=${`第 ${i + 1}–${end + 1} 行`}
-            @click=${this.handleFoldClick}
           >
             ${chevron}
           </button>`;
@@ -178,9 +181,12 @@ export class AuiCodeView extends LitElement {
       visible.includes(this.activeFold) && this.foldRanges.has(this.activeFold)
         ? this.activeFold
         : (visible.find((i) => this.foldRanges.has(i)) ?? -1);
-    const chunks: number[][] = [];
-    for (let i = 0; i < visible.length; i += CHUNK_SIZE) {
-      chunks.push(visible.slice(i, i + CHUNK_SIZE));
+    // 依原始行號分段；整段都被摺疊時不產生分段
+    const chunks: Array<{ index: number; lines: number[] }> = [];
+    for (const i of visible) {
+      const index = Math.floor(i / CHUNK_SIZE);
+      if (chunks.at(-1)?.index !== index) chunks.push({ index, lines: [] });
+      chunks.at(-1)!.lines.push(i);
     }
     // 行號欄寬依總行數的位數；內容寬度以最長一行估算（分段的繪製範圍會裁切超出的部分）
     const digits = Math.max(2, String(this.lines.length).length);
@@ -197,18 +203,24 @@ export class AuiCodeView extends LitElement {
         aria-label=${this.label}
         tabindex="0"
         @keydown=${this.handleKeydown}
+        @click=${this.handleClick}
       >
         <div class="code-view__content" style=${content}>
-          ${chunks.map(
-            (chunk) => html`
-              <div
-                class="code-view__chunk"
-                style=${styleMap({ '--aui-code-view-lines': String(chunk.length) })}
-              >
-                ${chunk.map((i) => this.renderLine(i, activeFold))}
-              </div>
-            `,
-          )}
+          ${
+            // 以分段編號為 key：某一段因摺疊而消失或出現時，其餘分段的 DOM 維持不動
+            repeat(
+              chunks,
+              (chunk) => chunk.index,
+              (chunk) => html`
+                <div
+                  class="code-view__chunk"
+                  style=${styleMap({ '--aui-code-view-lines': String(chunk.lines.length) })}
+                >
+                  ${chunk.lines.map((i) => this.renderLine(i, activeFold))}
+                </div>
+              `,
+            )
+          }
         </div>
       </div>
     `;

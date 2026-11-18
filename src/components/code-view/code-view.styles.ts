@@ -1,4 +1,5 @@
 import { css } from 'lit';
+import { TAB_SIZE } from './fold-ranges.js';
 
 export const codeViewStyles = css`
   /*
@@ -19,7 +20,7 @@ export const codeViewStyles = css`
     font-size: var(--text-sm, 0.875rem);
     line-height: var(--leading-normal, 1.5);
     color: var(--color-text-primary, #0f172a);
-    tab-size: 4; /* 須與 fold-ranges.ts 的 TAB_SIZE 一致 */
+    tab-size: ${TAB_SIZE}; /* 與摺疊、寬度估算使用同一個值 */
     background: var(--color-surface, #f1f5f9);
     border: 1px solid var(--color-border, #e2e8f0);
     border-radius: var(--radius-md, 8px);

@@ -3,7 +3,7 @@
  * 純函式，不依賴 DOM；行號一律為 0 起算的陣列索引。
  */
 
-/** Tab 的顯示寬度（須與 code-view.styles.ts 的 tab-size 一致） */
+/** Tab 的顯示寬度（code-view.styles.ts 的 tab-size 取自此值） */
 export const TAB_SIZE = 4;
 
 /** 拆成行；結尾的單一換行不產生額外的空行（與編輯器開啟檔案時相同） */

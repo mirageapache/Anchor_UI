@@ -248,6 +248,36 @@ describe('AuiCodeView (<aui-code-view>)', () => {
   });
 
   describe('ten thousand lines', () => {
+    it('folding only touches the chunk it happens in', async () => {
+      // 分段依原始行號劃分：在開頭摺疊時，後面分段的 DOM 節點與內容都不變
+      const blocks = Array.from({ length: 150 }, (_, i) => `block ${i}\n  a\n  b\n  c`);
+      const el = await fixture<AuiCodeView>(html`<aui-code-view></aui-code-view>`);
+      el.code = blocks.join('\n');
+      await el.updateComplete;
+      const chunks = () => [...el.shadowRoot!.querySelectorAll<HTMLElement>('.code-view__chunk')];
+      const before = chunks();
+      expect(before.length).to.equal(3);
+      const firstLines = before.map((chunk) => chunk.firstElementChild);
+      const texts = before.map((chunk) => chunk.textContent);
+
+      el.shadowRoot!.querySelector<HTMLButtonElement>('.code-view__fold')!.click();
+      await el.updateComplete;
+      const after = chunks();
+      expect(after.length).to.equal(3);
+      expect(after[0].textContent).to.not.equal(texts[0]);
+      for (const i of [1, 2]) {
+        expect(after[i] === before[i], `chunk ${i} element is reused`).to.be.true;
+        expect(after[i].firstElementChild === firstLines[i], `chunk ${i} lines stay`).to.be.true;
+        expect(after[i].textContent, `chunk ${i} content`).to.equal(texts[i]);
+      }
+
+      // 整段都被摺疊時該分段消失，其餘分段仍是原本的節點
+      el.foldAll();
+      el.unfoldAll();
+      await el.updateComplete;
+      expect(chunks().length).to.equal(3);
+    });
+
     it('renders every line but skips the layout of off-screen chunks', async () => {
       const code = bigJson();
       const total = code.split('\n').length;
