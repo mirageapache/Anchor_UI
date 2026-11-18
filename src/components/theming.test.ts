@@ -96,6 +96,13 @@ const cases: Case[] = [
     token: '--color-base',
   },
   {
+    tag: 'aui-navbar',
+    template: html`<aui-navbar brand="Navbar"></aui-navbar>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.navbar')!,
+    property: 'backgroundColor',
+    token: '--color-base',
+  },
+  {
     tag: 'aui-alert',
     template: html`<aui-alert heading="Alert" message="Body"></aui-alert>`,
     inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.alert__title')!,

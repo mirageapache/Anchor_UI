@@ -29,6 +29,7 @@ const ALLOWED_COMPONENT_DEPS = {
   field: ['icon-button'],
   alert: ['button', 'input', 'modal'],
   header: ['favorite-btn', 'tag'],
+  navbar: ['kbd'],
 };
 
 // ── 共用工具 ──

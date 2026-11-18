@@ -10,7 +10,7 @@ import { listComponents } from './scripts/components.mjs';
 
 /** 各入口的體積基準（bytes，gzip；TASK-202 建立於 2026-10-09） */
 const BASELINES = {
-  index: 47682, // Phase 4 Drawer（Phase 3 的 6 款元件與 Toast 位置設定後為 45950；Phase 2 結束時 35507，Phase 1 為 20838）
+  index: 51400, // Phase 4 Drawer、Navbar（Drawer 後為 47682；Phase 3 的 6 款元件與 Toast 位置設定後為 45950；Phase 2 結束時 35507，Phase 1 為 20838）
   button: 3189,
   'icon-button': 16704, // 含相依的 Tooltip 與 @floating-ui/dom
   tag: 3390,
@@ -29,6 +29,7 @@ const BASELINES = {
   header: 6503, // TASK-305
   kbd: 1494, // TASK-306
   drawer: 5150, // TASK-402（與 Modal 共用 internal/modal-dialog）
+  navbar: 6096, // TASK-403（含相依的 Kbd）
 };
 
 const TOLERANCE = 0.1;

@@ -1599,6 +1599,8 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
 
 獨立的站台頂部導覽列元件（Site Header），固定或吸頂於視窗上方（高度 64px）。整合品牌 Logo（含 Accent 亮點圓點）、自訂導覽選單插槽、快捷搜尋觸發鈕（內嵌 `⌘K` 鍵帽）與深淺主題切換開關，漢堡選單按鈕可與 Drawer 連動開闔：
 
+實作要點（`<aui-navbar>`）：吸附（`position: sticky`）設在 host 上，`position="fixed" | "static"` 可切換，頁面捲動後加上 `--shadow-sm` 陰影；響應式斷點以 Navbar 自身寬度（container query）判斷，寬度小於 768px 時隱藏導覽選單、顯示漢堡選單鈕，搜尋鈕只留圖示。漢堡選單以 `menu-drawer` 指定 `<aui-drawer>` 的 id；搜尋鈕點擊或按下 ⌘K（其他平台 Ctrl+K）時分派 `aui-search`；主題開關（`role="switch"`）分派可取消的 `aui-theme-change` 後以 `setTheme()` 切換。
+
 ```scss
 /* ─── 5.10 頂部導覽列 (Navbar: <aui-navbar>) ─── */
 .navbar {
@@ -1669,7 +1671,7 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary); // muted 在 surface 底上未達 WCAG AA 4.5:1
   font-size: var(--text-xs);
   cursor: pointer;
   transition:
@@ -1678,7 +1680,7 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
 
   &:hover {
     border-color: var(--color-brand-500);
-    color: var(--color-text-secondary);
+    color: var(--color-text-primary);
   }
 }
 

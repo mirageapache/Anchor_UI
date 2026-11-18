@@ -63,6 +63,10 @@
       "types": "./dist/components/modal/index.d.ts",
       "import": "./dist/components/modal/index.js"
     },
+    "./navbar": {
+      "types": "./dist/components/navbar/index.d.ts",
+      "import": "./dist/components/navbar/index.js"
+    },
     "./output": {
       "types": "./dist/components/output/index.d.ts",
       "import": "./dist/components/output/index.js"
@@ -117,6 +121,8 @@
     "./dist/components/kbd/kbd.js",
     "./dist/components/modal/index.js",
     "./dist/components/modal/modal.js",
+    "./dist/components/navbar/index.js",
+    "./dist/components/navbar/navbar.js",
     "./dist/components/output/index.js",
     "./dist/components/output/output.js",
     "./dist/components/segmented/index.js",

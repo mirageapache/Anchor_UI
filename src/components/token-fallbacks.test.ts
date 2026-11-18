@@ -13,6 +13,7 @@ import { AuiIconButton } from './icon-button/icon-button.js';
 import { AuiInput } from './input/input.js';
 import { AuiKbd } from './kbd/kbd.js';
 import { AuiModal } from './modal/modal.js';
+import { AuiNavbar } from './navbar/navbar.js';
 import { AuiOutput } from './output/output.js';
 import { AuiSegmented } from './segmented/segmented.js';
 import { AuiTag } from './tag/tag.js';
@@ -116,6 +117,7 @@ describe('Design token fallbacks', () => {
     'aui-output': AuiOutput,
     'aui-segmented': AuiSegmented,
     'aui-modal': AuiModal,
+    'aui-navbar': AuiNavbar,
     'aui-alert': AuiAlert,
     'aui-toast': AuiToast,
     'aui-card': AuiCard,
