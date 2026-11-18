@@ -1697,6 +1697,8 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
 
 獨立的站台通用頁尾元件，置於專案頁面最底層。提供統一風格的版權宣告（Copyright）、專案版本資訊、社群/GitHub 快速連結與次要選單插槽，支援 Minimal 與 Columns 排版插槽：
 
+實作要點（`<aui-footer>`）：沒有 `columns` 時為 Minimal，以 property 設定 `columns`（`[{ heading, links: [{ label, href, external? }] }]`）時為 Columns；`copyright-holder` 自動帶入今年（`copyright-since` 早於今年時顯示範圍），`links` slot 放次要選單、`social` slot 放社群連結。響應式斷點以 Footer 自身寬度（container query）判斷，小於 640px 時版權列直向堆疊。文字色改用 `--color-text-secondary`：`--color-text-muted` 在 `--color-surface` 底上對比約 4.4:1，未達 WCAG AA。
+
 ```scss
 /* ─── 5.11 通用頁尾 (Footer: <aui-footer>) ─── */
 .footer {

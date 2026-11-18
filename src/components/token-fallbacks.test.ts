@@ -8,6 +8,7 @@ import { AuiDrawer } from './drawer/drawer.js';
 import { AuiDropzone } from './dropzone/dropzone.js';
 import { AuiFavoriteBtn } from './favorite-btn/favorite-btn.js';
 import { AuiField } from './field/field.js';
+import { AuiFooter } from './footer/footer.js';
 import { AuiHeader } from './header/header.js';
 import { AuiIconButton } from './icon-button/icon-button.js';
 import { AuiInput } from './input/input.js';
@@ -114,6 +115,7 @@ describe('Design token fallbacks', () => {
     'aui-tooltip': AuiTooltip,
     'aui-input': AuiInput,
     'aui-field': AuiField,
+    'aui-footer': AuiFooter,
     'aui-output': AuiOutput,
     'aui-segmented': AuiSegmented,
     'aui-modal': AuiModal,

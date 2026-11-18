@@ -103,6 +103,13 @@ const cases: Case[] = [
     token: '--color-base',
   },
   {
+    tag: 'aui-footer',
+    template: html`<aui-footer copyright-holder="Footer"></aui-footer>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.footer')!,
+    property: 'backgroundColor',
+    token: '--color-surface',
+  },
+  {
     tag: 'aui-alert',
     template: html`<aui-alert heading="Alert" message="Body"></aui-alert>`,
     inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.alert__title')!,
