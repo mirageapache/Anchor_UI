@@ -16,6 +16,8 @@ allowBuilds:
   'esbuild': true
   'lmdb': true
   'msgpackr-extract': true
+  # @custom-elements-manifest/analyzer 經 find-dependencies 使用；原生程式由平台專屬的可選依賴提供，不需執行其 postinstall
+  'rs-module-lexer': false
 
 # 整個 workspace 鎖定 TypeScript 5.8：examples/angular 使用的 @angular/compiler-cli 19.2
 # 其 peerDependencies 要求 typescript ">=5.5 <5.9"。升級 Angular 後可一併解除此限制。

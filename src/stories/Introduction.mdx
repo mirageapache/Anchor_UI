@@ -1,0 +1,62 @@
+import { Meta } from '@storybook/addon-docs/blocks';
+
+<Meta title="快速開始" />
+
+# Anchor UI
+
+以 [Lit](https://lit.dev/) 實作的跨框架 Web Component 元件庫：一份元件可直接用在 Vue 3、Angular、React 或純 HTML 專案。
+樣式由 Design Tokens（CSS 變數）驅動，`<html data-theme="dark">` 切換深色主題。
+
+- **左側選單**：每個元件都有一頁 **Docs**（說明、所有範例與 API 表），以及可互動調整的 stories。
+- **API 表**由元件原始碼的註解自動產生，列出屬性（property，並註明對應的 HTML attribute）、方法、事件、slot、CSS part，以及元件提供的 CSS 變數。
+- 右上角的主題切換可預覽深淺兩種主題。
+
+## 安裝
+
+套件透過 [GitHub Releases](https://github.com/mirageapache/Anchor_UI/releases) 的 tarball 發布，以網址安裝
+（把 `<版本>` 換成 Releases 頁面上的版本，例如 `1.0.0`）：
+
+```bash
+npm install https://github.com/mirageapache/Anchor_UI/releases/download/v<版本>/anchor-ui-core-<版本>.tgz
+```
+
+需要打包工具（Vite、Angular CLI、webpack 等）；`lit` 與 `@floating-ui/dom` 會一併安裝。
+
+## 載入樣式與註冊元件
+
+```ts
+// 應用程式進入點
+import '@anchor-ui/core/styles.css'; // Design Tokens + 基礎樣式（已有自己的 reset 時改用 tokens.css）
+
+// 按需載入（推薦）：只註冊用到的元件
+import '@anchor-ui/core/button';
+import '@anchor-ui/core/modal';
+
+// 或全量載入所有元件
+import '@anchor-ui/core';
+```
+
+```html
+<aui-button variant="primary">儲存</aui-button>
+```
+
+字型檔不隨套件提供，請自行載入 Inter 與 JetBrains Mono（否則退回系統字型）。
+
+## 搭配框架
+
+- **Vue 3**：在 `vite.config.ts` 以 `compilerOptions.isCustomElement` 排除 `aui-` 開頭的標籤；表單元件可直接用 `v-model`。
+- **Angular**：使用 `aui-` 標籤的元件加上 `CUSTOM_ELEMENTS_SCHEMA`；表單元件的 `[(ngModel)]` / `[formControl]` 需加 `ngDefaultControl`。
+
+完整步驟（含設定範例、表單綁定與測試注意事項）見
+[README 的「在其他專案中導入」](https://github.com/mirageapache/Anchor_UI#在其他專案中導入-installation)，
+升級時見 [升級遷移手冊](https://github.com/mirageapache/Anchor_UI/blob/main/doc/anchor-ui-upgrade-guide.md)。
+
+## 慣例
+
+- **事件**：自訂事件都以 `aui-` 開頭，且會冒泡並穿出 Shadow DOM。浮層元件（Modal、Drawer、Tooltip）的
+  `aui-show` / `aui-hide` 可呼叫 `preventDefault()` 取消；只處理元件自身的事件時，先比對
+  `event.target === event.currentTarget`（內層元件的同名事件也會傳上來）。
+- **樣式客製**：以 `::part(...)` 調整元件內部（各元件的 CSS part 列在 API 表中），或覆寫 Design Token 的 CSS 變數。
+- **預設為 true 的選項**：在 HTML 中以 `close-on-escape="false"` 的形式關閉。
+- **主題**：`setTheme('dark')` / `toggleTheme()`（由全量入口 `@anchor-ui/core` 匯出），或直接設定
+  `document.documentElement.dataset.theme = 'dark'`。

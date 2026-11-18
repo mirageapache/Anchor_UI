@@ -40,6 +40,8 @@ import {
  */
 const meta: Meta = {
   title: 'Scenarios/Tool Page',
+  // 不是單一元件，不產生自動的 Docs 頁（API 表）
+  tags: ['!autodocs'],
   parameters: {
     layout: 'fullscreen',
     docs: {
