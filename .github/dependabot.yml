@@ -20,6 +20,9 @@
 # - smoke/vue3、smoke/angular 的 package-lock.json（TASK-307 冒煙測試專案，以 npm ci --ignore-scripts 安裝）：
 #   升級相依時於該目錄執行 npm install --package-lock-only 後提交
 #
+# 冷卻期（cooldown）：新版本發布滿 7 天才開 PR。剛發布就被植入惡意程式的版本通常在數天內被下架，
+# runtime 相依的更新又會以 fix(deps) 自動進入 release PR，因此不追最新的版本（安全性更新不受冷卻期限制）。
+#
 # PR 目標為 develop（與一般開發相同，經 develop → main 的 PR 執行完整 CI）。
 version: 2
 updates:
@@ -28,6 +31,8 @@ updates:
     target-branch: develop
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     groups:
       github-actions:
         patterns: ['*']
@@ -40,6 +45,8 @@ updates:
     target-branch: develop
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     groups:
       # 須排在 development 之前：一個相依只會歸入第一個符合的群組
@@ -66,6 +73,8 @@ updates:
     target-branch: develop
     schedule:
       interval: weekly
+    cooldown:
+      default-days: 7
     open-pull-requests-limit: 5
     groups:
       examples:
