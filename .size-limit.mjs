@@ -10,7 +10,7 @@ import { listComponents } from './scripts/components.mjs';
 
 /** 各入口的體積基準（bytes，gzip；TASK-202 建立於 2026-10-09） */
 const BASELINES = {
-  index: 45950, // Phase 3 的 6 款元件與 Toast 位置設定（Phase 2 結束時 35507，Phase 1 為 20838）
+  index: 47682, // Phase 4 Drawer（Phase 3 的 6 款元件與 Toast 位置設定後為 45950；Phase 2 結束時 35507，Phase 1 為 20838）
   button: 3189,
   'icon-button': 16704, // 含相依的 Tooltip 與 @floating-ui/dom
   tag: 3390,
@@ -19,7 +19,7 @@ const BASELINES = {
   field: 18058, // 含相依的 Icon Button、Tooltip 與 @floating-ui/dom
   output: 2501,
   segmented: 3722,
-  modal: 4531,
+  modal: 5021, // 開關生命週期抽出為與 Drawer 共用的 internal/modal-dialog（+63；重構前實測 4958，原基準 4531）
   alert: 11141, // 含相依的 Modal、Button 與 Input
   toast: 6437, // 新增 placement（六種位置與對應的堆疊、動畫方向；原 5750）
   card: 3384, // TASK-301
@@ -28,6 +28,7 @@ const BASELINES = {
   'favorite-btn': 2423, // TASK-304
   header: 6503, // TASK-305
   kbd: 1494, // TASK-306
+  drawer: 5150, // TASK-402（與 Modal 共用 internal/modal-dialog）
 };
 
 const TOLERANCE = 0.1;

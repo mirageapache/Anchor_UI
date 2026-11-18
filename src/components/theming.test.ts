@@ -89,6 +89,13 @@ const cases: Case[] = [
     token: '--color-base',
   },
   {
+    tag: 'aui-drawer',
+    template: html`<aui-drawer heading="Drawer">Body</aui-drawer>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.drawer__panel')!,
+    property: 'backgroundColor',
+    token: '--color-base',
+  },
+  {
     tag: 'aui-alert',
     template: html`<aui-alert heading="Alert" message="Body"></aui-alert>`,
     inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.alert__title')!,

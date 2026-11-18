@@ -392,6 +392,7 @@
   --shadow-popover: 0 4px 12px rgb(0 0 0 / 28%); // 浮層氣泡（Tooltip）
   --shadow-modal: 0 25px 50px -12px rgb(0 0 0 / 35%); // 模態對話框（Modal、Alert）
   --shadow-toast: 0 10px 25px -5px rgb(0 0 0 / 15%); // 浮動通知卡片（Toast）
+  --shadow-drawer: 0 8px 30px rgb(0 0 0 / 25%); // 側邊抽屜面板（Drawer）
 }
 ```
 
@@ -1521,91 +1522,74 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
 
 ### 5.9 可收合抽屜側邊欄 (Drawer)
 
-獨立的可收合側邊欄元件（Off-canvas Drawer），不綁死特定的頁面整體版型 Layout，各專案可自由嵌入。常用於行動端滑入選單、側邊過濾面板或操作設定欄。支援左右滑出方向（`placement="left" | "right"`）、背景遮罩與捲動鎖定：
+獨立的可收合側邊欄元件（Off-canvas Drawer），不綁死特定的頁面整體版型 Layout，各專案可自由嵌入。常用於行動端滑入選單、側邊過濾面板或操作設定欄。支援左右滑出方向（`placement="left" | "right"`，預設 `left`）、背景遮罩與捲動鎖定。
+
+與 Modal 相同以原生 `<dialog>.showModal()` 進入 Top Layer（不需要 `z-index`，背景自動 inert），開關的生命週期與 Modal 共用（`src/internal/modal-dialog.ts`）。面板寬度以 `--aui-drawer-width` 調整，頁首與 Navbar 同高（`--nav-height`）：
 
 ```scss
 /* ─── 5.9 可收合抽屜側邊欄 (Drawer: <aui-drawer>) ─── */
-.drawer-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 900;
-  background: rgba(15, 23, 42, 0.5);
+.drawer::backdrop {
+  background: var(--color-backdrop);
   backdrop-filter: blur(2px);
-  animation: drawer-fade-in 0.2s ease-out;
+  transition: opacity 200ms ease-out; // 進場由 @starting-style 從 opacity: 0 開始
 }
 
-.drawer {
-  position: fixed;
+.drawer__panel {
+  position: absolute;
   top: 0;
   bottom: 0;
-  z-index: 950;
-  width: 280px;
-  max-width: 85vw;
-  height: 100dvh;
   display: flex;
   flex-direction: column;
+  width: var(--aui-drawer-width, 280px);
+  max-width: 85%;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--color-base);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-  transition: transform var(--transition-theme);
+  box-shadow: var(--shadow-drawer);
+  transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1);
 
-  // 方向支援
-  &--left,
-  &[placement='left'] {
+  // 方向支援：進場從所在側滑入（@starting-style），退場滑回同一側
+  &--left {
     left: 0;
     border-right: 1px solid var(--color-border);
-    transform: translateX(-100%);
-
-    &.is-open {
-      transform: translateX(0);
-    }
+    --aui-drawer-offscreen: -100%;
   }
 
-  &--right,
-  &[placement='right'] {
+  &--right {
     right: 0;
     border-left: 1px solid var(--color-border);
-    transform: translateX(100%);
-
-    &.is-open {
-      transform: translateX(0);
-    }
+    --aui-drawer-offscreen: 100%;
   }
 }
 
-.drawer-header {
+.drawer--leaving .drawer__panel {
+  transform: translateX(var(--aui-drawer-offscreen));
+}
+
+.drawer__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   min-height: var(--nav-height);
-  padding: 0 var(--space-lg);
+  padding: var(--space-sm) var(--space-lg);
   border-bottom: 1px solid var(--color-border);
-
-  .drawer-title {
-    font-size: var(--text-base);
-    font-weight: var(--weight-semibold);
-    color: var(--color-text-primary);
-  }
 }
 
-.drawer-body {
+.drawer__title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.drawer__body {
   flex: 1 1 auto;
   padding: var(--space-md) var(--space-lg);
   overflow-y: auto;
 }
 
-.drawer-footer {
+.drawer__footer {
   padding: var(--space-md) var(--space-lg);
   border-top: 1px solid var(--color-border);
   background: var(--color-surface);
-}
-
-@keyframes drawer-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 ```
 
