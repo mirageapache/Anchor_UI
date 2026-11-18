@@ -1,7 +1,8 @@
+import { defineConfig } from 'eslint/config';
 import tseslint from 'typescript-eslint';
 import litPlugin from 'eslint-plugin-lit';
 
-export default tseslint.config(
+export default defineConfig(
   {
     // Ignore build output, generated files, and Storybook static output.
     // Config files (vite.config.ts, eslint.config.js, etc.) are intentionally NOT excluded

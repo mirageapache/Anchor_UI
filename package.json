@@ -154,7 +154,7 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && pnpm build:tokens",
+    "build": "tsc --noEmit && vite build && pnpm build:tokens",
     "build:tokens": "sass src/tokens/index.scss dist/tokens.css --style=compressed --no-source-map",
     "verify:package": "node scripts/verify-package.mjs",
     "sync:package": "node scripts/sync-package-entries.mjs",

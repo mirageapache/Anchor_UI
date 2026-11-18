@@ -43,6 +43,23 @@ test('collects every package version in the runtime dependency tree', () => {
   ]);
 });
 
+test('includes the optional dependencies of the root project', () => {
+  const withOptional = [
+    {
+      name: '@anchor-ui/core',
+      dependencies: { lit: { version: '3.3.3' } },
+      optionalDependencies: {
+        fsevents: { version: '2.3.3', dependencies: { nan: { version: '2.0.0' } } },
+      },
+    },
+  ];
+  assert.deepEqual([...collectRuntimePackages(withOptional, '@anchor-ui/core')].sort(), [
+    'fsevents@2.3.3',
+    'lit@3.3.3',
+    'nan@2.0.0',
+  ]);
+});
+
 test('keeps only advisories whose affected version is in the runtime tree', () => {
   const audit = {
     advisories: {

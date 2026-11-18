@@ -24,7 +24,8 @@ const packageKey = (name, version) => `${name}@${version}`;
 /**
  * 由 `pnpm ls --prod --json --depth Infinity` 的結果收集根專案 runtime 相依樹中的所有套件版本。
  * 在 workspace 根目錄執行時結果也包含其他 workspace 專案（examples），只取名稱為 `rootName` 者。
- * @param {Array<{ name?: string, dependencies?: Record<string, unknown> }>} lsResult
+ * 根專案的 optionalDependencies 也會安裝到使用端，一併計入。
+ * @param {Array<{ name?: string, dependencies?: Record<string, unknown>, optionalDependencies?: Record<string, unknown> }>} lsResult
  * @param {string} rootName 根目錄 package.json 的 name
  * @returns {Set<string>} `name@version`
  */
@@ -41,6 +42,7 @@ export function collectRuntimePackages(lsResult, rootName) {
   const root = lsResult.find((project) => project.name === rootName);
   if (!root) throw new Error(`pnpm ls 的結果中找不到 ${rootName}`);
   visit(root.dependencies);
+  visit(root.optionalDependencies);
   return packages;
 }
 
