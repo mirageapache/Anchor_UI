@@ -4,6 +4,7 @@ import { AuiAccordion } from './accordion/accordion.js';
 import { AuiAlert } from './alert/alert.js';
 import { AuiButton } from './button/button.js';
 import { AuiCard } from './card/card.js';
+import { AuiCodeView } from './code-view/code-view.js';
 import { AuiDrawer } from './drawer/drawer.js';
 import { AuiDropzone } from './dropzone/dropzone.js';
 import { AuiFavoriteBtn } from './favorite-btn/favorite-btn.js';
@@ -123,6 +124,7 @@ describe('Design token fallbacks', () => {
     'aui-alert': AuiAlert,
     'aui-toast': AuiToast,
     'aui-card': AuiCard,
+    'aui-code-view': AuiCodeView,
     'aui-accordion': AuiAccordion,
     'aui-drawer': AuiDrawer,
     'aui-dropzone': AuiDropzone,

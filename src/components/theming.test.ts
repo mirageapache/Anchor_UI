@@ -110,6 +110,13 @@ const cases: Case[] = [
     token: '--color-surface',
   },
   {
+    tag: 'aui-code-view',
+    template: html`<aui-code-view code="x = 1"></aui-code-view>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.code-view')!,
+    property: 'backgroundColor',
+    token: '--color-surface',
+  },
+  {
     tag: 'aui-alert',
     template: html`<aui-alert heading="Alert" message="Body"></aui-alert>`,
     inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('.alert__title')!,

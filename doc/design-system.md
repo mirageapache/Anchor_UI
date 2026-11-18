@@ -911,7 +911,9 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
 
 #### 2. IDE 風格程式碼預覽 (`.code-view`)
 
-支援 **Sticky 行號列**、**行展開/收折**、**水平捲動且行號不位移**：
+支援 **Sticky 行號列**、**行展開/收折**、**水平捲動且行號不位移**。
+
+實作要點（`<aui-code-view>`）：純文字、不做語法高亮；依縮排自動判斷可摺疊的區塊（與 VS Code 預設相同），摺疊鈕以 roving tabindex 組成一組（↑ / ↓ / Home / End 移動）。所有行都在 DOM 中，每 200 行一段並以 `content-visibility: auto` 略過畫面外的排版與繪製（13,602 行初次渲染約 120–170 ms，捲動維持每幀約 16.7 ms），內容寬度以最長一行的欄數估算，避免長行被分段的繪製範圍裁切。行號與摺疊鈕改用 `--color-text-secondary`：`--color-text-muted` 在 `--color-surface` 底上未達 WCAG AA。
 
 ```scss
 .code-view {

@@ -27,6 +27,10 @@
       "types": "./dist/components/card/index.d.ts",
       "import": "./dist/components/card/index.js"
     },
+    "./code-view": {
+      "types": "./dist/components/code-view/index.d.ts",
+      "import": "./dist/components/code-view/index.js"
+    },
     "./drawer": {
       "types": "./dist/components/drawer/index.d.ts",
       "import": "./dist/components/drawer/index.js"
@@ -107,6 +111,8 @@
     "./dist/components/button/button.js",
     "./dist/components/card/index.js",
     "./dist/components/card/card.js",
+    "./dist/components/code-view/index.js",
+    "./dist/components/code-view/code-view.js",
     "./dist/components/drawer/index.js",
     "./dist/components/drawer/drawer.js",
     "./dist/components/dropzone/index.js",
