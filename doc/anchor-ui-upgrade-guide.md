@@ -62,6 +62,21 @@
   一般使用不受影響；若專案自行繼承 `AuiModal` 並宣告了與基底同名的成員，需要改名。
 - **授權**：套件附上 MIT `LICENSE`。
 
+行為修正（多數專案不需要改動，下列情況請檢查）：
+
+- **`<aui-input>` 按 Enter 會送出表單**：單行輸入框現在與原生 `<input>` 相同，按 Enter 會送出所屬表單
+  （有送出按鈕時等同點擊它；沒有時僅在表單只有一個單行欄位時送出）。先前按 Enter 沒有反應。
+  若專案自行監聽 `keydown` 在 Enter 時送出，會變成送出兩次：移除自己的處理，或在監聽器中 `preventDefault()`。
+- **`<aui-button type="submit">` / `"reset"` 的表單動作改在點擊事件分派完畢後執行**：與原生按鈕相同，
+  在 `click` 監聽器中 `preventDefault()` 可以取消送出（先前擋不住）。
+  影響：呼叫 `button.click()` 之後，`submit` 事件不再同步觸發，而是在下一個 task；
+  測試中點擊後請等待一次（例如 `await new Promise((r) => setTimeout(r))`）再檢查結果。
+- **`<fieldset disabled>` 會停用其中的 `<aui-button>`**（先前只對 `<aui-input>`、`<aui-segmented>` 有效）。
+- **`<aui-icon-button>` 的 `active` 不再被回饋狀態改寫**：複製 / 下載成功時的高亮改由 `status="success"` 呈現，
+  `active` 屬性維持使用端設定的值。先前成功時 `active` 會變成 `true`、回饋結束後一律重設為 `false`；
+  以 `[active]` 選取成功狀態的樣式請改用 `[status='success']`。
+- **`<aui-icon-button>` 下載同源檔案不再導走頁面**：未設定 `download-filename` 時也一律以下載處理。
+
 ### `0.3.0-beta` / `0.3.0`
 
 新增功能，沒有不相容的變更（`0.3.0` 與 `0.3.0-beta` 內容相同）：

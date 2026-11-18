@@ -15,7 +15,7 @@ const BASELINES = {
   'icon-button': 16704, // 含相依的 Tooltip 與 @floating-ui/dom
   tag: 3390,
   tooltip: 10807, // 含 @floating-ui/dom（約 6 KB）
-  input: 3208,
+  input: 3622, // Enter 隱式送出表單（+414；原 3208）
   field: 18058, // 含相依的 Icon Button、Tooltip 與 @floating-ui/dom
   output: 2501,
   segmented: 3722,

@@ -26,6 +26,8 @@ export function query<T extends Element = HTMLElement>(root: ParentNode, selecto
 /** 點擊元件內部的原生 <button>（如 <aui-button>） */
 export async function clickButton(host: Element): Promise<void> {
   await userEvent.click(inShadow(host, 'button'));
+  // <aui-button type="submit"> 的表單動作是點擊的預設行為，事件分派完畢後（下一個 task）才執行
+  await new Promise((resolve) => setTimeout(resolve));
 }
 
 /** 在 <aui-input> 中輸入文字（點擊內部控制項後逐字輸入） */

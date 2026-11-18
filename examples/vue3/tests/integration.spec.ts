@@ -138,6 +138,8 @@ describe('Vue 3 + Anchor UI Integration Test Suite (TASK-107)', () => {
     it('submits the Vue form when <aui-button type="submit"> is clicked', async () => {
       await wrapper.find<HTMLInputElement>('#form-input').setValue('Submitted by aui-button');
       (wrapper.find('aui-button#form-submit-btn').element as AuiButton).click();
+      // 表單動作是點擊的預設行為，事件分派完畢後（下一個 task）才執行
+      await new Promise((resolve) => setTimeout(resolve));
       await nextTick();
 
       expect(wrapper.find('#form-result-text').text()).toContain('Submitted by aui-button');
@@ -413,6 +415,7 @@ describe('Vue 3 + Anchor UI Integration Test Suite (TASK-107)', () => {
 
       // 以 <aui-button type="submit"> 實際提交，而非直接分派 submit 事件
       (wrapper.find('aui-button#controls-submit-btn').element as AuiButton).click();
+      await new Promise((resolve) => setTimeout(resolve));
       await nextTick();
       const submitted = JSON.parse(wrapper.find('#submitted-data code').text()) as Record<
         string,

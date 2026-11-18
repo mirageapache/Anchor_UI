@@ -140,11 +140,13 @@ describe('Angular 19 + Anchor UI Integration Test Suite (TASK-108)', () => {
       expect(component.lastSubmittedValue).toBe('Custom Angular 19 Payload');
     });
 
-    it('submits the Angular form when <aui-button type="submit"> is clicked', () => {
+    it('submits the Angular form when <aui-button type="submit"> is clicked', async () => {
       component.inputValue = 'Submitted by aui-button';
       fixture.detectChanges();
 
       compiled.querySelector<AuiButton>('aui-button#form-submit-btn')!.click();
+      // 表單動作是點擊的預設行為，事件分派完畢後（下一個 task）才執行
+      await new Promise((resolve) => setTimeout(resolve));
       fixture.detectChanges();
 
       expect(component.lastSubmittedValue).toBe('Submitted by aui-button');
@@ -475,6 +477,7 @@ describe('Angular 19 + Anchor UI Integration Test Suite (TASK-108)', () => {
 
       // 以 <aui-button type="submit"> 實際提交，而非直接分派 submit 事件
       compiled.querySelector<AuiButton>('aui-button#controls-submit-btn')!.click();
+      await new Promise((resolve) => setTimeout(resolve));
       fixture.detectChanges();
       const submitted = JSON.parse(component.submittedData) as Record<string, string>;
       expect(submitted).toMatchObject({ mode: 'decode', text: 'payload' });
