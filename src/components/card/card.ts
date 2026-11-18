@@ -6,6 +6,7 @@ import { styleMap } from 'lit/directives/style-map.js';
 import { normalizeHeadingLevel, renderHeading } from '../../internal/heading.js';
 import { hasLightContent, LightContentController } from '../../internal/slot.js';
 import { cardStyles } from './card.styles.js';
+import { safeHref } from '../../internal/safe-href.js';
 import type { CardHeadingLevel, CardTarget } from './card.types.js';
 
 /**
@@ -50,7 +51,10 @@ export class AuiCard extends LitElement {
   @property({ type: String })
   description = '';
 
-  /** 連結網址；設定後（包含空字串，同原生 `<a href="">`）整張卡片成為連結 */
+  /**
+   * 連結網址；設定後（包含空字串，同原生 `<a href="">`）整張卡片成為連結。
+   * 只接受 http(s)、`mailto:`、`tel:` 與相對路徑，其他協定（如 `javascript:`）視為未設定
+   */
   @property({ type: String })
   href?: string;
 
@@ -85,7 +89,8 @@ export class AuiCard extends LitElement {
   }
 
   override render() {
-    const isLink = this.href != null;
+    const href = safeHref(this.href);
+    const isLink = href !== undefined;
     const lines = Number.isFinite(this.lines) && this.lines > 0 ? Math.floor(this.lines) : 0;
     const hasHeading = !!this.heading || hasLightContent(this, 'heading');
     const hasSlottedDescription = hasLightContent(this);
@@ -141,7 +146,7 @@ export class AuiCard extends LitElement {
       <a
         class=${classes}
         part="base"
-        href=${this.href ?? ''}
+        href=${href}
         target=${ifDefined(this.target)}
         rel=${ifDefined(rel)}
         aria-labelledby=${ifDefined(labelledBy)}

@@ -3,6 +3,7 @@ import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { normalizeHeadingLevel, renderHeading } from '../../internal/heading.js';
+import { safeHref } from '../../internal/safe-href.js';
 import { hasLightContent, LightContentController } from '../../internal/slot.js';
 import { footerStyles } from './footer.styles.js';
 import type { FooterColumn, FooterHeadingLevel, FooterLink } from './footer.types.js';
@@ -19,6 +20,8 @@ import type { FooterColumn, FooterHeadingLevel, FooterLink } from './footer.type
  *   `copyright-since` 早於今年時顯示為範圍（© 2024–2026）。要自訂整段內容時使用 `copyright` slot。
  * - **外部連結**：`columns` 中 `external` 的連結另開新視窗，並為輔助科技補上「（另開新視窗）」；
  *   放進 `links` / `social` slot 的外部連結請自行加上 `target` 與 `rel`。
+ * - **連結協定**：`columns` 的 `href` 只接受 http(s)、`mailto:`、`tel:` 與相對路徑；
+ *   其他協定（如 `javascript:`）不會輸出 `href`，該項目顯示為沒有連結的文字。
  *
  * 外層為 `<footer>`（contentinfo landmark），一個頁面只應放一個。
  *
@@ -95,11 +98,13 @@ export class AuiFooter extends LitElement {
   }
 
   private renderLink(link: FooterLink) {
+    // 資料可能來自使用端無法完全信任的來源：不安全的協定不輸出 href
+    const href = ifDefined(safeHref(link.href));
     return link.external
-      ? html`<a href=${link.href} target="_blank" rel="noopener noreferrer"
+      ? html`<a href=${href} target="_blank" rel="noopener noreferrer"
           >${link.label}<span class="sr-only">${this.externalLabel}</span></a
         >`
-      : html`<a href=${link.href}>${link.label}</a>`;
+      : html`<a href=${href}>${link.label}</a>`;
   }
 
   /** 框架可能綁定 null 等非陣列值，一律視為沒有欄位 */

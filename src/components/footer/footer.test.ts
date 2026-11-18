@@ -127,6 +127,33 @@ describe('AuiFooter (<aui-footer>)', () => {
       expect(getComputedStyle(bottom).borderTopWidth).to.equal('1px');
     });
 
+    it('renders links with an unsafe protocol as text without href', async () => {
+      const el = await fixture<AuiFooter>(html`<aui-footer></aui-footer>`);
+      el.columns = [
+        {
+          heading: '連結',
+          links: [
+            { label: 'script', href: 'javascript:alert(1)' },
+            { label: 'spaced', href: ' JavaScript:alert(1)', external: true },
+            { label: 'data', href: 'data:text/html,x' },
+            { label: 'mail', href: 'mailto:hi@example.com' },
+            { label: 'relative', href: '/docs' },
+          ],
+        },
+      ];
+      await el.updateComplete;
+      const links = [...el.shadowRoot!.querySelectorAll<HTMLAnchorElement>('.footer__list a')];
+      expect(links.map((a) => a.getAttribute('href'))).to.deep.equal([
+        null,
+        null,
+        null,
+        'mailto:hi@example.com',
+        '/docs',
+      ]);
+      // 文字仍然顯示
+      expect(links[0].textContent).to.equal('script');
+    });
+
     it('opens external links in a new tab and announces it', async () => {
       const el = await fixture<AuiFooter>(html`<aui-footer .columns=${COLUMNS}></aui-footer>`);
       const external = el.shadowRoot!.querySelector<HTMLAnchorElement>('a[href^="https"]')!;

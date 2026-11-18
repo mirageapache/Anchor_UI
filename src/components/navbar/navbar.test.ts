@@ -61,6 +61,15 @@ describe('AuiNavbar (<aui-navbar>)', () => {
       expect(part(el, 'brand')!.localName).to.equal('span');
     });
 
+    it('ignores a brand-href with an unsafe protocol', async () => {
+      const el = await fixture<AuiNavbar>(
+        html`<aui-navbar brand="Anchor UI" brand-href="javascript:alert(1)"></aui-navbar>`,
+      );
+      const brand = el.shadowRoot!.querySelector('[part="brand"]')!;
+      expect(brand.tagName).to.equal('SPAN');
+      expect(brand.hasAttribute('href')).to.be.false;
+    });
+
     it('becomes a link with brand-href', async () => {
       const el = await fixture<AuiNavbar>(
         html`<aui-navbar brand="Anchor UI" brand-href="/"></aui-navbar>`,

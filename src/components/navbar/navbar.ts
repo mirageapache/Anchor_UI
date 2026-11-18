@@ -3,6 +3,7 @@ import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { getTheme, setTheme, type Theme } from '../../theme.js';
+import { safeHref } from '../../internal/safe-href.js';
 import { hasLightContent, LightContentController } from '../../internal/slot.js';
 import { getTopModalLayer } from '../../internal/top-layer.js';
 import '../kbd/index.js';
@@ -104,7 +105,10 @@ export class AuiNavbar extends LitElement {
   @property({ type: String })
   brand = '';
 
-  /** 品牌區的連結網址（通常為首頁）；未設定時品牌區不是連結 */
+  /**
+   * 品牌區的連結網址（通常為首頁）；未設定時品牌區不是連結。
+   * 只接受 http(s)、`mailto:`、`tel:` 與相對路徑，其他協定（如 `javascript:`）視為未設定
+   */
   @property({ type: String, attribute: 'brand-href' })
   brandHref = '';
 
@@ -300,8 +304,9 @@ export class AuiNavbar extends LitElement {
       </span>
       ${this.brand ? html`<span class="navbar__title" part="brand-title">${this.brand}</span>` : nothing}
     `;
-    return this.brandHref
-      ? html`<a class="navbar__brand" part="brand" href=${this.brandHref}>${content}</a>`
+    const href = this.brandHref ? safeHref(this.brandHref) : undefined;
+    return href
+      ? html`<a class="navbar__brand" part="brand" href=${href}>${content}</a>`
       : html`<span class="navbar__brand" part="brand">${content}</span>`;
   }
 
