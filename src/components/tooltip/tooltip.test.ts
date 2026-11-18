@@ -506,4 +506,67 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
       expect(btn.getAttribute('aria-describedby')).to.equal('hint late-hint');
     });
   });
+
+  describe('state consistency', () => {
+    it('withdraws open when set while disabled, so it can be shown again later', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Tip" disabled><button>Target</button></aui-tooltip>
+      `);
+      el.open = true;
+      await el.updateComplete;
+      await el.updateComplete;
+      expect(el.open, 'open is withdrawn').to.be.false;
+      expect(el.hasAttribute('open')).to.be.false;
+
+      el.disabled = false;
+      await el.updateComplete;
+      const shown = oneEvent(el, 'aui-after-show');
+      await el.show();
+      await shown;
+      expect(el.open).to.be.true;
+    });
+
+    it('follows a new target while open', async () => {
+      const wrapper = await fixture<HTMLDivElement>(html`
+        <div>
+          <button id="first" style="position: fixed; left: 40px; top: 200px">A</button>
+          <button id="second" style="position: fixed; left: 400px; top: 200px">B</button>
+          <aui-tooltip for="first" content="Tip"></aui-tooltip>
+        </div>
+      `);
+      const el = wrapper.querySelector<AuiTooltip>('aui-tooltip')!;
+      const popup = el.shadowRoot!.querySelector<HTMLElement>('.tooltip__popup')!;
+      const shown = oneEvent(el, 'aui-after-show');
+      el.open = true;
+      await shown;
+      const before = popup.getBoundingClientRect().left;
+
+      el.for = 'second';
+      await el.updateComplete;
+      // 定位為非同步（computePosition）
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      const after = popup.getBoundingClientRect().left;
+      expect(after - before, 'popup moved with the target').to.be.above(300);
+      expect(wrapper.querySelector('#second')!.hasAttribute('aria-describedby')).to.be.true;
+      expect(wrapper.querySelector('#first')!.hasAttribute('aria-describedby')).to.be.false;
+    });
+
+    it('still reports aui-after-hide when removed during the exit transition', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Tip"><button>Target</button></aui-tooltip>
+      `);
+      const shown = oneEvent(el, 'aui-after-show');
+      el.open = true;
+      await shown;
+
+      let afterHide = 0;
+      el.addEventListener('aui-after-hide', () => afterHide++);
+      el.open = false;
+      await el.updateComplete;
+      el.remove();
+      expect(afterHide, 'reported on removal').to.equal(1);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(afterHide, 'reported once').to.equal(1);
+    });
+  });
 });

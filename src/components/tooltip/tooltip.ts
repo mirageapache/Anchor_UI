@@ -53,6 +53,9 @@ export class AuiTooltip extends LitElement {
   private targetElement: HTMLElement | null = null;
   /** popover 是否已開啟（進場動畫的 rAF 前即為 true，與視覺狀態 isVisible 分開追蹤） */
   private isShowing = false;
+
+  /** 退場動畫中（aui-hide 已分派、aui-after-hide 尚未分派） */
+  private isHiding = false;
   /**
    * 開/關轉場序號：每次開始開啟或關閉都會遞增，
    * 延遲執行的 rAF / setTimeout 回呼若序號已過期即放棄，避免快速開關時互相覆蓋狀態
@@ -176,13 +179,16 @@ export class AuiTooltip extends LitElement {
     this.transitionId++;
     this.isShowing = false;
     this.isVisible = false;
+    // 退場動畫中被移出：aui-hide 已分派，補上被作廢的 aui-after-hide，讓成對監聽的使用端收到結果
+    if (this.isHiding) {
+      this.isHiding = false;
+      this.dispatchEvent(new CustomEvent('aui-after-hide', { bubbles: true, composed: true }));
+    }
   }
 
+  /** 初次渲染後綁定觸發目標；`open` 的初始值由同一輪的 updated() 處理 */
   override firstUpdated(): void {
     this.setupTarget();
-    if (this.open && !this.disabled) {
-      this.show();
-    }
   }
 
   override updated(changedProperties: Map<string, unknown>): void {
@@ -244,6 +250,9 @@ export class AuiTooltip extends LitElement {
     if (wasDescribed) {
       this.addAriaDescribedBy();
     }
+
+    // 開啟中更換目標：重新定位，並改為觀察新目標的捲動祖先與尺寸
+    if (this.isShowing) this.startAutoUpdate();
   }
 
   private attachTargetListeners(): void {
@@ -393,7 +402,13 @@ export class AuiTooltip extends LitElement {
   }
 
   private async internalShow(): Promise<void> {
-    if (!this.popupElement || this.disabled) return;
+    if (!this.popupElement) return;
+    // 停用中不開啟，並撤回 open：否則會停在「open 為 true 卻沒有顯示」，
+    // 之後解除停用也不會顯示，show() 與 hover / focus 又因 open 已為 true 而不動作
+    if (this.disabled) {
+      this.open = false;
+      return;
+    }
 
     const event = new CustomEvent('aui-show', {
       bubbles: true,
@@ -409,6 +424,7 @@ export class AuiTooltip extends LitElement {
 
     const transitionId = ++this.transitionId;
     this.isShowing = true;
+    this.isHiding = false;
     document.addEventListener('keydown', this.handleDocumentKeyDown);
 
     // 支援原生 Popover API 進入 Top Layer
@@ -449,6 +465,7 @@ export class AuiTooltip extends LitElement {
 
     const transitionId = ++this.transitionId;
     this.isShowing = false;
+    this.isHiding = true;
     this.isVisible = false;
     document.removeEventListener('keydown', this.handleDocumentKeyDown);
     this.removeAriaDescribedBy();
@@ -465,6 +482,7 @@ export class AuiTooltip extends LitElement {
           }
         }
         this.stopAutoUpdate();
+        this.isHiding = false;
         this.dispatchEvent(new CustomEvent('aui-after-hide', { bubbles: true, composed: true }));
       }
     }, transitionTimeMs(this.popupElement));
