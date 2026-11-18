@@ -21,8 +21,8 @@ Phase 1 做過的那次部署，就是發布 `v0.1.0-alpha`（PR #2 + tag），�
 自 `v0.3.0-beta` 之後由 release-please 自動處理，不再手動改版號、打 tag（手動建立的版本會讓 release-please 的版號計算錯亂）。完整說明見 [`doc/anchor-ui-release-guide.md`](../doc/anchor-ui-release-guide.md) 第二節。
 
 1. 變更照常經 `develop` → PR 合併進 `main`。
-2. Release Please workflow 會開啟或更新唯一的 release PR「`chore(release): v<下一版>`」，並在該分支執行 CI。只有 `docs`、`ci`、`chore` 等不列入 CHANGELOG 的變更時不會開 PR。
-3. 要發布時，檢查 release PR 的版號與 CHANGELOG，CI 通過後合併。
+2. Release Please workflow 會開啟或更新唯一的 release PR「`chore(release): v<下一版>`」（版號一律是預覽版）。只有 `docs`、`ci`、`chore` 等不列入 CHANGELOG 的變更時不會開 PR。
+3. 要發布時，檢查 release PR 的版號與 CHANGELOG（版號由 release-please 改，不要手動改）。CI 若停在等待核准，在 PR 頁面按「Approve workflows to run」；7 項檢查通過後合併。
 4. 之後自動完成：打 tag → 草稿 Release → 等 CI、`pnpm release:pack` → 附上 tarball 並公開 → `main` 合併回 `develop`。本機記得 `git pull`。
 5. 查看結果：
 
@@ -31,7 +31,7 @@ Phase 1 做過的那次部署，就是發布 `v0.1.0-alpha`（PR #2 + tag），�
    gh release view v<版號>
    ```
 
-6. 預覽版測試通過、要發正式版時：把 `release-please-config.json` 的 `"prerelease"` 改為 `false`，以 `chore(release): …` 的 commit 合併進 `main`（必須是這個 type 與 scope，才會列入 CHANGELOG 並開出 release PR），release PR 就會改成正式版號；發布後再改回 `true`。
+6. 預覽版測試通過、要發正式版時：在 `develop` 上 `git commit --allow-empty -m "chore(release): 發布 0.4.0 正式版" -m "Release-As: 0.4.0"`，經 PR 合併進 `main`，release PR 就會改成正式版號。type 與 scope 必須是 `chore(release)`（才會列入 CHANGELOG 並開出 release PR）；`"prerelease"` 固定為 `true`，不需修改也不需改回。
 7. 發布後更新 `doc/anchor-ui-release-guide.md` 的里程碑表格。
 
 （建議）合併 release PR 前在本機預演：`pnpm release:pack` 與 `pnpm smoke`。
@@ -87,16 +87,17 @@ pnpm dev:yalc
 
 ## 4. 常見陷阱
 
-| 狀況                                        | 原因與處理                                                                                                                                                                                                      |
-| ------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 手動建立了 tag 或 Release                   | 不要這樣做：release-please 不知道這個版本，版號計算與 CI 的 `release:verify --all-tags` 都會出錯。刪除該 Release 與 tag（`gh release delete <tag> --cleanup-tag --yes`、`git tag -d <tag>`），改走 release PR。 |
-| release-please 沒有開 release PR            | Settings → Actions → General 未勾選「Allow GitHub Actions to create and approve pull requests」（log 會顯示權限錯誤）；或自上次發布以來沒有符合 Conventional Commits 的 commit。                                |
-| release PR 的必要檢查一直是「Expected」     | 以 `GITHUB_TOKEN` 更新的 PR 不會觸發 CI，要靠 Release Please workflow 以 `workflow_dispatch` 執行。到 Actions → CI → Run workflow 選 release PR 的分支，或重跑 Release Please。                                 |
-| `Publish release` job 失敗                  | Release 仍是草稿，消費端看不到。修正後重跑失敗的 job，或 Actions → Release → Run workflow 輸入 tag；Release 已存在時只會覆蓋上傳 tarball 並公開。                                                               |
-| `Merge main back into develop` job 失敗     | 有衝突或 `develop` 剛好被更新。手動 `git switch develop && git pull && git merge origin/main && git push`。                                                                                                     |
-| Windows 建置時找不到 `#module-sync-enabled` | 目錄太深超過 260 字元路徑限制，換到路徑較短的目錄建置。                                                                                                                                                         |
-| 手動 `npm pack` 產出壞掉的 tarball          | 建置失敗時 `npm pack` 仍會打包。一律用 `pnpm release:pack`，任一步驟失敗就不會打包。                                                                                                                            |
-| 發布後切回 `develop` 時 `package.json` 擋住 | commit 時 lint-staged 的 prettier 改寫了換行符號，內容沒變；`git diff` 確認無實質差異後 `git restore package.json`。                                                                                            |
+| 狀況                                         | 原因與處理                                                                                                                                                                                                                 |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 手動建立了 tag 或 Release                    | 不要這樣做：release-please 不知道這個版本，版號計算與 CI 的 `release:verify --all-tags` 都會出錯。刪除該 Release 與 tag（`gh release delete <tag> --cleanup-tag --yes`、`git tag -d <tag>`），改走 release PR。            |
+| release-please 沒有開 release PR             | Settings → Actions → General 未勾選「Allow GitHub Actions to create and approve pull requests」（log 會顯示權限錯誤）；或自上次發布以來沒有會列入 CHANGELOG 的 commit（log 顯示 `No user facing commits found`，正常）。   |
+| release PR 無法合併（`Merging was blocked`） | 必要檢查還沒通過。CI 停在等待核准時按「Approve workflows to run」；完全沒有 CI 時 Close → Reopen 該 PR。手動 Run workflow 的檢查不算進 PR。                                                                                |
+| CHANGELOG 同一筆出現兩次                     | develop → main 的 PR 標題用了 Conventional Commits 格式，被寫進合併 commit 的內文而再讀一次。這類 PR 標題改用一般描述（例如 `合併 develop：Phase 4 Drawer`），並以「Create a merge commit」合併（發布指南第二節第 1 點）。 |
+| `Publish release` job 失敗                   | Release 仍是草稿，消費端看不到。修正後重跑失敗的 job，或 Actions → Release → Run workflow 輸入 tag；Release 已存在時只會覆蓋上傳 tarball 並公開。                                                                          |
+| `Merge main back into develop` job 失敗      | 有衝突或 `develop` 剛好被更新。手動 `git switch develop && git pull && git merge origin/main && git push`。                                                                                                                |
+| Windows 建置時找不到 `#module-sync-enabled`  | 目錄太深超過 260 字元路徑限制，換到路徑較短的目錄建置。                                                                                                                                                                    |
+| 手動 `npm pack` 產出壞掉的 tarball           | 建置失敗時 `npm pack` 仍會打包。一律用 `pnpm release:pack`，任一步驟失敗就不會打包。                                                                                                                                       |
+| 發布後切回 `develop` 時 `package.json` 擋住  | commit 時 lint-staged 的 prettier 改寫了換行符號，內容沒變；`git diff` 確認無實質差異後 `git restore package.json`。                                                                                                       |
 
 ## 5. 之後會改變的部分
 
