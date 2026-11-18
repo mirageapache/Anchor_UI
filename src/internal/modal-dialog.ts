@@ -1,9 +1,11 @@
 import { LitElement, html, nothing, type PropertyValues } from 'lit';
 import { property, query, state } from 'lit/decorators.js';
+import { classMap } from 'lit/directives/class-map.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { defaultTrue } from './converters.js';
 import { rememberFocus } from './focus-return.js';
 import { lockScroll } from './scroll-lock.js';
-import { pushModalLayer } from './top-layer.js';
+import { MODAL_OVERLAY_SLOT, pushModalLayer } from './top-layer.js';
 import { transitionTimeMs } from './transition.js';
 
 /**
@@ -17,6 +19,16 @@ export type DialogCloseReason = 'escape' | 'backdrop' | 'close-button' | 'api';
 
 interface DialogHideDetail {
   reason: DialogCloseReason;
+}
+
+/** `renderDialog()` 的設定 */
+interface DialogRenderOptions {
+  /** class 前綴（如 `modal`），與 `dialogBaseStyles()` 的參數相同 */
+  prefix: string;
+  /** 面板的額外 class（尺寸、方向等元件自己的變化） */
+  panelClass: string;
+  /** dialog 的 role；未指定時為原生的 `dialog` */
+  role?: 'alertdialog';
 }
 
 /**
@@ -33,16 +45,17 @@ const DIALOG_HOSTS = 'aui-modal, aui-drawer';
  * ESC 與點擊遮罩關閉、背景捲動鎖定、焦點返還、modal 層登記（`pushModalLayer`），
  * 以及瀏覽器自行關閉或開啟中被移出頁面時的狀態同步。
  *
- * 子類別負責 `render()`：須渲染一個 `<dialog>`，綁定 `handleCancel`、`handleNativeClose`、
- * `handlePointerDown`、`handleClick`，並在其中放一個 `part="panel"`、`tabindex="-1"` 的面板
- * （初始焦點的備援目標，其 CSS transition 決定動畫時長）。點擊 dialog 本身（面板以外的區域）即為點擊遮罩。
+ * 子類別的 `render()` 回傳 `renderDialog()`：共用的 `<dialog>` 結構（事件綁定、面板、頁首、內容、頁尾、
+ * overlay slot 與無障礙描述）只有這一份，子類別以 class 前綴與面板的 class 決定外觀
+ * （樣式為 `dialogBaseStyles(prefix)` 加上元件自己的版面）。面板的 CSS transition 決定動畫時長；
+ * 點擊 dialog 本身（面板以外的區域）即為點擊遮罩。
  */
 export abstract class ModalDialogElement extends LitElement {
   @query('dialog')
-  protected dialog!: HTMLDialogElement;
+  private dialog!: HTMLDialogElement;
 
   @query('[part="panel"]')
-  protected panel!: HTMLElement;
+  private panel!: HTMLElement;
 
   /**
    * 是否開啟（可直接設定，等同呼叫 show() / hide()）
@@ -94,15 +107,15 @@ export abstract class ModalDialogElement extends LitElement {
   @property({ type: String, attribute: 'close-label' })
   closeLabel = '關閉';
 
-  /** 退場動畫中（子類別據此套用退場樣式）；進場的起始狀態由 CSS @starting-style 定義 */
+  /** 退場動畫中（套用 --leaving 樣式）；進場的起始狀態由 CSS @starting-style 定義 */
   @state()
-  protected isLeaving = false;
+  private isLeaving = false;
 
   @state()
-  protected hasHeaderSlot = false;
+  private hasHeaderSlot = false;
 
   @state()
-  protected hasFooterSlot = false;
+  private hasFooterSlot = false;
 
   /** dialog 是否處於（或正在進入）開啟狀態；退場動畫期間為 false */
   private isShown = false;
@@ -189,7 +202,7 @@ export abstract class ModalDialogElement extends LitElement {
     this.settleTransition();
   }
 
-  protected requestClose(reason: DialogCloseReason): void {
+  private requestClose(reason: DialogCloseReason): void {
     if (!this.open) return;
     this.pendingReason = reason;
     this.open = false;
@@ -346,7 +359,7 @@ export abstract class ModalDialogElement extends LitElement {
   }
 
   /** ESC：由元件接手（才能播放退場動畫並分派可取消的 aui-hide） */
-  protected handleCancel = (event: Event) => {
+  private handleCancel = (event: Event) => {
     event.preventDefault();
     if (this.closeOnEscape) this.requestClose('escape');
   };
@@ -358,7 +371,7 @@ export abstract class ModalDialogElement extends LitElement {
    * 注意 close 事件是在 dialog.close() 之後才以 task 非同步分派：元件自行關閉後若已立即重新開啟，
    * 收到的會是過期的事件，因此以 dialog 當下是否仍開啟判斷，而非呼叫 close() 時的旗標。
    */
-  protected handleNativeClose = () => {
+  private handleNativeClose = () => {
     if (this.dialog.open || (!this.isShown && !this.open)) return;
     this.beginTransition();
     const wasShown = this.isShown;
@@ -371,11 +384,11 @@ export abstract class ModalDialogElement extends LitElement {
     this.settleTransition();
   };
 
-  protected handlePointerDown = (event: PointerEvent) => {
+  private handlePointerDown = (event: PointerEvent) => {
     this.pointerDownOnBackdrop = event.target === this.dialog;
   };
 
-  protected handleClick = (event: MouseEvent) => {
+  private handleClick = (event: MouseEvent) => {
     const fromBackdrop = this.pointerDownOnBackdrop && event.target === this.dialog;
     this.pointerDownOnBackdrop = false;
     if (fromBackdrop && this.closeOnBackdrop) this.requestClose('backdrop');
@@ -385,15 +398,71 @@ export abstract class ModalDialogElement extends LitElement {
     this.requestClose('close-button');
   };
 
-  protected handleSlotChange = (event: Event) => {
+  private handleSlotChange = (event: Event) => {
     const slot = event.target as HTMLSlotElement;
     const hasContent = slot.assignedNodes({ flatten: true }).length > 0;
     if (slot.name === 'header') this.hasHeaderSlot = hasContent;
     else if (slot.name === 'footer') this.hasFooterSlot = hasContent;
   };
 
+  /**
+   * 共用的 `<dialog>` 結構；子類別的 `render()` 回傳其結果。
+   * part 名稱（dialog、panel、header、title、close-button、body、footer）對所有子類別相同
+   */
+  protected renderDialog({ prefix, panelClass, role }: DialogRenderOptions) {
+    const hasHeader = Boolean(this.heading) || this.hasHeaderSlot;
+    const ariaLabel = !this.heading && this.label ? this.label : undefined;
+
+    return html`
+      <dialog
+        part="dialog"
+        class=${classMap({ [prefix]: true, [`${prefix}--leaving`]: this.isLeaving })}
+        aria-labelledby=${ifDefined(this.heading ? 'title' : undefined)}
+        aria-label=${ifDefined(ariaLabel)}
+        aria-describedby=${ifDefined(this.description ? 'description' : undefined)}
+        role=${ifDefined(role)}
+        @cancel=${this.handleCancel}
+        @close=${this.handleNativeClose}
+        @pointerdown=${this.handlePointerDown}
+        @click=${this.handleClick}
+      >
+        <div part="panel" class="${prefix}__panel ${panelClass}" tabindex="-1">
+          <div
+            part="header"
+            class=${classMap({
+              [`${prefix}__header`]: true,
+              [`${prefix}__header--empty`]: !hasHeader,
+            })}
+          >
+            ${
+              this.heading
+                ? html`<h2 part="title" id="title" class="${prefix}__title">${this.heading}</h2>`
+                : nothing
+            }
+            <slot name="header" @slotchange=${this.handleSlotChange}></slot>
+            ${this.renderCloseButton(`${prefix}__close`)}
+          </div>
+          <div part="body" class="${prefix}__body">
+            <slot></slot>
+          </div>
+          <div
+            part="footer"
+            class=${classMap({
+              [`${prefix}__footer`]: true,
+              [`${prefix}__footer--empty`]: !this.hasFooterSlot,
+            })}
+          >
+            <slot name="footer" @slotchange=${this.handleSlotChange}></slot>
+          </div>
+        </div>
+        <slot name=${MODAL_OVERLAY_SLOT}></slot>
+        ${this.renderDescription()}
+      </dialog>
+    `;
+  }
+
   /** 頁首關閉鈕（`no-close-button` 時不渲染） */
-  protected renderCloseButton(className: string) {
+  private renderCloseButton(className: string) {
     if (this.noCloseButton) return nothing;
     return html`
       <button
@@ -420,7 +489,7 @@ export abstract class ModalDialogElement extends LitElement {
   }
 
   /** `description` 的螢幕閱讀器專用文字（id 為 `description`，由 dialog 的 aria-describedby 參照） */
-  protected renderDescription() {
+  private renderDescription() {
     if (!this.description) return nothing;
     return html`<span id="description" class="sr-only">${this.description}</span>`;
   }

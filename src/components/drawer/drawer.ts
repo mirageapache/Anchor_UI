@@ -1,10 +1,7 @@
-import { html, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
-import { classMap } from 'lit/directives/class-map.js';
-import { ifDefined } from 'lit/directives/if-defined.js';
 import { drawerStyles } from './drawer.styles.js';
 import { ModalDialogElement } from '../../internal/modal-dialog.js';
-import { MODAL_OVERLAY_SLOT } from '../../internal/top-layer.js';
+import { dialogBaseStyles } from '../../internal/modal-dialog.styles.js';
 import type { DrawerPlacement } from './drawer.types.js';
 
 /**
@@ -45,7 +42,7 @@ import type { DrawerPlacement } from './drawer.types.js';
  * @fires aui-after-hide - 完全關閉且退場動畫結束後觸發，`detail.reason` 為關閉原因
  */
 export class AuiDrawer extends ModalDialogElement {
-  static override styles = drawerStyles;
+  static override styles = [dialogBaseStyles('drawer'), drawerStyles];
 
   /**
    * 滑出方向
@@ -54,49 +51,10 @@ export class AuiDrawer extends ModalDialogElement {
   placement: DrawerPlacement = 'left';
 
   override render() {
-    const hasHeader = Boolean(this.heading) || this.hasHeaderSlot;
-    const ariaLabel = !this.heading && this.label ? this.label : undefined;
-    const placement = this.placement === 'right' ? 'right' : 'left';
-
-    return html`
-      <dialog
-        part="dialog"
-        class=${classMap({ drawer: true, 'drawer--leaving': this.isLeaving })}
-        aria-labelledby=${ifDefined(this.heading ? 'title' : undefined)}
-        aria-label=${ifDefined(ariaLabel)}
-        aria-describedby=${ifDefined(this.description ? 'description' : undefined)}
-        @cancel=${this.handleCancel}
-        @close=${this.handleNativeClose}
-        @pointerdown=${this.handlePointerDown}
-        @click=${this.handleClick}
-      >
-        <div part="panel" class="drawer__panel drawer__panel--${placement}" tabindex="-1">
-          <div
-            part="header"
-            class=${classMap({ drawer__header: true, 'drawer__header--empty': !hasHeader })}
-          >
-            ${
-              this.heading
-                ? html`<h2 part="title" id="title" class="drawer__title">${this.heading}</h2>`
-                : nothing
-            }
-            <slot name="header" @slotchange=${this.handleSlotChange}></slot>
-            ${this.renderCloseButton('drawer__close')}
-          </div>
-          <div part="body" class="drawer__body">
-            <slot></slot>
-          </div>
-          <div
-            part="footer"
-            class=${classMap({ drawer__footer: true, 'drawer__footer--empty': !this.hasFooterSlot })}
-          >
-            <slot name="footer" @slotchange=${this.handleSlotChange}></slot>
-          </div>
-        </div>
-        <slot name=${MODAL_OVERLAY_SLOT}></slot>
-        ${this.renderDescription()}
-      </dialog>
-    `;
+    return this.renderDialog({
+      prefix: 'drawer',
+      panelClass: `drawer__panel--${this.placement === 'right' ? 'right' : 'left'}`,
+    });
   }
 }
 

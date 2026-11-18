@@ -19,8 +19,8 @@ const BASELINES = {
   field: 18058, // 含相依的 Icon Button、Tooltip 與 @floating-ui/dom
   output: 2501,
   segmented: 3722,
-  modal: 5021, // 開關生命週期抽出為與 Drawer 共用的 internal/modal-dialog（+63；重構前實測 4958，原基準 4531）
-  alert: 12265, // 含相依的 Modal、Button 與 Input（Input 的 Enter 送出、Button 的表單動作與 fieldset 停用後 +1124；原 11141）
+  modal: 5276, // 範本與樣式改由 internal/modal-dialog 產生（單一入口 +228，全量入口因共用而 -527；原 5021）
+  alert: 12574, // 含相依的 Modal、Button 與 Input（Modal 範本共用後 +309；Input 的 Enter 送出、Button 的表單動作與 fieldset 停用後 +1124；原 11141）
   toast: 6437, // 新增 placement（六種位置與對應的堆疊、動畫方向；原 5750）
   card: 3384, // TASK-301
   accordion: 2665, // TASK-302
@@ -28,7 +28,7 @@ const BASELINES = {
   'favorite-btn': 2423, // TASK-304
   header: 6503, // TASK-305
   kbd: 1494, // TASK-306
-  drawer: 5150, // TASK-402（與 Modal 共用 internal/modal-dialog）
+  drawer: 5376, // TASK-402（與 Modal 共用 internal/modal-dialog 的範本與樣式；原 5150）
   navbar: 6096, // TASK-403（含相依的 Kbd）
   footer: 3575, // TASK-404
   'code-view': 3934, // TASK-401
