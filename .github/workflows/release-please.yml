@@ -7,9 +7,10 @@ name: Release Please
 # 2. release PR 被合併時，打 tag 並建立草稿 Release，再交給 release.yml 等待 CI、建置驗證、附上 tarball 後公開。
 # 3. 發布後把 main 合併回 develop。
 #
-# 以 GITHUB_TOKEN 建立或更新的 PR 不會觸發 pull_request 事件，release PR 的必要檢查因此不會自動執行。
-# workflow_dispatch 是例外，所以每次更新 release PR 後以 gh workflow run 在 release PR 的分支執行 CI，
-# 產生的檢查會掛在該分支最新的 commit 上，滿足 main Ruleset 的必要檢查。
+# release PR 由 github-actions[bot] 開啟，其 pull_request 的 CI 會照常建立，但 repo 對首次貢獻者要求核准
+# （Settings → Actions → General → Approval for running fork pull request workflows），可能停在 action_required，
+# 需在 PR 頁面按「Approve workflows to run」。曾改以 workflow_dispatch 在 release PR 分支執行 CI，但那樣的檢查
+# 雖然掛在同一個 commit 上，GitHub 不會算進 PR 的必要檢查（statusCheckRollup 為空），因此已移除。
 # 前提：Settings → Actions → General 勾選「Allow GitHub Actions to create and approve pull requests」。
 on:
   push:
@@ -30,7 +31,6 @@ jobs:
       contents: write # 更新 release PR 分支、打 tag、建立 Release
       pull-requests: write # 開啟與更新 release PR
       issues: write # 建立與設定 autorelease: pending / tagged 標籤
-      actions: write # 以 workflow_dispatch 在 release PR 分支執行 CI
     outputs:
       release_created: ${{ steps.release.outputs.release_created }}
       tag_name: ${{ steps.release.outputs.tag_name }}
@@ -41,18 +41,6 @@ jobs:
         with:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
-
-      # always-update 讓 release PR 每次都以最新的 main 重建，因此每次都要重新執行 CI。
-      # 沒有使用者可見的變更時 release-please 不會開 PR，pr 輸出為空；步驟的 env 在 if 之前就會求值，
-      # 所以不能在 env 中寫 fromJSON(...)（空字串會讓整個 job 失敗），改在 shell 中以 jq 解析
-      - name: Run CI on the release PR branch
-        if: steps.release.outputs.pr != ''
-        run: |
-          head_branch=$(jq -r '.headBranchName' <<< "$RELEASE_PR")
-          gh workflow run ci.yml --repo "$GITHUB_REPOSITORY" --ref "$head_branch"
-        env:
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_PR: ${{ steps.release.outputs.pr }}
 
   release:
     name: Publish release

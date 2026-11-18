@@ -6,8 +6,8 @@ on:
   # PR 到 develop 也執行完整 CI，讓問題在功能合併進 develop 時就被攔下，不必等到 develop → main 的 PR
   pull_request:
     branches: [main, develop]
-  # TASK-405：release-please 以 GITHUB_TOKEN 更新的 release PR 不會觸發 pull_request，
-  # 改由 release-please.yml 以 workflow_dispatch 在 release PR 的分支執行（檢查掛在該分支最新的 commit 上）
+  # 手動重跑用（Actions → CI → Run workflow）。注意：以此執行的檢查不會算進 PR 的必要檢查，
+  # release PR 的 CI 請在 PR 頁面按「Approve workflows to run」（見 doc/anchor-ui-release-guide.md）
   workflow_dispatch:
 
 # TASK-214：同一個 PR（或以 workflow_dispatch 執行的同一個分支）推送新 commit 時取消仍在執行的舊 run，
