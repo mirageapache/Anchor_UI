@@ -421,4 +421,16 @@ describe('AuiDrawer (<aui-drawer>)', () => {
       }
     });
   });
+
+  it('names the close button with close-label (default 關閉)', async () => {
+    const el = await fixture<AuiDrawer>(html`<aui-drawer heading="Menu"></aui-drawer>`);
+    const button = () => el.shadowRoot!.querySelector('[part="close-button"]')!;
+    expect(button().getAttribute('aria-label')).to.equal('關閉');
+    el.closeLabel = 'Close menu';
+    await el.updateComplete;
+    expect(button().getAttribute('aria-label')).to.equal('Close menu');
+    el.setAttribute('close-label', '');
+    await el.updateComplete;
+    expect(button().getAttribute('aria-label'), 'never unnamed').to.equal('關閉');
+  });
 });

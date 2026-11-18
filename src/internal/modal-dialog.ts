@@ -88,6 +88,12 @@ export abstract class ModalDialogElement extends LitElement {
   @property({ type: Boolean, attribute: 'no-close-button' })
   noCloseButton = false;
 
+  /**
+   * 頁首關閉鈕的無障礙名稱
+   */
+  @property({ type: String, attribute: 'close-label' })
+  closeLabel = '關閉';
+
   /** 退場動畫中（子類別據此套用退場樣式）；進場的起始狀態由 CSS @starting-style 定義 */
   @state()
   protected isLeaving = false;
@@ -394,7 +400,7 @@ export abstract class ModalDialogElement extends LitElement {
         part="close-button"
         class=${className}
         type="button"
-        aria-label="關閉"
+        aria-label=${this.closeLabel || '關閉'}
         @click=${this.handleCloseButton}
       >
         <svg
