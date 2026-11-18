@@ -205,7 +205,7 @@
   /* Text */
   --color-text-primary: #f8fafc; // Slate-50
   --color-text-secondary: #94a3b8; // Slate-400
-  --color-text-muted: #64748b; // Slate-500
+  --color-text-muted: #8494ab; // 介於 Slate-500 與 Slate-400：在 base / surface 上 4.7:1（Slate-500 只有 3.1:1）
 
   /* Tooltip (深色底上提亮一階，與頁面背景區隔) */
   --color-tooltip-bg: #1e293b; // Slate-800

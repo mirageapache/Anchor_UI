@@ -57,6 +57,8 @@
 - **新元件**：`<aui-drawer>`（側邊抽屜）、`<aui-navbar>`（頂部導覽列）、`<aui-footer>`（頁尾）、`<aui-code-view>`（程式碼檢視區）。
   按需載入時從各自的入口引用，例如 `import '@anchor-ui/core/drawer'`。
 - **新 Design Token**：`--shadow-drawer`。自行覆寫 tokens 的專案不需要改動，未覆寫時使用預設值。
+- **深色主題的 `--color-text-muted` 提亮**（`#64748b` → `#8494ab`）：原值在深色底上對比只有 3.1:1，
+  未達 WCAG AA；影響深色主題下的 placeholder 與使用這個 token 的文字。自行覆寫此 token 的專案不受影響。
 - **Modal 的內部重構**：`<aui-modal>` 的開關邏輯移到與 Drawer 共用的基底類別，屬性、事件、slot 與 CSS part 都沒有改變。
   只有一個型別層面的差異：`AuiModal` 的父類別由 `LitElement` 變為 `ModalDialogElement`（仍繼承自 `LitElement`）。
   一般使用不受影響；若專案自行繼承 `AuiModal` 並宣告了與基底同名的成員，需要改名。
