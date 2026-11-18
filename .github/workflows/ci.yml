@@ -57,6 +57,12 @@ jobs:
       - name: Check tool versions are in sync
         run: pnpm check:versions
 
+      # TASK-406：發布套件的 runtime 相依（lit、@floating-ui/dom 及其遞移相依）不得有 High / Critical 漏洞；
+      # examples 與開發工具的漏洞不在發布產物中，由 Dependabot 追蹤更新。
+      # 需要連線 registry；無法稽核時刻意失敗（寧可擋下也不放行），重跑即可
+      - name: Audit runtime dependencies
+        run: pnpm audit:runtime
+
       # TASK-214：workflow 只有推上 GitHub 才會實際執行，以 actionlint 先檢查語法、job 相依、運算式與 shell 腳本
       - name: Lint GitHub Actions workflows (actionlint)
         run: docker run --rm -v "$PWD:/repo" -w /repo rhysd/actionlint:1.7.7@sha256:887a259a5a534f3c4f36cb02dca341673c6089431057242cdc931e9f133147e9

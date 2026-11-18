@@ -161,6 +161,7 @@
     "size": "size-limit",
     "release:verify": "node scripts/verify-release.mjs",
     "check:versions": "node scripts/check-tool-versions.mjs",
+    "audit:runtime": "node scripts/audit-runtime.mjs",
     "release:pack": "pnpm build && pnpm verify:package && pnpm size && pnpm release:verify && node scripts/pack.mjs",
     "smoke": "node scripts/smoke-test.mjs",
     "test:scripts": "node --test \"scripts/*.test.mjs\"",
