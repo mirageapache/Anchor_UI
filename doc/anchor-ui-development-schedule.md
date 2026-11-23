@@ -12,7 +12,7 @@
 2. **小步快跑、早期驗證 (PoC Early)**：Phase 1 僅挑選少數核心原子元件，立即以 `yalc` 軟連結接入 Vue 3 與 Angular 專案，提早暴露 Web Component 跨框架綁定問題。
 3. **自動化驗證護航 (Test & A11y Automation)**：自 Phase 1 起導入單元/元件測試與 `axe-core` 無障礙自動化檢測，Phase 2 導入視覺回歸比對與 Bundle 體積監控。
 4. **高頻核心優先 (High-Value First)**：Phase 2 優先實作常用功能，及早讓各專案享受到元件庫效益。
-5. **發布流水線自動化 (CD & Release Automation)**：建立基於 Conventional Commits 與 Changesets 的自動化語意發布流水線（CD），確保版本升級與 CHANGELOG 零人工作業失誤。
+5. **發布流水線自動化 (CD & Release Automation)**：建立基於 Conventional Commits 與 release-please 的自動化語意發布流水線（CD），確保版本升級與 CHANGELOG 零人工作業失誤。
 
 ---
 
@@ -53,7 +53,7 @@
 ┌─────────────────────────────────────────────────────────────────────────────────────────┐
 │ Phase 4: 進階功能、獨立導覽抽屜與 CD 正式發布 (Advanced Features, Navigation & CD)      │
 │ [Code View] ──▶ [Drawer] ──▶ [Navbar] ──▶ [Footer]                                      │
-│ └── 工程任務: Changesets / Semantic Release CD 流水線 ──▶ 私有 npm 自動發布 (v1.0.0)    │
+│ └── 工程任務: release-please CD 流水線 ──▶ GitHub Release 附 tarball 發布 (v1.0.0)      │
 │ └── 導入任務: 目標專案正式鎖版導入 ──▶ 安全漏洞掃描 (npm audit / Dependabot)            │
 └─────────────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -169,7 +169,7 @@
 | **TASK-202** | 工程 | **Bundle 體積門禁監控 (Size Limit)** [✅]                            | 整合 **`size-limit`** 至 CI，逐一檢查各元件入口（gzip、不含消費端自備的 `lit`）。預算以 TASK-201 完成後的實測值為基準 **+10%**（參考 Phase 1 單檔實測：Button 3.2 KB、Tag 3.4 KB、Tooltip 11.1 KB、IconButton 16.8 KB，Tooltip 與 IconButton 含 floating-ui）；新元件於首次合併時建立基準。超出預算即 CI 失敗，並於 PR 留言列出差異。                                                                                                                                                                                              |
 | **TASK-203** | 工程 | **視覺回歸測試建置 (Visual Regression)** [✅]                        | 沿用現有 Web Test Runner + Playwright，導入 **`@web/test-runner-visual-regression`**：<br>1. 於固定的 Playwright 官方容器中產生與比對基準圖，避免本機與 CI 的作業系統差異。<br>2. 測試環境自行載入 Inter 與 JetBrains Mono 字型檔（元件庫本身不打包字型），並等待 `document.fonts.ready`。<br>3. 以 `reducedMotion: 'reduce'` 停用轉場與動畫。<br>4. 基準圖納入版本控制；更新須透過 PR 並附差異圖供審查。<br>5. 先涵蓋 Phase 1 四個元件的淺色／深色主題。                                                                          |
 | **TASK-204** | 工程 | **共用浮層基礎模組 (`src/internal/`)** [✅]                          | 供 Modal、Alert 與 Phase 4 Drawer 共用：<br>1. 背景捲動鎖定：支援巢狀開啟的計數，並補償捲軸寬度避免版面跳動。<br>2. 焦點返還：記錄開啟時實際聚焦的元素（穿透 Shadow DOM 逐層取得 `activeElement`），關閉後還原。<br>3. Top Layer 工具：堆疊順序（重新提升至最上層），以及 modal 開啟期間將浮層（如 Toast Viewport）移入最上層 modal 子樹、關閉後移回，避開 modal 造成的 inert 邊界。                                                                                                                                               |
-| **TASK-205** | 工程 | 版本與發布產物規範 [✅]                                              | 補記 Phase 1 里程碑 `v0.1.0-alpha` 並建立 Git Tag；Phase 2 結束時更新為 `v0.2.0-beta`。Phase 4 導入 Changesets 前，以 yalc 與 `npm pack` 產出之 tarball 交付測試專案。                                                                                                                                                                                                                                                                                                                                                             |
+| **TASK-205** | 工程 | 版本與發布產物規範 [✅]                                              | 補記 Phase 1 里程碑 `v0.1.0-alpha` 並建立 Git Tag；Phase 2 結束時更新為 `v0.2.0-beta`。Phase 4 導入 release-please 前，以 yalc 與 `npm pack` 產出之 tarball 交付測試專案。                                                                                                                                                                                                                                                                                                                                                         |
 | **TASK-206** | 元件 | `Input & Field` 元件 (`<aui-input>`, `<aui-field>`) [✅]             | 支援單行／多行等寬輸入；Focus 雙層光環；整合 Field 標題列（Label + 右側快捷複製／清除按鈕，沿用 `<aui-icon-button>`）。<br>**表單參與**：form-associated（`ElementInternals.setFormValue`、`required` 驗證、`formResetCallback`、`formDisabledCallback`），不支援時退回隱藏 input。<br>**標題關聯**：`<aui-field>` 將標題與描述傳入 `<aui-input>`，由 input 於自身 Shadow DOM 內完成 label／描述關聯。                                                                                                                             |
 | **TASK-207** | 元件 | `Output` 元件 (`<aui-output>`) [✅]                                  | 結果輸出框；左側 4px 垂直語意邊條（綠色成功／琥珀警告／紅色錯誤）；等寬字體與長文字換行溢位防護；成功／警告／錯誤狀態除顏色外亦以文字或 `role` 傳達。                                                                                                                                                                                                                                                                                                                                                                              |
 | **TASK-208** | 元件 | `Segmented Control` 元件 (`<aui-segmented>`) [✅]                    | 膠囊軌道單選切換器；選中項高亮背景過渡；採 radiogroup 模式（roving tabindex：Tab 僅停留在選中項，左右方向鍵／Home／End 巡覽並自動選取）；form-associated，於 host 分派 `input` 與 `change`。                                                                                                                                                                                                                                                                                                                                       |
@@ -187,7 +187,7 @@
 - 支援個別元件入口與 Tree-shaking 的建置產物。
 - 雙主題截圖快照比對測試機制。
 - CI Bundle Size 檢查與 PR 差異報告。
-- Anchor UI **v0.2.0-beta** 版本（以 yalc 與 `npm pack` tarball 交付；正式 registry 發布於 Phase 4 TASK-405）。
+- Anchor UI **v0.2.0-beta** 版本（以 yalc 與 `npm pack` tarball 交付；正式交付方式於 Phase 4 TASK-405 定為 GitHub Release 附 tarball）。
 
 #### 驗收條件 (Acceptance Criteria)
 
@@ -267,48 +267,55 @@
   1. 實作 IDE 風格程式碼檢視區（Sticky 行號與摺疊）。
   2. 實作獨立的可收合側邊抽屜（Drawer: `<aui-drawer>`），支援左右側滑出與遮罩鎖定，不綁死特定版型，可自由嵌入各專案。
   3. 實作獨立的站台頂部導覽列（Navbar: `<aui-navbar>`）與通用頁尾（Footer: `<aui-footer>`），提供品牌統一視覺基底。
-  4. **建立基於 Changesets 的 CD 自動化語意發布流水線，發布至私有 npm / GitHub Packages**。
+  4. **建立 CD 自動化語意發布流水線（release-please，`v0.3.0` 起使用），正式版以 GitHub Release 附 tarball 交付**（主要供自己的專案使用，暫不發布至 npm registry）。
   5. 選定第一個業務專案正式安裝導入，完成生產環境驗證。
+  6. 補上 MIT 授權檔（`LICENSE`），讓其他人可明確合法使用。
 
 #### 任務拆解 (Task Breakdown)
 
-| 任務代號     | 類別 | 工作項目                                   | 說明與具體內容                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| ------------ | :--: | ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **TASK-401** | 元件 | `Code View` 元件 (`<aui-code-view>`)       | 等寬代碼預覽；左側 Sticky 黏性行號列（水平捲動行號不位移）；支援程式碼區塊折疊展開。                                                                                                                                                                                                                                                                                                                                                                                                            |
-| **TASK-402** | 元件 | `Drawer` 側邊抽屜元件 (`<aui-drawer>`)     | 獨立可收合側欄（Off-canvas Drawer）；支援左右側滑出（`placement="left" \| "right"`）；遮罩與背景捲動鎖定；不綁死特定 Layout 版型，可靈活嵌入各專案。                                                                                                                                                                                                                                                                                                                                            |
-| **TASK-403** | 元件 | `Navbar` 頂部導覽列 (`<aui-navbar>`)       | 64px 獨立頂部導覽列；整合 Logo（Accent 圓點）、搜尋按鈕（內嵌 ⌘K 鍵帽）、導覽選單與主題切換開關。                                                                                                                                                                                                                                                                                                                                                                                               |
-| **TASK-404** | 元件 | `Footer` 通用頁尾 (`<aui-footer>`)         | 獨立通用頁尾；版權聲明、版本資訊、外部連結與次要選單插槽；支援 Minimal 與 Columns 自適應排版。                                                                                                                                                                                                                                                                                                                                                                                                  |
-| **TASK-405** | 工程 | **CD 自動化發布管線建立 (release-please)** | 原規劃 Changesets，改用 **release-please** + GitHub Actions（專案已以 commitlint 強制 Conventional Commits，不需另寫變更說明檔）：<br>1. 合併進 `main` 時，依 commit 類型自動開啟或更新 release PR（版號、`CHANGELOG.md`）。<br>2. release PR 合併後，自動上 Git Tag、建置驗證並建立附上 tarball 的 GitHub Release，再將 `main` 合併回 `develop`；`-beta` 預覽版與正式版以設定切換。<br>3. 待辦：自動 `npm publish` 發布至私有 npm / GitHub Packages。流程見 `doc/anchor-ui-release-guide.md`。 |
-| **TASK-406** | 工程 | **相依性安全掃描與合規審查**               | 配置 **Dependabot**（或 Snyk）與 CI 流程之 `npm audit --production`，設定安全性漏洞阻擋機制。                                                                                                                                                                                                                                                                                                                                                                                                   |
-| **TASK-407** | 導入 | 跨專案正式導入與版本鎖定驗證               | 選定一個實際專案（如 ToolBox 前端）正式安裝 `@my-org/anchor-ui@1.0.0`，驗證正式環境打包與運行。                                                                                                                                                                                                                                                                                                                                                                                                 |
-| **TASK-408** | 文檔 | 元件庫使用手冊與 API 文件交付              | 完善 Readme、Storybook 互動文檔、Vue 3 / Angular 安裝指南與升級遷移手冊。                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| 任務代號     | 類別 | 工作項目                                        | 說明與具體內容                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------ | :--: | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **TASK-401** | 元件 | `Code View` 元件 (`<aui-code-view>`) [✅]       | 等寬代碼預覽；左側 Sticky 黏性行號列（水平捲動行號不位移）；支援程式碼區塊折疊展開。依縮排自動判斷摺疊區塊、不做語法高亮；每 200 行一段以 `content-visibility: auto` 延遲渲染，13,602 行（Lit dev mode）初次渲染約 120–170 ms、摺疊至重繪完成約 100–125 ms，捲動平均每幀 16.7 ms（p95 約 18 ms）。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| **TASK-402** | 元件 | `Drawer` 側邊抽屜元件 (`<aui-drawer>`) [✅]     | 獨立可收合側欄（Off-canvas Drawer）；支援左右側滑出（`placement="left" \| "right"`）；遮罩與背景捲動鎖定；不綁死特定 Layout 版型，可靈活嵌入各專案。與 Modal 共用開關生命週期（`src/internal/modal-dialog.ts`），寬度以 `--aui-drawer-width` 調整。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **TASK-403** | 元件 | `Navbar` 頂部導覽列 (`<aui-navbar>`) [✅]       | 64px 獨立頂部導覽列；整合 Logo（Accent 圓點）、搜尋按鈕（內嵌 ⌘K 鍵帽）、導覽選單與主題切換開關。漢堡選單以 `menu-drawer` 連動 Drawer；⌘K / Ctrl+K 快捷鍵分派 `aui-search`；主題開關分派可取消的 `aui-theme-change` 後切換。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| **TASK-404** | 元件 | `Footer` 通用頁尾 (`<aui-footer>`) [✅]         | 獨立通用頁尾；版權聲明、版本資訊、外部連結與次要選單插槽；支援 Minimal 與 Columns 自適應排版。多欄以 `columns` 資料屬性提供，版權年份自動帶入今年。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| **TASK-405** | 工程 | **CD 自動化發布管線建立 (release-please)** [✅] | 原規劃 Changesets，改用 **release-please** + GitHub Actions（專案已以 commitlint 強制 Conventional Commits，不需另寫變更說明檔）：<br>1. 合併進 `main` 時，依 commit 類型自動開啟或更新 release PR（版號、`CHANGELOG.md`）；自動計算的版號一律為 `-beta` 預覽版，正式版以 `chore(release)` commit 的 `Release-As` footer 指定（Phase 4 結束時以 `Release-As: 1.0.0-beta`、`Release-As: 1.0.0` 發布）。<br>2. release PR 合併後，自動上 Git Tag、等待 CI、建置驗證並建立附上 tarball 的 GitHub Release，再將 `main` 合併回 `develop`。<br>3. 交付方式決定為 **GitHub Release 附 tarball**（主要供自己的專案使用），暫不發布至 npm registry；日後要發布時以 `npm publish release/<檔名>.tgz` 發布同一個 tarball。<br>已於 `v0.3.0`（PR #17）實際走完一次。流程見 `doc/anchor-ui-release-guide.md`。 |
+| **TASK-406** | 工程 | **相依性安全掃描與合規審查** [✅]               | 1. Dependabot 目前只監控 GitHub Actions，新增 npm 生態系（根目錄與 `examples/*`）。<br>2. 漏洞門檻以**發布的套件**為範圍：runtime `dependencies`（`lit`、`@floating-ui/dom`）須為 0 High / 0 Critical，並在 CI 檢查。`examples/` 與開發工具的漏洞不進入發布產物，由 Dependabot 追蹤更新、不阻擋發布（2026-11-18 時 `pnpm audit --prod` 的 7 High 全部來自 `examples/` 的 Angular 19 與 Vue 依賴）。<br>實作：`pnpm audit:runtime`（`scripts/audit-runtime.mjs`，CI lint job）以 `pnpm ls --prod` 取得根專案的 runtime 相依樹，只對樹內的漏洞套用門檻；Dependabot 的 runtime 相依更新以 `fix(deps)` 提交（觸發發布）、開發相依以 `chore(deps-dev)` 提交。                                                                                                                                          |
+| **TASK-407** | 導入 | 跨專案正式導入與版本鎖定驗證                    | 選定一個實際專案（如 ToolBox 前端）以 GitHub Release 的 tarball 網址正式安裝 `@anchor-ui/core@1.0.0`，驗證正式環境打包與運行。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| **TASK-408** | 文檔 | 元件庫使用手冊與 API 文件交付 [✅]              | 完善 Readme、Storybook 互動文檔、Vue 3 / Angular 安裝指南與升級遷移手冊。<br>實作：Storybook 加入 addon-docs，每個元件自動產生 Docs 頁，API 表取自 `@custom-elements-manifest/analyzer` 由 JSDoc 產生的 `custom-elements.json`（`pnpm analyze`），另有「快速開始」MDX 頁；README 補上元件一覽並更新安裝範例；新增 `doc/anchor-ui-upgrade-guide.md`。Vue 3 / Angular 安裝指南沿用 README「在其他專案中導入」第 5、6 節。                                                                                                                                                                                                                                                                                                                                                                           |
+| **TASK-409** | 文檔 | 授權檔案 (`LICENSE`) [✅]                       | `package.json` 已宣告 `"license": "MIT"`，但 repo 沒有 `LICENSE` 檔，GitHub 顯示為無授權。新增標準 MIT `LICENSE`（著作權人 mirageapache，`package.json` 的 `author` 同步填入），README 補上授權段落；確認 tarball 含 `LICENSE`（`npm pack` 一律收錄），且 `verify:package` 與 `pnpm smoke` 的發布檔案檢查允許它。                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 #### 交付成果 (Deliverables)
 
 - 完整 20 款獨立共用元件與全域服務（對齊 components-list.md）。
 - 全自動化發布流水線（CD），具備 SemVer 與自動 CHANGELOG 生成。
-- **Anchor UI v1.0.0 正式穩定版** 發布至私有 npm。
+- **Anchor UI v1.0.0 正式穩定版** 發布至 GitHub Releases（附 tarball）。
 - 第一個業務專案成功導入並上線運作。
+- MIT 授權檔（`LICENSE`）。
 
 #### 驗收條件 (Acceptance Criteria)
 
-- [ ] 業務專案透過 `npm install @my-org/anchor-ui` 安裝後能順利編譯通過生產打包（Production Build）。
-- [ ] `Code View` 載入萬行代碼時捲動順暢無卡頓，Sticky 行號定位精準。
-- [ ] `Drawer`、`Navbar` 與 `Footer` 能作為獨立元件自由嵌入不同專案頁面中，Drawer 展開與收合平滑無殘影，Navbar 具備正常吸頂與主題切換事件驅動。
+- [ ] 業務專案透過 GitHub Release 的 tarball 網址安裝 `@anchor-ui/core` 後能順利編譯通過生產打包（Production Build）。
+- [x] `Code View` 載入萬行代碼時捲動順暢無卡頓，Sticky 行號定位精準。
+      （2026-11-23 於 Chromium 實測：12,002 行 JSON 初次渲染約 100 ms；每幀捲動 400px 由頂端到底共 629 幀，幀間隔平均與 p95 皆為 16.7 ms、最大 16.8 ms，沒有掉幀。在頂端、1/3、2/3、底部四處水平捲到最右，行號列都固定在左緣，行號與該行程式碼上緣對齊，數字與實際行號一致。）
+- [x] `Drawer`、`Navbar` 與 `Footer` 能作為獨立元件自由嵌入不同專案頁面中，Drawer 展開與收合平滑無殘影，Navbar 具備正常吸頂與主題切換事件驅動。
+      （2026-11-23 於 Chromium 實測：三者放在 flex、grid 與另一個 Shadow Root 中皆撐滿容器並正常運作，Navbar 的 `menu-drawer` 可開啟同一 Shadow Root 內的右側 Drawer。Drawer 逐幀取樣的位置在展開時單調滑入、收合時單調滑出；關閉後 dialog 離開 Top Layer、面板不佔版面、頁面可點擊。頁面捲動 1500px 後 Navbar 仍貼齊頂端並顯示陰影；主題開關分派 `aui-theme-change` 並切換 `<html data-theme>`，事件被取消時不切換。各元件的單獨入口由 `examples/*/tests/entries.spec.ts` 與 `pnpm smoke` 驗證。）
 - [ ] 透過 CD 流水線發布版本全程無人為介入，CHANGELOG 內容與 Git Tag 準確對齊。
-- [ ] `npm audit` 檢驗結果為 0 High / 0 Critical 漏洞。
+- [x] 發布套件的 runtime 依賴經漏洞檢查為 0 High / 0 Critical（範圍見 TASK-406；CI 以 `pnpm audit:runtime` 持續檢查）。
+- [ ] repo 有 MIT `LICENSE` 檔，GitHub 頁面正確顯示授權，發布的 tarball 也包含它。
+      （`LICENSE` 檔與 tarball 收錄已完成，由 `verify:package` 與 `pnpm smoke` 檢查；GitHub 只偵測預設分支 `main` 上的授權檔，待 PR #19 合併後確認。）
 
 ---
 
 ## 三、各階段工期估算與里程碑檢核表 (Timeline & Milestones)
 
-|    階段     | 階段主題                        | 包含核心工程任務                                                | 預估工期 | 累計工期 |         版本里程碑         | 關鍵檢核條件 (Gate Criteria)                                                                     |
-| :---------: | ------------------------------- | --------------------------------------------------------------- | :------: | :------: | :------------------------: | ------------------------------------------------------------------------------------------------ |
-| **Phase 0** | 基礎建設、Tokens 與工程管線     | ESLint/Stylelint、Pre-commit（Husky+Commitlint）、PR 基礎 CI    |  1.5 週  |  1.5 週  |          `v0.0.1`          | Tokens 獨立打包發布、Pre-commit 生效、PR 基礎 CI 通過。                                          |
-| **Phase 1** | 技術驗證、最小可用原子與測試    | 單元測試框架、a11y 自動化檢測、Vue 3 / Angular yalc 軟連結      |  2.0 週  |  3.5 週  |       `v0.1.0-alpha`       | 雙框架整合測試通過、單元測試覆蓋率 ≥ 85%、通過 WCAG AA 檢測。                                    |
-| **Phase 2** | 高頻互動控制項、回饋與視覺 QA   | Tree-shaking 建置架構、Bundle Size 門禁、視覺回歸、共用浮層模組 |  4.5 週  |  8.0 週  |       `v0.2.0-beta`        | 表單可與 Vue 3 / Angular 雙向綁定、視覺回歸差異 ≤ 0.1%、體積不超出預算、單獨引用不夾帶其他元件。 |
-| **Phase 3** | 業務複合元件與自動化預覽        | 跨框架 CI 冒煙測試、Storybook 自動化 PR 預覽部署                |  2.5 週  | 10.5 週  |          `v0.3.0`          | 組裝出完整工具頁、PR 自動產出 Storybook 預覽連結。                                               |
-| **Phase 4** | 進階功能、獨立導覽抽屜與正式 CD | Changesets CD 自動發布、Dependabot 安全掃描、業務專案導入       |  3.0 週  | 13.5 週  | **`v1.0.0`**<br>_(正式版)_ | 私有 npm 自動發布成功、業務專案生產上線、0 漏洞。                                                |
+|    階段     | 階段主題                        | 包含核心工程任務                                                      | 預估工期 | 累計工期 |         版本里程碑         | 關鍵檢核條件 (Gate Criteria)                                                                     |
+| :---------: | ------------------------------- | --------------------------------------------------------------------- | :------: | :------: | :------------------------: | ------------------------------------------------------------------------------------------------ |
+| **Phase 0** | 基礎建設、Tokens 與工程管線     | ESLint/Stylelint、Pre-commit（Husky+Commitlint）、PR 基礎 CI          |  1.5 週  |  1.5 週  |          `v0.0.1`          | Tokens 獨立打包發布、Pre-commit 生效、PR 基礎 CI 通過。                                          |
+| **Phase 1** | 技術驗證、最小可用原子與測試    | 單元測試框架、a11y 自動化檢測、Vue 3 / Angular yalc 軟連結            |  2.0 週  |  3.5 週  |       `v0.1.0-alpha`       | 雙框架整合測試通過、單元測試覆蓋率 ≥ 85%、通過 WCAG AA 檢測。                                    |
+| **Phase 2** | 高頻互動控制項、回饋與視覺 QA   | Tree-shaking 建置架構、Bundle Size 門禁、視覺回歸、共用浮層模組       |  4.5 週  |  8.0 週  |       `v0.2.0-beta`        | 表單可與 Vue 3 / Angular 雙向綁定、視覺回歸差異 ≤ 0.1%、體積不超出預算、單獨引用不夾帶其他元件。 |
+| **Phase 3** | 業務複合元件與自動化預覽        | 跨框架 CI 冒煙測試、Storybook 自動化 PR 預覽部署                      |  2.5 週  | 10.5 週  |          `v0.3.0`          | 組裝出完整工具頁、PR 自動產出 Storybook 預覽連結。                                               |
+| **Phase 4** | 進階功能、獨立導覽抽屜與正式 CD | release-please CD 自動發布、Dependabot 安全掃描、業務專案導入、授權檔 |  3.0 週  | 13.5 週  | **`v1.0.0`**<br>_(正式版)_ | GitHub Release 自動發布成功、業務專案生產上線、發布套件 0 漏洞。                                 |
 
 > **總工期預估**：約 **13 ~ 14 週**（以 1 位前端工程師全職投入估算；若為 2 人協同開發約可壓縮至 7 ~ 8 週）。
 
@@ -343,10 +350,11 @@
 
 ### 3. CD 發布流水線標準 (Continuous Delivery)
 
-1. **Version Bump**：合併至 `main` 後，Changesets 依據 PR 記錄之 changeset 自動建立版本更新 PR。
-2. **Release & Tag**：Version PR 合併後，CD 自動建立 Git Tag、更新 `CHANGELOG.md`。
-3. **Package Publishing**：自動發布產物至私有 npm registry 或 GitHub Packages，並將最新 Storybook 發布至線上文檔庫。
-4. **Lockstep Deployment**：通知消費端專案可鎖版升級至新版本。
+1. **Version Bump**：合併至 `main` 後，release-please 依 Conventional Commits 自動開啟或更新 release PR（版號、`CHANGELOG.md`）；預覽版自動計算，正式版以 `Release-As` 指定。
+2. **Release & Tag**：release PR 合併後，自動建立 Git Tag 與草稿 Release。
+3. **Package Publishing**：等待必要 CI、建置驗證並打包後，附上 tarball 公開 GitHub Release（不發布至 npm registry）；`main` 的推送同時將最新 Storybook 部署至 GitHub Pages。
+4. **Lockstep Deployment**：消費端改用新版的 tarball 網址重新安裝，即鎖定於該版本。
+5. 詳細流程與失敗處理見 `doc/anchor-ui-release-guide.md`。
 
 ---
 

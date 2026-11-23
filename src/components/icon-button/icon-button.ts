@@ -320,6 +320,9 @@ export class AuiIconButton extends LitElement {
   @state()
   private announcement = '';
 
+  /** 複製進行中（等待剪貼簿）：期間不重複複製 */
+  private copying = false;
+
   constructor() {
     super();
     this.addEventListener('click', this.handleHostClick, { capture: true });
@@ -408,9 +411,11 @@ export class AuiIconButton extends LitElement {
    * 執行複製行為並觸發微動態反饋
    */
   async copy(): Promise<boolean> {
-    if (this.disabled || this.isBusy) return false;
+    // 前一次複製尚未完成時不重複執行（快速連點只複製一次、只分派一次事件）
+    if (this.disabled || this.isBusy || this.copying) return false;
 
     const textToCopy = this.copyValue;
+    this.copying = true;
 
     try {
       // 沒有可複製的內容時不可回報成功（避免「已複製！」但剪貼簿其實沒有變更）
@@ -428,13 +433,20 @@ export class AuiIconButton extends LitElement {
         textarea.style.left = '-9999px';
         textarea.style.top = '-9999px';
         textarea.setAttribute('readonly', '');
-        document.body.appendChild(textarea);
-        textarea.select();
-        const successful = document.execCommand('copy');
-        document.body.removeChild(textarea);
+        // 放在自身的 Shadow DOM 內：按鈕位於 modal 內時，<body> 下的元素是 inert、無法選取
+        this.renderRoot.appendChild(textarea);
+        let successful = false;
+        try {
+          textarea.select();
+          successful = document.execCommand('copy');
+        } finally {
+          textarea.remove();
+        }
         if (!successful) throw new Error('execCommand copy failed');
       }
 
+      // 等待剪貼簿期間已被移出頁面：不啟動回饋（計時器不會再被 disconnectedCallback 清除）
+      if (!this.isConnected) return true;
       this.triggerFeedback('success');
       this.dispatchEvent(
         new CustomEvent<CopyDetail>('aui-copy', {
@@ -445,6 +457,7 @@ export class AuiIconButton extends LitElement {
       );
       return true;
     } catch (err) {
+      if (!this.isConnected) return false;
       this.triggerFeedback('error');
       this.dispatchEvent(
         new CustomEvent('aui-copy-error', {
@@ -454,6 +467,8 @@ export class AuiIconButton extends LitElement {
         }),
       );
       return false;
+    } finally {
+      this.copying = false;
     }
   }
 
@@ -508,7 +523,8 @@ export class AuiIconButton extends LitElement {
     if (isCrossOrigin) {
       anchor.target = '_blank';
       anchor.rel = 'noopener noreferrer';
-    } else if (this.downloadFilename) {
+    } else {
+      // 一律設定 download（沒有檔名時為空字串，由瀏覽器決定檔名）：否則同源網址與 blob: 會讓整頁被導走
       anchor.download = this.downloadFilename;
     }
     document.body.appendChild(anchor);
@@ -551,12 +567,12 @@ export class AuiIconButton extends LitElement {
   }
 
   /**
-   * 回饋狀態的唯一轉換點：同步 active、播報文字，並在狀態實際改變時分派 aui-status-change
+   * 回饋狀態的唯一轉換點：更新播報文字，並在狀態實際改變時分派 aui-status-change。
+   * 成功時的高亮由 render 依 status 推導，不改寫使用端設定的 `active`
    */
   private setStatus(next: IconButtonStatus): void {
     const previousStatus = this.status;
     this.status = next;
-    this.active = next === 'success';
     this.announcement =
       next === 'success' ? this.computeSuccessTooltip() : next === 'error' ? '操作失敗' : '';
 

@@ -29,7 +29,20 @@ const git = (...gitArgs) =>
   execFileSync('git', gitArgs, { cwd: root, encoding: 'buffer', maxBuffer: 64 * 1024 * 1024 });
 
 // 以 git diff 取得與 base 相比的變更（含尚未 commit 的工作目錄變更與新增檔案）
-const tracked = git('diff', '--name-status', base, '--', BASELINE_DIR).toString().trim();
+// --no-renames：改名的基準圖以「刪除 + 新增」列出（否則為 R100\t舊路徑\t新路徑，會取到已不存在的舊路徑）；
+// core.quotePath=false：非 ASCII 檔名不以跳脫形式輸出
+const tracked = git(
+  '-c',
+  'core.quotePath=false',
+  'diff',
+  '--no-renames',
+  '--name-status',
+  base,
+  '--',
+  BASELINE_DIR,
+)
+  .toString()
+  .trim();
 const untracked = git('ls-files', '--others', '--exclude-standard', '--', BASELINE_DIR)
   .toString()
   .trim();

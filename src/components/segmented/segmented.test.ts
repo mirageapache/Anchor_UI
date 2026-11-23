@@ -24,6 +24,26 @@ function recordEvents(el: AuiSegmented): string[] {
   return events;
 }
 
+describe('AuiSegmented form value follows options synchronously', () => {
+  it('updates FormData right after options change, without waiting for a render', async () => {
+    const form = await fixture<HTMLFormElement>(html`
+      <form><aui-segmented name="level" value="2"></aui-segmented></form>
+    `);
+    const el = form.querySelector<AuiSegmented>('aui-segmented')!;
+    // 值不對應任何選項時不提交
+    expect(new FormData(form).has('level')).to.be.false;
+
+    el.options = [
+      { value: '1', label: 'One' },
+      { value: '2', label: 'Two' },
+    ];
+    expect(new FormData(form).get('level'), 'right after setting options').to.equal('2');
+
+    el.options = [{ value: '1', label: 'One' }];
+    expect(new FormData(form).has('level'), 'value no longer matches').to.be.false;
+  });
+});
+
 describe('AuiSegmented (<aui-segmented>)', () => {
   describe('rendering', () => {
     it('renders one radio per option inside a radiogroup', async () => {

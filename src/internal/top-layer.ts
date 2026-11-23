@@ -53,20 +53,16 @@ export function isPopoverOpen(element: Element): boolean {
 /** 收集 root 子樹內（含各層 Shadow DOM）已開啟的 popover，依樹狀順序排列 */
 function openPopoversWithin(root: Element): HTMLElement[] {
   const result: HTMLElement[] = [];
-  const visit = (node: Element) => {
-    for (const child of node.children) {
+  // 每個元素先走訪自己的 Shadow Root 再走訪 light DOM 子元素。Shadow Root 的直接子元素也可能有
+  // 自己的 Shadow Root（如 <aui-icon-button> 的 Shadow Root 頂層就是 <aui-tooltip>），須一併走訪
+  const visit = (parent: Element | ShadowRoot) => {
+    for (const child of parent.children) {
       if (child instanceof HTMLElement && isPopoverOpen(child)) result.push(child);
-      if (child.shadowRoot) {
-        for (const shadowChild of child.shadowRoot.children) {
-          if (shadowChild instanceof HTMLElement && isPopoverOpen(shadowChild)) {
-            result.push(shadowChild);
-          }
-          visit(shadowChild);
-        }
-      }
+      if (child.shadowRoot) visit(child.shadowRoot);
       visit(child);
     }
   };
+  if (root.shadowRoot) visit(root.shadowRoot);
   visit(root);
   return result;
 }

@@ -14,6 +14,9 @@ export interface SetThemeOptions {
   transition?: boolean;
 }
 
+/** 移除 .theme-transitioning 的計時器：連續切換時以最後一次為準 */
+let transitionTimer: ReturnType<typeof setTimeout> | undefined;
+
 /**
  * 設定目前頁面之視覺主題 ('light' | 'dark')
  * 透過於 document.documentElement 上設置 data-theme 屬性驅動 CSS Custom Properties。
@@ -30,8 +33,12 @@ export function setTheme(theme: Theme, options: SetThemeOptions = {}): void {
   } else {
     html.removeAttribute('data-theme');
   }
-  // 250ms 後移除過渡 class，避免影響後續一般互動動畫
-  if (transition) setTimeout(() => html.classList.remove('theme-transitioning'), 250);
+  // 250ms 後移除過渡 class，避免影響後續一般互動動畫。
+  // 先取消前一次的計時器：否則快速連續切換時，較早的計時器會在後一次轉場進行到一半時移除 class，畫面瞬間跳變
+  if (transition) {
+    clearTimeout(transitionTimer);
+    transitionTimer = setTimeout(() => html.classList.remove('theme-transitioning'), 250);
+  }
 }
 
 /**

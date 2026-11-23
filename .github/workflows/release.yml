@@ -5,7 +5,9 @@ name: Release
 # - 平常由 release-please.yml 在 release PR 合併、建立 tag 與草稿 Release 後呼叫（workflow_call）。
 #   以 GITHUB_TOKEN 建立的 tag 不會觸發 push 事件，因此不再以「推送 v* tag」觸發。
 # - 發布中途失敗時，可重跑 Release Please 中失敗的 job，或在 Actions 頁面以 tag 手動執行（workflow_dispatch）；
-#   Release 已存在時只會覆蓋上傳 tarball 並公開。
+#   Release 仍是草稿時覆蓋上傳 tarball 並公開；已公開的 Release 不會被覆蓋（見 overwrite-published）。
+# - 建置與發布分成兩個 job：安裝相依與建置（會執行第三方程式）只拿唯讀權杖，
+#   具 contents: write 的 publish job 不 checkout、不安裝，只上傳前一個 job 的 tarball。
 # 流程見 doc/anchor-ui-release-guide.md。
 on:
   workflow_call:
@@ -14,22 +16,32 @@ on:
         description: 要發布的 tag（例如 v0.4.0-beta）
         required: true
         type: string
+      overwrite-published:
+        description: Release 已公開時仍覆蓋其 tarball
+        required: false
+        type: boolean
+        default: false
   workflow_dispatch:
     inputs:
       tag:
         description: 要發布的 tag（例如 v0.4.0-beta），須已存在且位於 main 上
         required: true
         type: string
+      overwrite-published:
+        description: Release 已公開時仍覆蓋其 tarball（重新建置的檔案內容與原本不同，以雜湊鎖定的使用端會安裝失敗）
+        required: false
+        type: boolean
+        default: false
 
 permissions: {}
 
 jobs:
-  release:
-    name: Verify and publish GitHub Release
+  build:
+    name: Verify and pack the tarball
     runs-on: ubuntu-latest
     timeout-minutes: 40 # 含最多 20 分鐘的 CI 等待
     permissions:
-      contents: write
+      contents: read
       checks: read
     # 同一個 tag 不可同時執行兩次發布（例如自動觸發與手動重跑重疊）
     concurrency:
@@ -50,6 +62,7 @@ jobs:
         with:
           ref: refs/tags/${{ inputs.tag }}
           fetch-depth: 0 # 需要完整歷史以確認 tag 位於 main 上
+          persist-credentials: false # 之後會執行相依套件的程式，不把權杖留在 .git/config
 
       - name: Ensure the tag points to a commit on main
         id: tag
@@ -79,7 +92,7 @@ jobs:
         uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: '.nvmrc'
-          cache: 'pnpm'
+          # 不使用相依快取：發布的產物不應受其他 workflow 寫入的快取影響
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -90,14 +103,42 @@ jobs:
         env:
           RELEASE_TAG: ${{ inputs.tag }}
 
+      - name: Upload the tarball for the publish job
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: release-tarball
+          path: release/*.tgz
+          if-no-files-found: error
+          retention-days: 7
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download the tarball
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: release-tarball
+          path: release
+
       # release-please 建立的是草稿 Release（版本說明取自 CHANGELOG）：附上 tarball 後才公開，
       # 驗證失敗時消費端不會看到沒有 tarball 的 Release。手動執行而 Release 不存在時直接建立。
+      # 已公開的 Release 不覆蓋：重新建置的 tarball 與當初驗證並發布的檔案內容不同，
+      # 會讓以雜湊鎖定安裝網址的使用端安裝失敗；確實需要時以 overwrite-published 明確指定。
       - name: Attach the tarball and publish the GitHub Release
         run: |
           # 預覽版：建置資訊（+ 之後）以外的部分含 -（-alpha、-beta…）；例如 1.0.0+build-5 是正式版
           prerelease=false
           case "${TAG%%+*}" in *-*) prerelease=true ;; esac
-          if gh release view "$TAG" >/dev/null 2>&1; then
+          if is_draft="$(gh release view "$TAG" --json isDraft --jq .isDraft 2>/dev/null)"; then
+            if [ "$is_draft" != true ] && [ "$OVERWRITE_PUBLISHED" != true ]; then
+              echo "::error::Release ${TAG} 已公開，不覆蓋其 tarball。確實要覆蓋時，手動執行並勾選 overwrite-published"
+              exit 1
+            fi
             gh release upload "$TAG" release/*.tgz --clobber
             gh release edit "$TAG" --title "$TAG" --draft=false --prerelease="$prerelease"
           else
@@ -107,4 +148,6 @@ jobs:
           fi
         env:
           GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }} # 這個 job 不 checkout，gh 無法從 git remote 得知 repo
           TAG: ${{ inputs.tag }}
+          OVERWRITE_PUBLISHED: ${{ inputs.overwrite-published }}

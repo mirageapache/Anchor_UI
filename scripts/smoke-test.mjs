@@ -111,6 +111,7 @@ function checkInstalledPackage(project) {
   const files = listFiles(installed);
   const leaked = files.filter((file) => /\.(test|stories)\.|[\\/]test-utils[\\/]/.test(file));
   if (leaked.length) failures.push(`發布內容包含測試或 stories 檔案（${leaked.length} 個）`);
+  if (!existsSync(join(installed, 'LICENSE'))) failures.push('安裝的套件缺少 LICENSE');
 
   // 發布的程式碼引用的外部套件都必須列在 dependencies / peerDependencies：
   // 測試專案為了鎖定版本也自行宣告了 lit 等套件，元件庫漏列相依時安裝仍會成功，因此在此明確檢查。

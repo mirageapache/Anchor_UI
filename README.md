@@ -15,6 +15,20 @@ Anchor UI 是一套以 **Web Component (Lit)** 為核心實作的跨框架共用
 - **無縫雙主題 (Light / Dark)**：由 `<html>` 的 `data-theme="dark"` 屬性驅動，執行期平滑過渡（`200ms ease`）。
 - **輕量解耦**：不綁定整頁版型容器，抽屜（Drawer）、導覽列（Navbar）、頁尾（Footer）、彈窗（Modal / Alert）皆為獨立模組。
 
+### 元件一覽
+
+每個元件都可從個別入口按需載入（`import '@anchor-ui/core/<入口>'`），用法、範例與 API 表（屬性、事件、slot、CSS part）見[線上 Storybook](https://mirageapache.github.io/Anchor_UI/) 各元件的 Docs 頁。
+
+| 分類 | 元件                                                         | 標籤                                                                                           | 入口                                                                   |
+| ---- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 基礎 | 按鈕、圖示按鈕、標籤、鍵帽                                   | `aui-button`、`aui-icon-button`、`aui-tag`、`aui-kbd`                                          | `button`、`icon-button`、`tag`、`kbd`                                  |
+| 表單 | 輸入框、欄位、分段控制器、輸出框                             | `aui-input`、`aui-field`、`aui-segmented`、`aui-output`                                        | `input`、`field`、`segmented`、`output`                                |
+| 浮層 | 提示氣泡、通知、彈窗、確認對話框                             | `aui-tooltip`、`aui-toast`、`aui-modal`、`aui-alert`                                           | `tooltip`、`toast`、`modal`、`alert`                                   |
+| 複合 | 卡片、摺疊面板、檔案拖放區、收藏鈕、工具頁標頭、程式碼檢視區 | `aui-card`、`aui-accordion`、`aui-dropzone`、`aui-favorite-btn`、`aui-header`、`aui-code-view` | `card`、`accordion`、`dropzone`、`favorite-btn`、`header`、`code-view` |
+| 導覽 | 側邊抽屜、頂部導覽列、頁尾                                   | `aui-drawer`、`aui-navbar`、`aui-footer`                                                       | `drawer`、`navbar`、`footer`                                           |
+
+Toast 與 Alert 另有程式呼叫的服務：`ToastService`（`@anchor-ui/core/toast`）、`AlertService`（`@anchor-ui/core/alert`）。
+
 ---
 
 ## 技術架構
@@ -41,12 +55,14 @@ Anchor_UI/
 ├── doc/                         # 規格規劃文件
 │   ├── anchor-ui-spec.md        # 架構規格規劃
 │   ├── design-system.md         # 樣式系統與 Design Tokens 字典
-│   ├── anchor-ui-components-list.md # 20 款共用元件規格清單
-│   └── anchor-ui-development-schedule.md # Phase 0 ~ 4 開發排程
+│   ├── anchor-ui-components-list.md # 共用元件規格清單
+│   ├── anchor-ui-development-schedule.md # Phase 0 ~ 4 開發排程
+│   ├── anchor-ui-release-guide.md # 發布流程（release-please）
+│   └── anchor-ui-upgrade-guide.md # 升級遷移手冊（給使用端）
 ├── src/
 │   ├── tokens/                  # Design Tokens (色彩、文字、間距、圓角、動態)
 │   ├── base/                    # 全域基底 (Reset、Focus 環、Utilities)
-│   ├── components/              # Web Components 元件實作 (Phase 1 起逐步擴充)
+│   ├── components/              # Web Components 元件實作（每個資料夾一個元件）
 │   ├── stories/                 # Storybook 視覺展示頁
 │   ├── env.d.ts                 # 型別環境宣告
 │   ├── index.ts                 # 套件主入口
@@ -107,7 +123,7 @@ pnpm verify:package
 
 ## 在其他專案中導入 (Installation)
 
-> 正式發布到 npm registry 之前（Phase 4 TASK-405），透過 [GitHub Releases](https://github.com/mirageapache/Anchor_UI/releases) 的 tarball 安裝。以下以 `v0.2.0-beta` 為例，換成需要的版本即可。
+> 套件透過 [GitHub Releases](https://github.com/mirageapache/Anchor_UI/releases) 附上的 tarball 發布（不在 npm registry 上）。以下以 `v0.3.0` 為例，換成需要的版本即可。
 
 ### 1. 前置需求
 
@@ -119,14 +135,14 @@ pnpm verify:package
 直接以 Release 附檔的網址安裝（repo 為公開，不需登入）：
 
 ```bash
-npm install https://github.com/mirageapache/Anchor_UI/releases/download/v0.2.0-beta/anchor-ui-core-0.2.0-beta.tgz
+npm install https://github.com/mirageapache/Anchor_UI/releases/download/v0.3.0/anchor-ui-core-0.3.0.tgz
 # 或
-pnpm add https://github.com/mirageapache/Anchor_UI/releases/download/v0.2.0-beta/anchor-ui-core-0.2.0-beta.tgz
+pnpm add https://github.com/mirageapache/Anchor_UI/releases/download/v0.3.0/anchor-ui-core-0.3.0.tgz
 ```
 
 - `package.json` 的相依會記錄成這個網址，其他人 `npm install` 時會下載同一個檔案；`lit` 與 `@floating-ui/dom` 會一併自動安裝。
 - `v0.2.0-beta`（含）以前的 tarball 帶有本元件庫開發用的 `prepare: husky` 腳本，安裝時套件管理器可能提示有腳本待核准（npm `install-scripts`、pnpm「Ignored build scripts」）：**不需核准**，消費端用不到。之後的版本已不含此腳本。
-- 也可以先下載 tarball 再安裝：`gh release download v0.2.0-beta --repo mirageapache/Anchor_UI --pattern "*.tgz"`，接著 `npm install ./anchor-ui-core-0.2.0-beta.tgz`。這種做法需把 `.tgz` 提交進專案，否則其他人安裝不到。
+- 也可以先下載 tarball 再安裝：`gh release download v0.3.0 --repo mirageapache/Anchor_UI --pattern "*.tgz"`，接著 `npm install ./anchor-ui-core-0.3.0.tgz`。這種做法需把 `.tgz` 提交進專案，否則其他人安裝不到。
 
 ### 3. 載入樣式與字型
 
@@ -261,6 +277,7 @@ npm install https://github.com/mirageapache/Anchor_UI/releases/download/v0.3.0/a
 
 - 以網址安裝的相依不會被 `npm update` 自動升級，版本完全由網址決定，需手動更換。
 - `v1.0.0` 之前屬於 `0.x` 階段，任何版本都可能有不相容的變更，升級後請重新建置並檢查畫面。
+- 版本規則、升級後的檢查清單與各版本需要注意的變更見 [升級遷移手冊](doc/anchor-ui-upgrade-guide.md)。
 
 ---
 
@@ -300,17 +317,18 @@ npm install https://github.com/mirageapache/Anchor_UI/releases/download/v0.3.0/a
 
 **開發與程式碼品質**
 
-| 指令                                    | 說明                                                 |
-| --------------------------------------- | ---------------------------------------------------- |
-| `pnpm storybook`                        | 啟動 Storybook 開發環境 (預設 port: 6006)            |
-| `pnpm build-storybook`                  | 建置 Storybook 靜態部署產物至 `storybook-static/`    |
-| `pnpm typecheck`                        | 執行 TypeScript 靜態型別檢驗 (`tsc --noEmit`)        |
-| `pnpm lint` / `pnpm lint:fix`           | 執行 ESLint 檢查（及自動修復）TypeScript 與 Lit 語法 |
-| `pnpm stylelint` / `pnpm stylelint:fix` | 執行 Stylelint 檢查（及自動修復）SCSS 變數與樣式規範 |
-| `pnpm format:check` / `pnpm format`     | 檢查（及自動格式化）程式碼排版 (Prettier)            |
-| `pnpm yalc:publish`                     | 建置並發布至本機 yalc store                          |
-| `pnpm yalc:push`                        | 建置並推送更新至所有已 `yalc add` 的專案             |
-| `pnpm dev:yalc`                         | 監聽 `src/`，變更時自動建置並 `yalc push`            |
+| 指令                                    | 說明                                                                                                                   |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `pnpm storybook`                        | 啟動 Storybook 開發環境 (預設 port: 6006)                                                                              |
+| `pnpm build-storybook`                  | 建置 Storybook 靜態部署產物至 `storybook-static/`                                                                      |
+| `pnpm analyze`                          | 由元件的 JSDoc 產生 `custom-elements.json`（Storybook Docs 頁的 API 表；上面兩個指令與 `test:storybook` 會先自動執行） |
+| `pnpm typecheck`                        | 執行 TypeScript 靜態型別檢驗 (`tsc --noEmit`)                                                                          |
+| `pnpm lint` / `pnpm lint:fix`           | 執行 ESLint 檢查（及自動修復）TypeScript 與 Lit 語法                                                                   |
+| `pnpm stylelint` / `pnpm stylelint:fix` | 執行 Stylelint 檢查（及自動修復）SCSS 變數與樣式規範                                                                   |
+| `pnpm format:check` / `pnpm format`     | 檢查（及自動格式化）程式碼排版 (Prettier)                                                                              |
+| `pnpm yalc:publish`                     | 建置並發布至本機 yalc store                                                                                            |
+| `pnpm yalc:push`                        | 建置並推送更新至所有已 `yalc add` 的專案                                                                               |
+| `pnpm dev:yalc`                         | 監聽 `src/`，變更時自動建置並 `yalc push`                                                                              |
 
 ---
 
@@ -399,7 +417,15 @@ import '@fontsource/jetbrains-mono/400.css';
 
 詳細架構、樣式字典與排程請參考 `doc/` 目錄：
 
-- [架構規格規劃書 (`anchor-ui-spec.md`)](file:///c:/Users/user/Documents/my_repo/Anchor_UI/doc/anchor-ui-spec.md)
-- [樣式系統與 Design Tokens 字典 (`design-system.md`)](file:///c:/Users/user/Documents/my_repo/Anchor_UI/doc/design-system.md)
-- [共用元件規格清單 (`anchor-ui-components-list.md`)](file:///c:/Users/user/Documents/my_repo/Anchor_UI/doc/anchor-ui-components-list.md)
-- [開發排程與里程碑 (`anchor-ui-development-schedule.md`)](file:///c:/Users/user/Documents/my_repo/Anchor_UI/doc/anchor-ui-development-schedule.md)
+- [架構規格規劃書 (`anchor-ui-spec.md`)](doc/anchor-ui-spec.md)
+- [樣式系統與 Design Tokens 字典 (`design-system.md`)](doc/design-system.md)
+- [共用元件規格清單 (`anchor-ui-components-list.md`)](doc/anchor-ui-components-list.md)
+- [開發排程與里程碑 (`anchor-ui-development-schedule.md`)](doc/anchor-ui-development-schedule.md)
+- [發布流程 (`anchor-ui-release-guide.md`)](doc/anchor-ui-release-guide.md)
+- [升級遷移手冊 (`anchor-ui-upgrade-guide.md`)](doc/anchor-ui-upgrade-guide.md)
+
+---
+
+## 授權 (License)
+
+本專案以 [MIT License](./LICENSE) 授權，Copyright (c) 2026 mirageapache。發布的套件（GitHub Release 的 tarball）也附有同一份 `LICENSE`。

@@ -4,14 +4,18 @@ import { AuiAccordion } from './accordion/accordion.js';
 import { AuiAlert } from './alert/alert.js';
 import { AuiButton } from './button/button.js';
 import { AuiCard } from './card/card.js';
+import { AuiCodeView } from './code-view/code-view.js';
+import { AuiDrawer } from './drawer/drawer.js';
 import { AuiDropzone } from './dropzone/dropzone.js';
 import { AuiFavoriteBtn } from './favorite-btn/favorite-btn.js';
 import { AuiField } from './field/field.js';
+import { AuiFooter } from './footer/footer.js';
 import { AuiHeader } from './header/header.js';
 import { AuiIconButton } from './icon-button/icon-button.js';
 import { AuiInput } from './input/input.js';
 import { AuiKbd } from './kbd/kbd.js';
 import { AuiModal } from './modal/modal.js';
+import { AuiNavbar } from './navbar/navbar.js';
 import { AuiOutput } from './output/output.js';
 import { AuiSegmented } from './segmented/segmented.js';
 import { AuiTag } from './tag/tag.js';
@@ -112,13 +116,17 @@ describe('Design token fallbacks', () => {
     'aui-tooltip': AuiTooltip,
     'aui-input': AuiInput,
     'aui-field': AuiField,
+    'aui-footer': AuiFooter,
     'aui-output': AuiOutput,
     'aui-segmented': AuiSegmented,
     'aui-modal': AuiModal,
+    'aui-navbar': AuiNavbar,
     'aui-alert': AuiAlert,
     'aui-toast': AuiToast,
     'aui-card': AuiCard,
+    'aui-code-view': AuiCodeView,
     'aui-accordion': AuiAccordion,
+    'aui-drawer': AuiDrawer,
     'aui-dropzone': AuiDropzone,
     'aui-favorite-btn': AuiFavoriteBtn,
     'aui-header': AuiHeader,

@@ -27,6 +27,14 @@
       "types": "./dist/components/card/index.d.ts",
       "import": "./dist/components/card/index.js"
     },
+    "./code-view": {
+      "types": "./dist/components/code-view/index.d.ts",
+      "import": "./dist/components/code-view/index.js"
+    },
+    "./drawer": {
+      "types": "./dist/components/drawer/index.d.ts",
+      "import": "./dist/components/drawer/index.js"
+    },
     "./dropzone": {
       "types": "./dist/components/dropzone/index.d.ts",
       "import": "./dist/components/dropzone/index.js"
@@ -38,6 +46,10 @@
     "./field": {
       "types": "./dist/components/field/index.d.ts",
       "import": "./dist/components/field/index.js"
+    },
+    "./footer": {
+      "types": "./dist/components/footer/index.d.ts",
+      "import": "./dist/components/footer/index.js"
     },
     "./header": {
       "types": "./dist/components/header/index.d.ts",
@@ -58,6 +70,10 @@
     "./modal": {
       "types": "./dist/components/modal/index.d.ts",
       "import": "./dist/components/modal/index.js"
+    },
+    "./navbar": {
+      "types": "./dist/components/navbar/index.d.ts",
+      "import": "./dist/components/navbar/index.js"
     },
     "./output": {
       "types": "./dist/components/output/index.d.ts",
@@ -95,12 +111,18 @@
     "./dist/components/button/button.js",
     "./dist/components/card/index.js",
     "./dist/components/card/card.js",
+    "./dist/components/code-view/index.js",
+    "./dist/components/code-view/code-view.js",
+    "./dist/components/drawer/index.js",
+    "./dist/components/drawer/drawer.js",
     "./dist/components/dropzone/index.js",
     "./dist/components/dropzone/dropzone.js",
     "./dist/components/favorite-btn/index.js",
     "./dist/components/favorite-btn/favorite-btn.js",
     "./dist/components/field/index.js",
     "./dist/components/field/field.js",
+    "./dist/components/footer/index.js",
+    "./dist/components/footer/footer.js",
     "./dist/components/header/index.js",
     "./dist/components/header/header.js",
     "./dist/components/icon-button/index.js",
@@ -111,6 +133,8 @@
     "./dist/components/kbd/kbd.js",
     "./dist/components/modal/index.js",
     "./dist/components/modal/modal.js",
+    "./dist/components/navbar/index.js",
+    "./dist/components/navbar/navbar.js",
     "./dist/components/output/index.js",
     "./dist/components/output/output.js",
     "./dist/components/segmented/index.js",
@@ -130,13 +154,14 @@
   ],
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && pnpm build:tokens",
+    "build": "tsc --noEmit && vite build && pnpm build:tokens",
     "build:tokens": "sass src/tokens/index.scss dist/tokens.css --style=compressed --no-source-map",
     "verify:package": "node scripts/verify-package.mjs",
     "sync:package": "node scripts/sync-package-entries.mjs",
     "size": "size-limit",
     "release:verify": "node scripts/verify-release.mjs",
     "check:versions": "node scripts/check-tool-versions.mjs",
+    "audit:runtime": "node scripts/audit-runtime.mjs",
     "release:pack": "pnpm build && pnpm verify:package && pnpm size && pnpm release:verify && node scripts/pack.mjs",
     "smoke": "node scripts/smoke-test.mjs",
     "test:scripts": "node --test \"scripts/*.test.mjs\"",
@@ -161,12 +186,13 @@
     "format:check": "prettier --check \"src/**/*.{ts,js,scss,css,json,md}\"",
     "format": "prettier --write \"src/**/*.{ts,js,scss,css,json,md}\"",
     "prepare": "husky",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build",
-    "test:storybook": "vitest run --project=storybook",
+    "storybook": "pnpm analyze && storybook dev -p 6006",
+    "build-storybook": "pnpm analyze && storybook build",
+    "test:storybook": "pnpm analyze && vitest run --project=storybook",
     "yalc:publish": "pnpm build && yalc publish --no-scripts",
     "yalc:push": "pnpm build && yalc push --no-scripts",
-    "dev:yalc": "node scripts/yalc-watch.mjs"
+    "dev:yalc": "node scripts/yalc-watch.mjs",
+    "analyze": "cem analyze"
   },
   "keywords": [
     "anchor-ui",
@@ -175,7 +201,7 @@
     "design-system",
     "design-tokens"
   ],
-  "author": "",
+  "author": "mirageapache",
   "license": "MIT",
   "dependencies": {
     "@floating-ui/dom": "^1.8.0",
@@ -184,10 +210,12 @@
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
+    "@custom-elements-manifest/analyzer": "0.11.0",
     "@fontsource/inter": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@open-wc/testing": "^5.0.0",
     "@size-limit/preset-small-lib": "^14.2.0",
+    "@storybook/addon-docs": "10.6.5",
     "@storybook/addon-vitest": "10.6.5",
     "@storybook/web-components-vite": "10.6.5",
     "@types/mocha": "^10.0.10",

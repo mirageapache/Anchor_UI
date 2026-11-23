@@ -228,6 +228,32 @@ describe('internal/top-layer', () => {
       expect(inner.matches(':popover-open')).to.be.true;
       expect(host.shadowRoot!.elementFromPoint(10, 10)).to.equal(inner);
     });
+
+    it('finds a popover in the shadow root of a shadow-root child (icon-button → tooltip)', () => {
+      // <aui-icon-button> 的 Shadow Root 頂層就是 <aui-tooltip>，popup 在 tooltip 自己的 Shadow Root 內
+      const parent = document.createElement('div');
+      parent.popover = 'manual';
+      parent.style.cssText = fill;
+      const outerHost = document.createElement('div');
+      const innerHost = document.createElement('div');
+      const popup = document.createElement('div');
+      popup.popover = 'manual';
+      popup.style.cssText = 'position: fixed; inset: 0; margin: 0; width: 50px; height: 50px;';
+      innerHost.attachShadow({ mode: 'open' }).appendChild(popup);
+      outerHost.attachShadow({ mode: 'open' }).appendChild(innerHost);
+      parent.appendChild(outerHost);
+      document.body.appendChild(parent);
+      parent.showPopover();
+      popup.showPopover();
+
+      raisePopover(parent);
+
+      expect(popup.matches(':popover-open')).to.be.true;
+      expect(innerHost.shadowRoot!.elementFromPoint(10, 10), 'popup stays above parent').to.equal(
+        popup,
+      );
+      parent.remove();
+    });
   });
 
   describe('followTopModal edge cases', () => {

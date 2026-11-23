@@ -26,8 +26,14 @@ export default defineConfig({
       insertTypesEntry: true,
       include: ['src/**/*.ts'],
       // 測試、stories 與測試工具不屬於發布內容
-      // src/internal 為不對外的共用模組，元件的公開型別不引用它們，不發布其型別
-      exclude: ['src/**/*.test.ts', 'src/stories/**', 'src/test-utils/**', 'src/internal/**'],
+      // src/internal 為不對外的共用模組，不發布其型別；例外是元件公開類別所繼承的基底
+      // （modal-dialog：AuiModal、AuiDrawer 的父類別），否則元件的型別檔無法解析
+      exclude: [
+        'src/**/*.test.ts',
+        'src/stories/**',
+        'src/test-utils/**',
+        'src/internal/**/!(modal-dialog).ts',
+      ],
     }),
   ],
   resolve: {

@@ -5,6 +5,7 @@ import { ifDefined } from 'lit/directives/if-defined.js';
 import { live } from 'lit/directives/live.js';
 import { inputStyles } from './input.styles.js';
 import { FormControlController } from '../../internal/form-control.js';
+import { afterDispatch, submitImplicitly } from '../../internal/implicit-submit.js';
 import type { InputType } from './input.types.js';
 
 /** 支援的單行類型（與 InputType 一致）；其他類型（如 file、checkbox）無法以文字值運作 */
@@ -23,6 +24,8 @@ const INPUT_TYPES: ReadonlySet<string> = new Set<InputType>([
  * 等寬字體的單行／多行文字輸入框，具備 Focus 雙層光環與錯誤狀態。
  * 為 form-associated custom element：可參與原生 `<form>` 提交、`required` 等驗證、
  * `form.reset()` 與 `<fieldset disabled>`；不支援 ElementInternals 時退回以 light DOM 隱藏 input 提交。
+ * 單行輸入時按 Enter 會送出所屬表單（與原生 `<input>` 相同：有送出按鈕時等同點擊它，
+ * 沒有時僅在表單只有一個單行欄位時送出）；在 `keydown` 監聽器中 `preventDefault()` 可取消。
  *
  * 標題與描述（`label` / `description`）在元件自身的 Shadow DOM 內與輸入框建立關聯，
  * 因 IDREF 無法跨 Shadow DOM 邊界解析；搭配 `<aui-field>` 時由 field 自動傳入。
@@ -265,6 +268,11 @@ export class AuiInput extends LitElement {
     const previous = this.currentValue;
     this.currentValue = String(next ?? '');
     this.formControl.setValue(this.currentValue);
+    // 驗證以內部控制項為準：先把值寫入控制項再同步，設定 value 後立刻 checkValidity() 才是最新結果
+    // （否則要等下一次渲染）。首次渲染前還沒有控制項，由 updated() 同步
+    const control = this.control;
+    if (control && control.value !== this.currentValue) control.value = this.currentValue;
+    this.syncValidity();
     this.requestUpdate('value', previous);
   }
 
@@ -290,6 +298,19 @@ export class AuiInput extends LitElement {
   private handleChange = (event: Event) => {
     this.value = (event.target as HTMLInputElement | HTMLTextAreaElement).value;
     this.dispatchEvent(new Event('change', { bubbles: true }));
+  };
+
+  /**
+   * 單行輸入按 Enter：送出所屬表單（隱式送出）。內部的 <input> 位於 Shadow DOM、沒有表單擁有者，
+   * 瀏覽器不會代為處理。輸入法選字中的 Enter 與帶修飾鍵的 Enter 不算
+   */
+  private handleKeydown = (event: KeyboardEvent) => {
+    if (event.key !== 'Enter' || event.isComposing) return;
+    if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
+    afterDispatch(event, () => {
+      const form = this.form;
+      if (form && this.isConnected && !this.isDisabled) submitImplicitly(form);
+    });
   };
 
   override willUpdate(changed: PropertyValues<this>): void {
@@ -353,6 +374,7 @@ export class AuiInput extends LitElement {
             ?required=${this.required}
             @input=${this.handleInput}
             @change=${this.handleChange}
+            @keydown=${this.handleKeydown}
           />
         `;
 

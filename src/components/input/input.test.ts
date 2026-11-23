@@ -1,4 +1,5 @@
-import { expect, fixture, html } from '@open-wc/testing';
+import { aTimeout, expect, fixture, html } from '@open-wc/testing';
+import '../button/index.js';
 import { sendKeys } from '@web/test-runner-commands';
 import './index.js';
 import type { AuiInput } from './input.js';
@@ -446,6 +447,154 @@ describe('AuiInput (<aui-input>)', () => {
       el.formStateRestoreCallback('restored');
       el.formStateRestoreCallback(null);
       expect(el.value).to.equal('restored');
+    });
+  });
+
+  describe('validity after programmatic changes', () => {
+    it('reports validity synchronously after setting value', async () => {
+      const form = await fixture<HTMLFormElement>(html`
+        <form><aui-input name="q" required value="filled"></aui-input></form>
+      `);
+      const el = form.querySelector<AuiInput>('aui-input')!;
+      expect(form.checkValidity()).to.be.true;
+
+      el.value = '';
+      // 不等待渲染
+      expect(el.validity!.valueMissing, 'valueMissing right away').to.be.true;
+      expect(form.checkValidity()).to.be.false;
+
+      el.value = 'again';
+      expect(el.validity!.valid).to.be.true;
+      expect(form.checkValidity()).to.be.true;
+    });
+  });
+
+  describe('implicit submission (Enter)', () => {
+    /** 表單與送出次數；submit 一律 preventDefault 以免頁面導走 */
+    async function formWith(content: unknown) {
+      const state = { submits: 0 };
+      const form = await fixture<HTMLFormElement>(html`
+        <form
+          @submit=${(event: Event) => {
+            event.preventDefault();
+            state.submits++;
+          }}
+        >
+          ${content}
+        </form>
+      `);
+      return { form, state };
+    }
+
+    async function pressEnter(el: AuiInput, press = 'Enter') {
+      el.focus();
+      await sendKeys({ press });
+      // 送出是 Enter 的預設行為，事件分派完畢後才執行
+      await aTimeout(0);
+    }
+
+    it('submits a form whose only single-line field is this input', async () => {
+      const { form, state } = await formWith(html`<aui-input name="q" value="lit"></aui-input>`);
+      await pressEnter(form.querySelector<AuiInput>('aui-input')!);
+      expect(state.submits).to.equal(1);
+    });
+
+    it('submits through the default button when the form has several fields', async () => {
+      const { form, state } = await formWith(html`
+        <aui-input name="user" value="amy"></aui-input>
+        <aui-input name="password" type="password" value="secret"></aui-input>
+        <aui-button type="submit">登入</aui-button>
+      `);
+      await pressEnter(form.querySelectorAll<AuiInput>('aui-input')[1]);
+      expect(state.submits).to.equal(1);
+    });
+
+    it('names a native default button as the submitter', async () => {
+      let submitter: HTMLElement | null = null;
+      const { form } = await formWith(html`
+        <aui-input name="q"></aui-input>
+        <input name="other" />
+        <button id="go" name="action" value="search">搜尋</button>
+      `);
+      form.addEventListener('submit', (event) => (submitter = event.submitter));
+      await pressEnter(form.querySelector<AuiInput>('aui-input')!);
+      expect(submitter === form.querySelector('#go'), 'submitter is the default button').to.be.true;
+    });
+
+    it('does not submit several fields without a submit button (like native inputs)', async () => {
+      const { form, state } = await formWith(html`
+        <aui-input name="a"></aui-input>
+        <aui-input name="b"></aui-input>
+      `);
+      await pressEnter(form.querySelector<AuiInput>('aui-input')!);
+      expect(state.submits).to.equal(0);
+    });
+
+    it('does not submit while the default button is disabled or loading', async () => {
+      const { form, state } = await formWith(html`
+        <aui-input name="q"></aui-input>
+        <aui-button type="submit" disabled>送出</aui-button>
+      `);
+      const input = form.querySelector<AuiInput>('aui-input')!;
+      const button = form.querySelector<HTMLElement & { disabled: boolean; loading: boolean }>(
+        'aui-button',
+      )!;
+      await pressEnter(input);
+      expect(state.submits, 'disabled').to.equal(0);
+
+      button.disabled = false;
+      button.loading = true;
+      await pressEnter(input);
+      expect(state.submits, 'loading').to.equal(0);
+
+      button.loading = false;
+      await pressEnter(input);
+      expect(state.submits, 'enabled').to.equal(1);
+    });
+
+    it('runs validation: an invalid form is not submitted', async () => {
+      const { form, state } = await formWith(html`<aui-input name="q" required></aui-input>`);
+      await pressEnter(form.querySelector<AuiInput>('aui-input')!);
+      expect(state.submits).to.equal(0);
+    });
+
+    it('can be cancelled with preventDefault() in a keydown listener', async () => {
+      const { form, state } = await formWith(html`<aui-input name="q"></aui-input>`);
+      form.addEventListener('keydown', (event) => event.preventDefault());
+      await pressEnter(form.querySelector<AuiInput>('aui-input')!);
+      expect(state.submits).to.equal(0);
+    });
+
+    it('ignores Enter with a modifier, in a multiline input and outside a form', async () => {
+      const { form, state } = await formWith(html`<aui-input name="q"></aui-input>`);
+      const input = form.querySelector<AuiInput>('aui-input')!;
+      await pressEnter(input, 'Shift+Enter');
+      expect(state.submits, 'Shift+Enter').to.equal(0);
+
+      input.multiline = true;
+      await input.updateComplete;
+      await pressEnter(input);
+      expect(state.submits, 'multiline').to.equal(0);
+      expect(input.value, 'Enter inserts a line break').to.equal('\n');
+
+      // 不在表單內：不拋出錯誤
+      const lone = await fixture<AuiInput>(html`<aui-input></aui-input>`);
+      await pressEnter(lone);
+    });
+
+    it('ignores Enter that confirms an IME composition', async () => {
+      const { form, state } = await formWith(html`<aui-input name="q"></aui-input>`);
+      const input = form.querySelector<AuiInput>('aui-input')!;
+      controlOf(input).dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          isComposing: true,
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      await aTimeout(0);
+      expect(state.submits).to.equal(0);
     });
   });
 

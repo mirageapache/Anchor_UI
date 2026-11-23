@@ -26,6 +26,17 @@ describe('theme', () => {
     expect(html.classList.contains('theme-transitioning')).to.be.false;
   });
 
+  it('keeps the transition class for the full duration after the last of several rapid toggles', async () => {
+    setTheme('dark');
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    setTheme('light');
+    // 第一次切換的計時器（t=250）不可在第二次轉場進行到一半時移除 class
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(html.classList.contains('theme-transitioning'), 'at t=300').to.be.true;
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(html.classList.contains('theme-transitioning'), 'at t=450').to.be.false;
+  });
+
   it('skips the transition class when transition is false', () => {
     setTheme('dark', { transition: false });
     expect(getTheme()).to.equal('dark');

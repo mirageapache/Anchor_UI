@@ -10,17 +10,17 @@ import { listComponents } from './scripts/components.mjs';
 
 /** 各入口的體積基準（bytes，gzip；TASK-202 建立於 2026-10-09） */
 const BASELINES = {
-  index: 45950, // Phase 3 的 6 款元件與 Toast 位置設定（Phase 2 結束時 35507，Phase 1 為 20838）
+  index: 56004, // Phase 4 Drawer、Navbar、Footer、Code View（Footer 後為 53238；Navbar 後為 51400；Drawer 後為 47682；Phase 3 的 6 款元件與 Toast 位置設定後為 45950；Phase 2 結束時 35507，Phase 1 為 20838）
   button: 3189,
   'icon-button': 16704, // 含相依的 Tooltip 與 @floating-ui/dom
   tag: 3390,
   tooltip: 10807, // 含 @floating-ui/dom（約 6 KB）
-  input: 3208,
+  input: 3622, // Enter 隱式送出表單（+414；原 3208）
   field: 18058, // 含相依的 Icon Button、Tooltip 與 @floating-ui/dom
   output: 2501,
   segmented: 3722,
-  modal: 4531,
-  alert: 11141, // 含相依的 Modal、Button 與 Input
+  modal: 5276, // 範本與樣式改由 internal/modal-dialog 產生（單一入口 +228，全量入口因共用而 -527；原 5021）
+  alert: 12574, // 含相依的 Modal、Button 與 Input（Modal 範本共用後 +309；Input 的 Enter 送出、Button 的表單動作與 fieldset 停用後 +1124；原 11141）
   toast: 6437, // 新增 placement（六種位置與對應的堆疊、動畫方向；原 5750）
   card: 3384, // TASK-301
   accordion: 2665, // TASK-302
@@ -28,6 +28,10 @@ const BASELINES = {
   'favorite-btn': 2423, // TASK-304
   header: 6503, // TASK-305
   kbd: 1494, // TASK-306
+  drawer: 5376, // TASK-402（與 Modal 共用 internal/modal-dialog 的範本與樣式；原 5150）
+  navbar: 6096, // TASK-403（含相依的 Kbd）
+  footer: 3575, // TASK-404
+  'code-view': 3934, // TASK-401
 };
 
 const TOLERANCE = 0.1;

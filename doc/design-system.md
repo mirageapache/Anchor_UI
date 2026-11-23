@@ -205,7 +205,7 @@
   /* Text */
   --color-text-primary: #f8fafc; // Slate-50
   --color-text-secondary: #94a3b8; // Slate-400
-  --color-text-muted: #64748b; // Slate-500
+  --color-text-muted: #8494ab; // 介於 Slate-500 與 Slate-400：在 base / surface 上 4.7:1（Slate-500 只有 3.1:1）
 
   /* Tooltip (深色底上提亮一階，與頁面背景區隔) */
   --color-tooltip-bg: #1e293b; // Slate-800
@@ -392,6 +392,7 @@
   --shadow-popover: 0 4px 12px rgb(0 0 0 / 28%); // 浮層氣泡（Tooltip）
   --shadow-modal: 0 25px 50px -12px rgb(0 0 0 / 35%); // 模態對話框（Modal、Alert）
   --shadow-toast: 0 10px 25px -5px rgb(0 0 0 / 15%); // 浮動通知卡片（Toast）
+  --shadow-drawer: 0 8px 30px rgb(0 0 0 / 25%); // 側邊抽屜面板（Drawer）
 }
 ```
 
@@ -910,7 +911,9 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
 
 #### 2. IDE 風格程式碼預覽 (`.code-view`)
 
-支援 **Sticky 行號列**、**行展開/收折**、**水平捲動且行號不位移**：
+支援 **Sticky 行號列**、**行展開/收折**、**水平捲動且行號不位移**。
+
+實作要點（`<aui-code-view>`）：純文字、不做語法高亮；依縮排自動判斷可摺疊的區塊（與 VS Code 預設相同），摺疊鈕以 roving tabindex 組成一組（↑ / ↓ / Home / End 移動）。所有行都在 DOM 中，每 200 行一段並以 `content-visibility: auto` 略過畫面外的排版與繪製（13,602 行初次渲染約 120–170 ms，捲動維持每幀約 16.7 ms），內容寬度以最長一行的欄數估算，避免長行被分段的繪製範圍裁切。行號與摺疊鈕改用 `--color-text-secondary`：`--color-text-muted` 在 `--color-surface` 底上未達 WCAG AA。
 
 ```scss
 .code-view {
@@ -1521,91 +1524,74 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
 
 ### 5.9 可收合抽屜側邊欄 (Drawer)
 
-獨立的可收合側邊欄元件（Off-canvas Drawer），不綁死特定的頁面整體版型 Layout，各專案可自由嵌入。常用於行動端滑入選單、側邊過濾面板或操作設定欄。支援左右滑出方向（`placement="left" | "right"`）、背景遮罩與捲動鎖定：
+獨立的可收合側邊欄元件（Off-canvas Drawer），不綁死特定的頁面整體版型 Layout，各專案可自由嵌入。常用於行動端滑入選單、側邊過濾面板或操作設定欄。支援左右滑出方向（`placement="left" | "right"`，預設 `left`）、背景遮罩與捲動鎖定。
+
+與 Modal 相同以原生 `<dialog>.showModal()` 進入 Top Layer（不需要 `z-index`，背景自動 inert），開關的生命週期與 Modal 共用（`src/internal/modal-dialog.ts`）。面板寬度以 `--aui-drawer-width` 調整，頁首與 Navbar 同高（`--nav-height`）：
 
 ```scss
 /* ─── 5.9 可收合抽屜側邊欄 (Drawer: <aui-drawer>) ─── */
-.drawer-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 900;
-  background: rgba(15, 23, 42, 0.5);
+.drawer::backdrop {
+  background: var(--color-backdrop);
   backdrop-filter: blur(2px);
-  animation: drawer-fade-in 0.2s ease-out;
+  transition: opacity 200ms ease-out; // 進場由 @starting-style 從 opacity: 0 開始
 }
 
-.drawer {
-  position: fixed;
+.drawer__panel {
+  position: absolute;
   top: 0;
   bottom: 0;
-  z-index: 950;
-  width: 280px;
-  max-width: 85vw;
-  height: 100dvh;
   display: flex;
   flex-direction: column;
+  width: var(--aui-drawer-width, 280px);
+  max-width: 85%;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
   background: var(--color-base);
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-  transition: transform var(--transition-theme);
+  box-shadow: var(--shadow-drawer);
+  transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1);
 
-  // 方向支援
-  &--left,
-  &[placement='left'] {
+  // 方向支援：進場從所在側滑入（@starting-style），退場滑回同一側
+  &--left {
     left: 0;
     border-right: 1px solid var(--color-border);
-    transform: translateX(-100%);
-
-    &.is-open {
-      transform: translateX(0);
-    }
+    --aui-drawer-offscreen: -100%;
   }
 
-  &--right,
-  &[placement='right'] {
+  &--right {
     right: 0;
     border-left: 1px solid var(--color-border);
-    transform: translateX(100%);
-
-    &.is-open {
-      transform: translateX(0);
-    }
+    --aui-drawer-offscreen: 100%;
   }
 }
 
-.drawer-header {
+.drawer--leaving .drawer__panel {
+  transform: translateX(var(--aui-drawer-offscreen));
+}
+
+.drawer__header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   min-height: var(--nav-height);
-  padding: 0 var(--space-lg);
+  padding: var(--space-sm) var(--space-lg);
   border-bottom: 1px solid var(--color-border);
-
-  .drawer-title {
-    font-size: var(--text-base);
-    font-weight: var(--weight-semibold);
-    color: var(--color-text-primary);
-  }
 }
 
-.drawer-body {
+.drawer__title {
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.drawer__body {
   flex: 1 1 auto;
   padding: var(--space-md) var(--space-lg);
   overflow-y: auto;
 }
 
-.drawer-footer {
+.drawer__footer {
   padding: var(--space-md) var(--space-lg);
   border-top: 1px solid var(--color-border);
   background: var(--color-surface);
-}
-
-@keyframes drawer-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 ```
 
@@ -1614,6 +1600,8 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
 ### 5.10 頂部導覽列 (Navbar)
 
 獨立的站台頂部導覽列元件（Site Header），固定或吸頂於視窗上方（高度 64px）。整合品牌 Logo（含 Accent 亮點圓點）、自訂導覽選單插槽、快捷搜尋觸發鈕（內嵌 `⌘K` 鍵帽）與深淺主題切換開關，漢堡選單按鈕可與 Drawer 連動開闔：
+
+實作要點（`<aui-navbar>`）：吸附（`position: sticky`）設在 host 上，`position="fixed" | "static"` 可切換，頁面捲動後加上 `--shadow-sm` 陰影；響應式斷點以 Navbar 自身寬度（container query）判斷，寬度小於 768px 時隱藏導覽選單、顯示漢堡選單鈕，搜尋鈕只留圖示。漢堡選單以 `menu-drawer` 指定 `<aui-drawer>` 的 id；搜尋鈕點擊或按下 ⌘K（其他平台 Ctrl+K）時分派 `aui-search`；主題開關（`role="switch"`）分派可取消的 `aui-theme-change` 後以 `setTheme()` 切換。
 
 ```scss
 /* ─── 5.10 頂部導覽列 (Navbar: <aui-navbar>) ─── */
@@ -1685,7 +1673,7 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary); // muted 在 surface 底上未達 WCAG AA 4.5:1
   font-size: var(--text-xs);
   cursor: pointer;
   transition:
@@ -1694,7 +1682,7 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
 
   &:hover {
     border-color: var(--color-brand-500);
-    color: var(--color-text-secondary);
+    color: var(--color-text-primary);
   }
 }
 
@@ -1710,6 +1698,8 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
 ### 5.11 通用頁尾 (Footer)
 
 獨立的站台通用頁尾元件，置於專案頁面最底層。提供統一風格的版權宣告（Copyright）、專案版本資訊、社群/GitHub 快速連結與次要選單插槽，支援 Minimal 與 Columns 排版插槽：
+
+實作要點（`<aui-footer>`）：沒有 `columns` 時為 Minimal，以 property 設定 `columns`（`[{ heading, links: [{ label, href, external? }] }]`）時為 Columns；`copyright-holder` 自動帶入今年（`copyright-since` 早於今年時顯示範圍），`links` slot 放次要選單、`social` slot 放社群連結。響應式斷點以 Footer 自身寬度（container query）判斷，小於 640px 時版權列直向堆疊。文字色改用 `--color-text-secondary`：`--color-text-muted` 在 `--color-surface` 底上對比約 4.4:1，未達 WCAG AA。
 
 ```scss
 /* ─── 5.11 通用頁尾 (Footer: <aui-footer>) ─── */

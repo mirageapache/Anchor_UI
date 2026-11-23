@@ -1,4 +1,4 @@
-import { expect, fixture, html } from '@open-wc/testing';
+import { aTimeout, expect, fixture, html } from '@open-wc/testing';
 import { sendKeys } from '@web/test-runner-commands';
 import './index.js';
 import type { AuiButton } from './button.js';
@@ -138,6 +138,7 @@ describe('AuiButton (<aui-button>)', () => {
       </form>
     `);
     form.querySelector<AuiButton>('aui-button')!.click();
+    await aTimeout(0);
     expect(formSubmitted).to.be.false;
   });
 
@@ -182,7 +183,95 @@ describe('AuiButton (<aui-button>)', () => {
 
     const btn = form.querySelector('aui-button') as AuiButton;
     btn.click();
+    // 表單動作是點擊的預設行為，事件分派完畢後才執行
+    expect(formSubmitted, 'not submitted during dispatch').to.be.false;
+    await aTimeout(0);
     expect(formSubmitted).to.be.true;
+  });
+
+  it('does not submit or reset when a click listener calls preventDefault()', async () => {
+    // 與原生按鈕相同：使用端在 click 監聽器中 preventDefault() 即可取消表單動作，
+    // 不論監聽器掛在按鈕本身或祖先上
+    let submitted = 0;
+    let resets = 0;
+    const form = await fixture<HTMLFormElement>(html`
+      <form
+        @submit=${(e: Event) => {
+          e.preventDefault();
+          submitted++;
+        }}
+        @reset=${() => resets++}
+      >
+        <aui-button id="own" type="submit" @click=${(e: Event) => e.preventDefault()}>A</aui-button>
+        <div @click=${(e: Event) => e.preventDefault()}>
+          <aui-button id="ancestor" type="submit">B</aui-button>
+          <aui-button id="reset" type="reset">C</aui-button>
+        </div>
+      </form>
+    `);
+    for (const id of ['own', 'ancestor', 'reset']) form.querySelector<AuiButton>(`#${id}`)!.click();
+    await aTimeout(0);
+    expect(submitted).to.equal(0);
+    expect(resets).to.equal(0);
+  });
+
+  it('does not submit when removed or disabled before the click finished dispatching', async () => {
+    let submitted = 0;
+    const form = await fixture<HTMLFormElement>(html`
+      <form
+        @submit=${(e: Event) => {
+          e.preventDefault();
+          submitted++;
+        }}
+      >
+        <aui-button id="a" type="submit">A</aui-button>
+        <aui-button id="b" type="submit">B</aui-button>
+      </form>
+    `);
+    const [a, b] = [...form.querySelectorAll<AuiButton>('aui-button')];
+    a.addEventListener('click', () => a.remove());
+    b.addEventListener('click', () => (b.disabled = true));
+    a.click();
+    b.click();
+    await aTimeout(0);
+    expect(submitted).to.equal(0);
+  });
+
+  it('is disabled by a surrounding <fieldset disabled>', async () => {
+    let submitted = 0;
+    let clicks = 0;
+    const form = await fixture<HTMLFormElement>(html`
+      <form
+        @submit=${(e: Event) => {
+          e.preventDefault();
+          submitted++;
+        }}
+      >
+        <fieldset disabled>
+          <aui-button type="submit" @click=${() => clicks++}>Submit</aui-button>
+        </fieldset>
+      </form>
+    `);
+    const btn = form.querySelector<AuiButton>('aui-button')!;
+    await btn.updateComplete;
+    const inner = btn.shadowRoot!.querySelector('button')!;
+    expect(inner.disabled).to.be.true;
+    expect(inner.getAttribute('aria-disabled')).to.equal('true');
+    expect(inner.classList.contains('btn--disabled')).to.be.true;
+    // 自身的 disabled 屬性不受影響
+    expect(btn.disabled).to.be.false;
+
+    btn.click();
+    await aTimeout(0);
+    expect(clicks, 'click is intercepted').to.equal(0);
+    expect(submitted).to.equal(0);
+
+    form.querySelector('fieldset')!.disabled = false;
+    await btn.updateComplete;
+    expect(inner.disabled).to.be.false;
+    btn.click();
+    await aTimeout(0);
+    expect(submitted).to.equal(1);
   });
 
   it('resets surrounding form when type is reset', async () => {
@@ -200,6 +289,7 @@ describe('AuiButton (<aui-button>)', () => {
 
     const btn = form.querySelector('aui-button') as AuiButton;
     btn.click();
+    await aTimeout(0);
     expect(formReset).to.be.true;
   });
 
@@ -287,6 +377,7 @@ describe('AuiButton (<aui-button>)', () => {
 
     form.querySelector<AuiButton>('#reset')!.click();
     form.querySelector<AuiButton>('#submit')!.click();
+    await aTimeout(0);
     expect(resets).to.equal(1);
     expect(submitted).to.equal(1);
   });
@@ -316,6 +407,7 @@ describe('AuiButton (<aui-button>)', () => {
     const btn = wrapper.querySelector('aui-button') as AuiButton;
     expect(btn.form).to.equal(wrapper.querySelector('form'));
     btn.click();
+    await aTimeout(0);
     expect(submitted).to.be.true;
   });
 
@@ -344,6 +436,7 @@ describe('AuiButton (<aui-button>)', () => {
 
       inside.click();
       outside.click();
+      await aTimeout(0);
       expect(submitted).to.equal(2);
     } finally {
       proto.attachInternals = original;
@@ -364,6 +457,7 @@ describe('AuiButton (<aui-button>)', () => {
       </form>
     `);
     form.querySelector<AuiButton>('aui-button')!.click();
+    await aTimeout(0);
     expect(submitted).to.be.false;
   });
 });

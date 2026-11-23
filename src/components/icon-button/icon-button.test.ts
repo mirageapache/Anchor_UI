@@ -87,7 +87,8 @@ describe('AuiIconButton (<aui-icon-button>)', () => {
       expect(ev).to.exist;
       expect(ev.detail.value).to.equal('Hello Test');
       expect(el.status).to.equal('success');
-      expect(el.active).to.be.true;
+      // 成功的高亮由 status 推導，不改寫使用端的 active 屬性
+      expect(el.active).to.be.false;
 
       const innerBtn = el.shadowRoot?.querySelector('button');
       expect(innerBtn?.classList.contains('is-success')).to.be.true;
@@ -379,6 +380,117 @@ describe('AuiIconButton (<aui-icon-button>)', () => {
         expect(el.status).to.equal('idle');
       } finally {
         anchors.restore();
+      }
+    });
+  });
+
+  describe('download without navigating away', () => {
+    it('forces a download for same-origin and blob: URLs even without a filename', async () => {
+      // 沒有 download 屬性的 <a> 會讓整頁導向檔案（同源）或 blob，SPA 狀態因此遺失
+      const blobUrl = URL.createObjectURL(new Blob(['x']));
+      const anchors = stubAnchorClick();
+      try {
+        for (const url of ['/files/report.pdf', blobUrl]) {
+          const el = await fixture<AuiIconButton>(html`<aui-icon-button></aui-icon-button>`);
+          el.downloadUrl = url;
+          expect(await el.download()).to.be.true;
+        }
+        expect(anchors).to.have.length(2);
+        for (const anchor of anchors) {
+          expect(anchor.hasAttribute('download'), anchor.href).to.be.true;
+          expect(anchor.target).to.equal('');
+        }
+      } finally {
+        anchors.restore();
+        URL.revokeObjectURL(blobUrl);
+      }
+    });
+
+    it('uses download-filename when given, and a new tab for cross-origin URLs', async () => {
+      const anchors = stubAnchorClick();
+      try {
+        const named = await fixture<AuiIconButton>(
+          html`<aui-icon-button download-url="/a.txt" download-filename="b.txt"></aui-icon-button>`,
+        );
+        await named.download();
+        const cross = await fixture<AuiIconButton>(
+          html`<aui-icon-button download-url="https://example.com/a.txt"></aui-icon-button>`,
+        );
+        await cross.download();
+        expect(anchors[0].download).to.equal('b.txt');
+        expect(anchors[1].hasAttribute('download')).to.be.false;
+        expect(anchors[1].target).to.equal('_blank');
+        expect(anchors[1].rel).to.equal('noopener noreferrer');
+      } finally {
+        anchors.restore();
+      }
+    });
+  });
+
+  describe('feedback state', () => {
+    it('keeps a consumer-set active across a feedback cycle', async () => {
+      const el = await fixture<AuiIconButton>(
+        html`<aui-icon-button active label="Pin"></aui-icon-button>`,
+      );
+      const inner = el.shadowRoot!.querySelector('button')!;
+      el.triggerFeedback('success');
+      await el.updateComplete;
+      expect(inner.classList.contains('is-active')).to.be.true;
+      el.resetFeedback();
+      await el.updateComplete;
+      expect(el.active, 'active is still set').to.be.true;
+      expect(el.hasAttribute('active')).to.be.true;
+      expect(inner.classList.contains('is-active')).to.be.true;
+    });
+
+    it('copies once when clicked again while the clipboard write is pending', async () => {
+      const original = navigator.clipboard.writeText;
+      let writes = 0;
+      let finish!: () => void;
+      navigator.clipboard.writeText = () => {
+        writes++;
+        return new Promise<void>((resolve) => (finish = resolve));
+      };
+      try {
+        const el = await fixture<AuiIconButton>(
+          html`<aui-icon-button copy-value="x" label="Copy"></aui-icon-button>`,
+        );
+        let copied = 0;
+        el.addEventListener('aui-copy', () => copied++);
+        const first = el.copy();
+        expect(await el.copy(), 'second call is ignored').to.be.false;
+        finish();
+        expect(await first).to.be.true;
+        expect(writes).to.equal(1);
+        expect(copied).to.equal(1);
+        // 完成後可以再次複製
+        const again = el.copy();
+        finish();
+        expect(await again).to.be.true;
+        expect(writes).to.equal(2);
+      } finally {
+        navigator.clipboard.writeText = original;
+      }
+    });
+
+    it('starts no feedback when removed while the clipboard write is pending', async () => {
+      const original = navigator.clipboard.writeText;
+      let finish!: () => void;
+      navigator.clipboard.writeText = () => new Promise<void>((resolve) => (finish = resolve));
+      try {
+        const el = await fixture<AuiIconButton>(
+          html`<aui-icon-button copy-value="x" label="Copy"></aui-icon-button>`,
+        );
+        let statusChanges = 0;
+        el.addEventListener('aui-status-change', () => statusChanges++);
+        const pending = el.copy();
+        el.remove();
+        finish();
+        await pending;
+        expect(el.status).to.equal('idle');
+        expect(statusChanges).to.equal(0);
+      } finally {
+        navigator.clipboard.writeText = original;
       }
     });
   });

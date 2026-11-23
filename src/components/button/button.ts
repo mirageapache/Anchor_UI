@@ -1,8 +1,9 @@
 import { LitElement, html, nothing } from 'lit';
-import { property } from 'lit/decorators.js';
+import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { buttonStyles } from './button.styles.js';
 import { findFormOwner } from '../../internal/form-owner.js';
+import { afterDispatch } from '../../internal/implicit-submit.js';
 import { interceptInactiveClick } from '../../internal/inactive-click.js';
 import { spinnerIcon, spinnerStyles } from '../../internal/spinner.js';
 import type { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
@@ -12,6 +13,8 @@ import type { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
  *
  * 系統核心互動元件，支援 5 種語意層級變體、3 種尺寸規格、鍵盤可聚焦性、
  * 點擊微縮放動態、載入中 Spinner 以及與宿主表單（form）的原生提交互動。
+ * `type="submit"` / `"reset"` 的表單動作與原生按鈕相同，是點擊的預設行為：在 `click` 監聽器中
+ * `preventDefault()` 可取消（因此在事件分派完畢後才執行）；所屬的 `<fieldset disabled>` 也會停用按鈕。
  * host 上的 `aria-describedby`（例如被 `<aui-tooltip>` 包住時的提示描述）會轉交給內部的 `<button>`。
  *
  * @element aui-button
@@ -87,6 +90,10 @@ export class AuiButton extends LitElement {
   @property({ attribute: 'aria-describedby' })
   private hostDescribedBy: string | null = null;
 
+  /** 由所屬 `<fieldset disabled>` 或自身 disabled 屬性決定的表單停用狀態 */
+  @state()
+  private formDisabled = false;
+
   constructor() {
     super();
     this.internals = typeof this.attachInternals === 'function' ? this.attachInternals() : null;
@@ -101,21 +108,29 @@ export class AuiButton extends LitElement {
     return this.internals ? this.internals.form : findFormOwner(this);
   }
 
-  private handleHostClick = (event: MouseEvent) => {
-    if (interceptInactiveClick(event, this.disabled || this.loading)) return;
+  /** @internal 自身 disabled 屬性或所屬 `<fieldset disabled>` 改變時由瀏覽器呼叫 */
+  formDisabledCallback(disabled: boolean): void {
+    this.formDisabled = disabled;
+  }
 
-    // 與所屬 Form 表單原生連動。
-    // 以 HTMLFormElement.prototype 呼叫：表單內 id／name 為 "reset"、"submit" 的控制項（包含這顆按鈕本身）
-    // 會以同名屬性蓋過 form.reset 等方法（DOM clobbering）
-    const form = this.form;
-    if (!form) return;
-    if (this.type === 'submit') {
-      event.preventDefault();
-      HTMLFormElement.prototype.requestSubmit.call(form);
-    } else if (this.type === 'reset') {
-      event.preventDefault();
-      HTMLFormElement.prototype.reset.call(form);
-    }
+  private get isDisabled(): boolean {
+    return this.disabled || this.formDisabled;
+  }
+
+  private handleHostClick = (event: MouseEvent) => {
+    if (interceptInactiveClick(event, this.isDisabled || this.loading)) return;
+    if (this.type !== 'submit' && this.type !== 'reset') return;
+
+    // 與所屬表單連動。表單動作是點擊的預設行為：等事件分派完畢、確認沒有被 preventDefault() 才執行，
+    // 並重新確認狀態（期間可能已被停用、移出頁面或換了表單）
+    afterDispatch(event, () => {
+      const form = this.form;
+      if (!form || !this.isConnected || this.isDisabled || this.loading) return;
+      // 以 HTMLFormElement.prototype 呼叫：表單內 id／name 為 "reset"、"submit" 的控制項（包含這顆按鈕本身）
+      // 會以同名屬性蓋過 form.reset 等方法（DOM clobbering）
+      if (this.type === 'submit') HTMLFormElement.prototype.requestSubmit.call(form);
+      else if (this.type === 'reset') HTMLFormElement.prototype.reset.call(form);
+    });
   };
 
   /** host 的 aria-describedby 所指向的元素；指向的元素須在設定屬性前已存在 */
@@ -132,7 +147,8 @@ export class AuiButton extends LitElement {
   override render() {
     // loading 只以 aria-disabled 標示並由 handleHostClick 攔截點擊，不設原生 disabled：
     // 否則聚焦中的按鈕進入 loading 時會失去焦點（焦點掉回 body）
-    const isInactive = this.disabled || this.loading;
+    const isDisabled = this.isDisabled;
+    const isInactive = isDisabled || this.loading;
 
     return html`
       <button
@@ -141,11 +157,11 @@ export class AuiButton extends LitElement {
           btn: true,
           [`btn--${this.variant}`]: true,
           [`btn--${this.size}`]: true,
-          'btn--disabled': this.disabled,
+          'btn--disabled': isDisabled,
           'btn--loading': this.loading,
         })}
         type=${this.type}
-        ?disabled=${this.disabled}
+        ?disabled=${isDisabled}
         aria-busy=${this.loading ? 'true' : 'false'}
         aria-disabled=${isInactive ? 'true' : 'false'}
         .ariaDescribedByElements=${this.describedByElements}

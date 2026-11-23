@@ -61,7 +61,9 @@ jobs:
             || failed_jobs='[]'
           failed_jobs=${failed_jobs:-[]}
 
-          # allowed_mentions.parse = [] 讓 commit 訊息或 PR 標題中的 @everyone 等提及不會真的觸發通知
+          # allowed_mentions.parse = [] 讓 commit 訊息或 PR 標題中的 @everyone 等提及不會真的觸發通知。
+          # commit 訊息（fork PR 的作者可控制）中的遮罩連結 [文字](網址) 會渲染成可點擊的文字：
+          # 在 ] 與 ( 之間插入空白使其失效；分支名稱移除反引號，避免提前結束行內程式碼
           payload=$(jq -c --argjson pr "$pr" --argjson failed "$failed_jobs" '
             .workflow_run as $run
             | ({
@@ -85,8 +87,8 @@ jobs:
                   fields: (
                     (if $pr != null then [{name: "PR", value: "[#\($pr.number)](\($pr.url))", inline: true}] else [] end)
                     + [
-                        {name: "分支", value: "`\($branch)`", inline: true},
-                        {name: "Commit", value: "[`\($run.head_sha[0:7])`](\($run.repository.html_url)/commit/\($run.head_sha)) \($run.head_commit.message // "" | split("\n")[0] | .[0:200])", inline: false}
+                        {name: "分支", value: "`\($branch | gsub("`"; ""))`", inline: true},
+                        {name: "Commit", value: "[`\($run.head_sha[0:7])`](\($run.repository.html_url)/commit/\($run.head_sha)) \($run.head_commit.message // "" | split("\n")[0] | .[0:200] | gsub("\\]\\("; "] ("))", inline: false}
                       ]
                     + (if ($failed | length) > 0 then
                          [{name: "失敗的 job", value: ($failed | map("• [\(.name)](\(.html_url))") | join("\n") | .[0:1024]), inline: false}]

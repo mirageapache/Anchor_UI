@@ -15,6 +15,11 @@ const repo = option('repo', process.env.GITHUB_REPOSITORY);
 const sha = option('sha', process.env.GITHUB_SHA);
 const branch = option('branch', 'main');
 const timeoutMinutes = Number(option('timeout', '20'));
+if (!Number.isFinite(timeoutMinutes) || timeoutMinutes <= 0) {
+  // NaN 會讓期限永遠不到期，一路輪詢到 job 逾時
+  console.error('✗ --timeout 須為大於 0 的分鐘數');
+  process.exit(1);
+}
 const POLL_SECONDS = Number(process.env.WAIT_FOR_CI_POLL_SECONDS ?? 20);
 
 if (!token || !repo || !sha) {

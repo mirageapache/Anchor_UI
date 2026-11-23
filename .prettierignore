@@ -5,3 +5,5 @@ pnpm-lock.yaml
 storybook-static
 # 由 release-please 產生與追加，保留它的格式（lint-staged 的 prettier 會略過這裡列出的檔案）
 CHANGELOG.md
+# 由 pnpm analyze 產生
+custom-elements.json

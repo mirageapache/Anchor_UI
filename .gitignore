@@ -45,3 +45,6 @@ smoke/*/dist/
 
 # Vitest browser mode 失敗時的截圖
 __screenshots__/
+
+# Custom Elements Manifest（pnpm analyze 產生，供 Storybook Docs 頁使用）
+custom-elements.json
