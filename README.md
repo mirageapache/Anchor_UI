@@ -159,6 +159,22 @@ import '@anchor-ui/core/button';
 createApp(App).mount('#app');
 ```
 
+**在 Vue 範本中綁定屬性**：Vue 只在元素上有**同名 property** 時直接設定 property，否則寫成 HTML attribute，而 `false` 會寫成字串 `"false"`。元件的布林屬性只看 attribute 是否存在，因此多字的布林屬性以 kebab-case 動態綁定 `false` 時，會被當成 **true**：
+
+```html
+<!-- ✗ 寫成 attribute full-width="false"，按鈕仍是全寬 -->
+<aui-button :full-width="isWide">送出</aui-button>
+
+<!-- ✓ 以下三種寫法都會正確設定 false -->
+<aui-button :fullWidth="isWide">送出</aui-button>
+<aui-button :full-width.camel="isWide">送出</aui-button>
+<aui-button :full-width="isWide || null">送出</aui-button>
+```
+
+- 動態綁定多字的屬性時一律使用 camelCase（或 `.camel` 修飾符）。注意 `.prop` 不會轉換名稱，`:full-width.prop` 設定的是名為 `full-width` 的 property，元件讀不到。
+- 單字的屬性（`:disabled`、`:open`）與陣列 / 物件屬性（`:options`、`:columns`）元素上都有同名 property，直接綁定即可。
+- 靜態寫在範本中的布林屬性（`<aui-button full-width>`）不受影響。
+
 **Angular**：在使用 `aui-` 標籤的元件（或 NgModule）加上 `CUSTOM_ELEMENTS_SCHEMA`，樣式加進 `angular.json`，元件在 `main.ts` 註冊：
 
 ```ts

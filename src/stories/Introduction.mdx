@@ -44,7 +44,7 @@ import '@anchor-ui/core';
 
 ## 搭配框架
 
-- **Vue 3**：在 `vite.config.ts` 以 `compilerOptions.isCustomElement` 排除 `aui-` 開頭的標籤；表單元件可直接用 `v-model`。
+- **Vue 3**：在 `vite.config.ts` 以 `compilerOptions.isCustomElement` 排除 `aui-` 開頭的標籤；表單元件可直接用 `v-model`。動態綁定多字的布林屬性請用 camelCase（`:fullWidth="flag"`），kebab-case 的 `false` 會被當成 true。
 - **Angular**：使用 `aui-` 標籤的元件加上 `CUSTOM_ELEMENTS_SCHEMA`；表單元件的 `[(ngModel)]` / `[formControl]` 需加 `ngDefaultControl`。
 
 完整步驟（含設定範例、表單綁定與測試注意事項）見
