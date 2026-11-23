@@ -302,8 +302,8 @@
       （2026-11-23 於 Chromium 實測：三者放在 flex、grid 與另一個 Shadow Root 中皆撐滿容器並正常運作，Navbar 的 `menu-drawer` 可開啟同一 Shadow Root 內的右側 Drawer。Drawer 逐幀取樣的位置在展開時單調滑入、收合時單調滑出；關閉後 dialog 離開 Top Layer、面板不佔版面、頁面可點擊。頁面捲動 1500px 後 Navbar 仍貼齊頂端並顯示陰影；主題開關分派 `aui-theme-change` 並切換 `<html data-theme>`，事件被取消時不切換。各元件的單獨入口由 `examples/*/tests/entries.spec.ts` 與 `pnpm smoke` 驗證。）
 - [ ] 透過 CD 流水線發布版本全程無人為介入，CHANGELOG 內容與 Git Tag 準確對齊。
 - [x] 發布套件的 runtime 依賴經漏洞檢查為 0 High / 0 Critical（範圍見 TASK-406；CI 以 `pnpm audit:runtime` 持續檢查）。
-- [ ] repo 有 MIT `LICENSE` 檔，GitHub 頁面正確顯示授權，發布的 tarball 也包含它。
-      （`LICENSE` 檔與 tarball 收錄已完成，由 `verify:package` 與 `pnpm smoke` 檢查；GitHub 只偵測預設分支 `main` 上的授權檔，待 PR #19 合併後確認。）
+- [x] repo 有 MIT `LICENSE` 檔，GitHub 頁面正確顯示授權，發布的 tarball 也包含它。
+      （2026-11-23 確認：GitHub API 偵測 repo 授權為 MIT；`v1.0.0-beta` Release 的 tarball 收錄 `LICENSE`，由 `verify:package` 與 `pnpm smoke` 檢查。）
 
 ---
 
