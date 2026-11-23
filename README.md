@@ -1,5 +1,12 @@
 # Anchor UI
 
+<p>
+  <a href="https://github.com/mirageapache/Anchor_UI/actions/workflows/ci.yml"><img src="https://github.com/mirageapache/Anchor_UI/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI" /></a>
+  <a href="https://github.com/mirageapache/Anchor_UI/releases/latest"><img src="https://img.shields.io/github/v/release/mirageapache/Anchor_UI?sort=semver" alt="Release" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/mirageapache/Anchor_UI" alt="License: MIT" /></a>
+  <a href="https://mirageapache.github.io/Anchor_UI/"><img src="https://img.shields.io/badge/docs-Storybook-ff4785?logo=storybook&logoColor=white" alt="Storybook" /></a>
+</p>
+
 > 跨專案前端共用 UI 元件庫（Enterprise Shared Web Component Library）
 
 Anchor UI 是一套以 **Web Component（[Lit](https://lit.dev/)）** 實作的跨框架共用元件庫，提供單一的視覺與互動標準，可直接用在 **Vue 3、Angular、React** 或純 HTML 應用中，不必為每個框架各寫一套元件。
