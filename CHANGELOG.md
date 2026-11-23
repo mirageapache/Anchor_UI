@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.0.0-beta.1](https://github.com/mirageapache/Anchor_UI/compare/v1.0.0-beta...v1.0.0-beta.1) (2026-11-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **tag:** <aui-tag> 不再套用 text-transform: lowercase。依賴自動轉小寫的標籤請改成直接寫小寫， 或自行加上 aui-tag::part(base) { text-transform: lowercase; }。
+
+### 新功能
+
+* **tag:** 標籤文字照原樣顯示，不再預設轉成小寫 ([287a7a5](https://github.com/mirageapache/Anchor_UI/commit/287a7a59ef8cebb2108ca83a476045b90d3b228c))
+
+
+### 錯誤修正
+
+* **favorite-btn,tooltip:** 收藏鈕的提示改用 aui-tooltip，提示與名稱相同時不重複作為描述 ([8830ab5](https://github.com/mirageapache/Anchor_UI/commit/8830ab5010206e0c3581b196f6f18e31bfdc9b9c))
+* **tag:** 移除鈕不再顯示瀏覽器原生提示 ([881ab86](https://github.com/mirageapache/Anchor_UI/commit/881ab867af4555d06aa3e7fc9029a49f0b2c1a36))
+* **tooltip:** block 模式下觸發容器的高度跟隨 host ([813ad25](https://github.com/mirageapache/Anchor_UI/commit/813ad2567edcdf21698e47ee8f5b48ba97c0e9ed))
+
+
+### 發布
+
+* **release:** 發布 1.0.0-beta.1 預覽版 ([75da6e2](https://github.com/mirageapache/Anchor_UI/commit/75da6e2b428c13a222039bb0f1da32fb815ab86c))
+
 ## [1.0.0-beta](https://github.com/mirageapache/Anchor_UI/compare/v0.3.0...v1.0.0-beta) (2026-11-23)
 
 
