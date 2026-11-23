@@ -1,6 +1,6 @@
 {
   "name": "@anchor-ui/core",
-  "version": "0.3.0",
+  "version": "1.0.0-beta",
   "description": "Anchor UI - framework-agnostic Web Component library with modern Slate-Navy aesthetic",
   "type": "module",
   "packageManager": "pnpm@11.26.0",
