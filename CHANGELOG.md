@@ -38,7 +38,6 @@
 ### 錯誤修正
 
 * **card,navbar,footer:** 連結只接受安全的協定 ([27d95f0](https://github.com/mirageapache/Anchor_UI/commit/27d95f0f0f5bbe6bc93b38c89eb98ed7fba521dc))
-* **deps:** bump the runtime group with 2 updates ([c0bdadb](https://github.com/mirageapache/Anchor_UI/commit/c0bdadb39119bcea72b2783c962939958a5db2b0))
 * **deps:** bump the runtime group with 2 updates ([a6a951f](https://github.com/mirageapache/Anchor_UI/commit/a6a951ff614d5fbf332a1a96d37ac029929a26ba))
 * **icon-button:** 同源下載不再導走頁面，active 不被回饋狀態改寫 ([a8412b5](https://github.com/mirageapache/Anchor_UI/commit/a8412b5ffbec052add93cf356f580a7ed8a90584))
 * **input,button:** 按 Enter 送出表單，表單動作可由 preventDefault 取消 ([27c0a28](https://github.com/mirageapache/Anchor_UI/commit/27c0a28089130cecfac2cd575cfca0f6d1fc0898))
