@@ -2,13 +2,18 @@
 #
 # 1. GitHub Actions：workflow 中的第三方 action 一律釘選 commit SHA（tag 可被改寫，見供應鏈攻擊 tj-actions 事件），
 #    由 Dependabot 每週檢查新版本並開 PR 更新 SHA 與後方的版本註解。
-# 2. npm（pnpm workspace，共用根目錄的 pnpm-lock.yaml），根目錄與 examples 分成兩組設定：
-#    - 根目錄：runtime 相依（lit、@floating-ui/dom）的更新以 fix(deps) 提交，會列入 CHANGELOG 並觸發
-#      release PR；開發相依以 chore(deps-dev) 提交，不觸發發布。
-#    - examples/*：vue、@angular/* 等雖為範例的 dependencies，卻不在發布產物中，一律以 chore 提交，
-#      避免為未發布的程式觸發 release PR。
-#    - 次要與修補版本依類型合併為一個 PR，主要版本各自一個 PR（可能需要調整程式）。
+# 2. npm：只有一份設定，directory 為根目錄。
+#    pnpm workspace 只有根目錄一份 pnpm-lock.yaml，根目錄的設定就會涵蓋整個 workspace（含 examples/*），
+#    並同時更新 lockfile。不可為 examples/* 另立設定：那樣的 PR 只改 package.json、不更新根目錄的 lockfile，
+#    CI 的 pnpm install --frozen-lockfile 必定失敗（ERR_PNPM_OUTDATED_LOCKFILE），也會與根目錄的 PR 重複。
+#    - 一律以 chore 提交（不觸發 release PR）：同一份設定無法讓 lit、@floating-ui/dom 用 fix、
+#      範例的 vue、@angular/* 用 chore，而後者不在發布產物中，不應觸發發布。
+#      runtime 相依以 ^ 範圍宣告，使用端安裝時本來就會取得新的修補版；runtime 相依的更新隨下一次發布一併釋出。
+#    - 次要與修補版本依群組合併為一個 PR，主要版本各自一個 PR（可能需要調整程式）。
 #    - vitest、@vitest/*（含 @vitest/browser-playwright）彼此以精確版本互為 peer，合併為同一組一起升級。
+#    - @angular/* 須同版號，合併為同一組，且不做主要版本升級：範例鎖定 Angular 19，
+#      升級需同時調整 TypeScript（見 pnpm-workspace.yaml 的 overrides）與範例程式，手動進行。
+#    - typescript 只接受修補版：pnpm-workspace.yaml 以 overrides 鎖定 ~5.8（Angular 19 的 peer 範圍）。
 #    - playwright 不在此更新：版本須與 ci.yml 的 Playwright 容器映像一致（pnpm check:versions 把關），
 #      升級時手動一併修改。
 #    - 漏洞門檻只看發布套件的 runtime 相依（pnpm audit:runtime，CI lint job）；examples 與開發工具的漏洞
@@ -21,9 +26,9 @@
 #   升級相依時於該目錄執行 npm install --package-lock-only 後提交
 #
 # 冷卻期（cooldown）：新版本發布滿 7 天才開 PR。剛發布就被植入惡意程式的版本通常在數天內被下架，
-# runtime 相依的更新又會以 fix(deps) 自動進入 release PR，因此不追最新的版本（安全性更新不受冷卻期限制）。
+# 因此不追最新的版本（安全性更新不受冷卻期限制）。
 #
-# PR 目標為 develop（與一般開發相同，經 develop → main 的 PR 執行完整 CI）。
+# 設定只有在預設分支（main）上才生效。PR 目標為 develop（與一般開發相同，經 develop → main 的 PR 執行完整 CI）。
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -39,7 +44,7 @@ updates:
     commit-message:
       prefix: ci
 
-  # 根目錄（發布的套件）
+  # 整個 pnpm workspace（根目錄的套件與 examples/*）
   - package-ecosystem: npm
     directory: /
     target-branch: develop
@@ -49,10 +54,13 @@ updates:
       default-days: 7
     open-pull-requests-limit: 5
     groups:
-      # 須排在 development 之前：一個相依只會歸入第一個符合的群組
+      # 一個相依只會歸入第一個符合的群組：特定套件的群組須排在依類型分組的群組之前
       vitest:
         patterns: ['vitest', '@vitest/*']
-      runtime:
+      angular:
+        patterns: ['@angular/*', '@angular-devkit/*']
+        update-types: [minor, patch]
+      production:
         dependency-type: production
         update-types: [minor, patch]
       development:
@@ -60,25 +68,13 @@ updates:
         update-types: [minor, patch]
     ignore:
       - dependency-name: playwright
-    commit-message:
-      prefix: fix
-      prefix-development: chore
-      include: scope
-
-  # 範例專案：不在發布產物中，一律以 chore 提交
-  - package-ecosystem: npm
-    directories:
-      - /examples/vue3
-      - /examples/angular
-    target-branch: develop
-    schedule:
-      interval: weekly
-    cooldown:
-      default-days: 7
-    open-pull-requests-limit: 5
-    groups:
-      examples:
-        update-types: [minor, patch]
+      - dependency-name: '@angular/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@angular-devkit/*'
+        update-types: ['version-update:semver-major']
+      - dependency-name: typescript
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
     commit-message:
       prefix: chore
+      prefix-development: chore
       include: scope
