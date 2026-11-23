@@ -125,7 +125,7 @@ export class AuiHeader extends LitElement {
           <slot name="tags"></slot>
           ${
             this.hot
-              ? html`<aui-tag class="header__hot" part="hot-badge" variant="warning" preserve-case
+              ? html`<aui-tag class="header__hot" part="hot-badge" variant="warning"
                   >${this.hotLabel}</aui-tag
                 >`
               : nothing

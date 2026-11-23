@@ -52,6 +52,14 @@
 
 > 尚未發布，預計以 `1.0.0` 發布；實際版號以 Releases 為準。內容為 `1.0.0-beta` 整合測試回饋的修正。
 
+不相容的變更：
+
+- **`<aui-tag>` 不再把文字轉成小寫**：文字照原樣顯示。先前預設套用 `text-transform: lowercase`，
+  `<aui-tag>Verified</aui-tag>` 會顯示成 `verified`，需要加上 `preserve-case` 才保留原本的大小寫。
+  - 依賴自動轉小寫的標籤（例如傳入 `JSON`、想顯示成 `json`）請改成直接寫小寫，或自行加上
+    `aui-tag::part(base) { text-transform: lowercase; }`。
+  - `preserve-case` 已無作用，可以移除；保留也不影響顯示，下一個主要版本才會刪除這個屬性。
+
 行為修正（下列情況請檢查）：
 
 - **`<aui-favorite-btn>` 的提示改用 `<aui-tooltip>`**：先前懸停時出現的是瀏覽器原生提示（來自 SVG `<title>`），

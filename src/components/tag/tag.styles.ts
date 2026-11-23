@@ -21,7 +21,7 @@ export const tagStyles = css`
     font-weight: var(--weight-medium, 500);
     line-height: var(--leading-none, 1);
     letter-spacing: 0.02em;
-    text-transform: lowercase; /* 全小寫標籤規範 (TASK-102) */
+    /* 文字照原樣顯示，不轉換大小寫：專有名詞、代碼（US、HTTP 200）與狀態文字都很常見 */
     white-space: nowrap;
     user-select: none;
     border: 1px solid var(--color-border, #e2e8f0);
@@ -34,12 +34,6 @@ export const tagStyles = css`
       color var(--transition-fast, 100ms ease),
       box-shadow var(--transition-fast, 100ms ease),
       transform var(--transition-fast, 100ms ease);
-  }
-
-  /* ─── 大小寫保留例外開關 ─── */
-  :host([preserve-case]) .tag,
-  .tag--preserve-case {
-    text-transform: none;
   }
 
   /* ─── 尺寸規格 (Sizes) ─── */

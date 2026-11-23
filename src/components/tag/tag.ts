@@ -9,7 +9,7 @@ import type { TagSize, TagVariant } from './tag.types.js';
  *
  * 採用 JetBrains Mono 等寬字體呈現的專業標籤，用於技術分類、版本標號、格式與狀態標記。
  * 支援 7 種語意色彩變體（另有 6 個相容別名）、3 種尺寸規格、膠囊圓角 (pill)、可點擊互動 (interactive)、
- * 可移除操作 (removable)，並預設落實全小寫標籤規範（支援 preserve-case 跳脫）。
+ * 可移除操作 (removable)。文字照原樣顯示，不轉換大小寫。
  *
  * @element aui-tag
  *
@@ -49,7 +49,8 @@ export class AuiTag extends LitElement {
   pill = false;
 
   /**
-   * 是否保留文字原始大小寫（預設依規範轉為全小寫）
+   * 已無作用：文字預設即保留原始大小寫。保留這個屬性只為相容舊的寫法，下一個主要版本移除。
+   * @deprecated 文字一律照原樣顯示，不需要再設定
    */
   @property({ type: Boolean, reflect: true, attribute: 'preserve-case' })
   preserveCase = false;
@@ -104,7 +105,7 @@ export class AuiTag extends LitElement {
 
   override render() {
     // 移除鈕的滑鼠懸停提示放在 SVG 的 <title>，而不是按鈕的 title 屬性：後者即使與 aria-label 相同，
-    // 瀏覽器仍會把它當成額外的描述，螢幕閱讀器會重複念兩次（與 <aui-favorite-btn> 相同的做法）。
+    // 瀏覽器仍會把它當成額外的描述，螢幕閱讀器會重複念兩次。
     // SVG 已 aria-hidden，不進入無障礙樹；透明的 rect 讓整個圖示範圍都能觸發提示。
     return html`
       <span
@@ -114,7 +115,6 @@ export class AuiTag extends LitElement {
           [`tag--${this.variant}`]: !!this.variant,
           [`tag--${this.size}`]: !!this.size,
           'tag--pill': this.pill,
-          'tag--preserve-case': this.preserveCase,
           'tag--interactive': this.interactive,
           'tag--removable': this.removable,
         })}

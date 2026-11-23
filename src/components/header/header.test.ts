@@ -80,8 +80,11 @@ describe('AuiHeader (<aui-header>)', () => {
       const badge = part<AuiTag>(el, 'hot-badge');
       expect(badge.localName).to.equal('aui-tag');
       expect(badge.variant).to.equal('warning');
-      expect(badge.preserveCase, 'not lower-cased').to.be.true;
       expect(badge.textContent?.trim()).to.equal('HOT');
+      await badge.updateComplete;
+      expect(getComputedStyle(badge.shadowRoot!.querySelector('.tag')!).textTransform).to.equal(
+        'none',
+      );
       expect(part(el, 'tags').hidden).to.be.false;
       expect(el.hasAttribute('hot')).to.be.true;
     });

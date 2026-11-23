@@ -340,7 +340,8 @@
 2. **JetBrains Mono**：專門用於輸入框（Input）、輸出框（Output）、程式碼（Code/Pre）、分類標籤（Tag）與鍵盤鍵帽（Kbd）。
 3. **大小寫規範**：
    - 內文與描述採用句首大寫（Sentence case）。
-   - 標籤（Tag）全小寫（例：`json`, `uuid`, `wasm`）。
+   - 技術分類標籤（Tag）以小寫書寫（例：`json`, `uuid`, `wasm`）；專有名詞、代碼與狀態文字保留原本的大小寫（例：`US`, `HTTP 200`, `Verified`）。
+     `<aui-tag>` 不轉換大小寫，文字照原樣顯示，由使用端依內容決定寫法。
    - 區塊標題（Section Label）為唯一全大寫例外（例：`INPUT`, `OUTPUT`），並搭配 `letter-spacing: 0.1em`。
 
 ---
