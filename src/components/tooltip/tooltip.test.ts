@@ -29,7 +29,7 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
           <div style="height: 100%; background: currentColor"></div>
         </aui-tooltip>
         <aui-tooltip block content="auto">
-          <span>Label</span>
+          <div style="height: 24px"></div>
         </aui-tooltip>
       </div>
     `);
@@ -40,10 +40,9 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
     expect(trigger(sized).getBoundingClientRect().width).to.equal(200);
     expect(trigger(sized).getBoundingClientRect().height).to.equal(80);
     expect(sized.querySelector('div')!.getBoundingClientRect().height).to.equal(80);
-    // host 未設定高度時仍由內容決定
-    expect(trigger(auto).getBoundingClientRect().height).to.equal(
-      auto.querySelector('span')!.getBoundingClientRect().height,
-    );
+    // host 未設定高度時仍由內容決定（以固定高度的區塊比較，不受各平台字型的行高影響）
+    expect(trigger(auto).getBoundingClientRect().height).to.equal(24);
+    expect(auto.getBoundingClientRect().height).to.equal(24);
   });
 
   it('shows and hides programmatically via show() and hide()', async () => {
