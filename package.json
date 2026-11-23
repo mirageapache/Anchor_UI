@@ -245,7 +245,7 @@
     "typescript-eslint": "^8.70.1",
     "vite": "^8.3.1",
     "vite-plugin-dts": "^5.1.1",
-    "vitest": "5.0.5",
+    "vitest": "5.1.0",
     "yalc": "1.0.0-pre.53"
   }
 }
