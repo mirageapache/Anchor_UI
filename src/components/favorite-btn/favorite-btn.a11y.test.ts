@@ -1,11 +1,13 @@
-import { expect, fixture, html } from '@open-wc/testing';
+import { expect, fixture, html, oneEvent } from '@open-wc/testing';
 import { sendKeys } from '@web/test-runner-commands';
 import { getAxNode } from '../../test-utils/ax.js';
 import './index.js';
 import type { AuiFavoriteBtn } from './favorite-btn.js';
+import type { AuiTooltip } from '../tooltip/tooltip.js';
 
 const button = (el: AuiFavoriteBtn) => el.shadowRoot!.querySelector('button')!;
 const icon = (el: AuiFavoriteBtn) => el.shadowRoot!.querySelector<SVGElement>('.fav-btn__icon')!;
+const tooltip = (el: AuiFavoriteBtn) => el.shadowRoot!.querySelector<AuiTooltip>('aui-tooltip')!;
 
 const states = () => html`
   <div style="display: flex; gap: 12px">
@@ -116,17 +118,34 @@ describe('AuiFavoriteBtn Accessibility (<aui-favorite-btn>)', () => {
       expect(button(el).getAttribute('aria-pressed')).to.equal('true');
     });
 
-    it('uses the label for the accessible name and the tooltip', async () => {
+    it('uses the label for the accessible name and the tooltip without describing it twice', async () => {
       const el = await fixture<AuiFavoriteBtn>(
         html`<aui-favorite-btn label="收藏 JSON Formatter"></aui-favorite-btn>`,
       );
+      const tip = tooltip(el);
+      setTimeout(() => tip.show());
+      await oneEvent(tip, 'aui-after-show');
+
       const node = await getAxNode(button(el));
       expect(node.name).to.equal('收藏 JSON Formatter');
-      // 懸停提示放在裝飾用 SVG 的 <title>，不可成為按鈕的描述（否則名稱會被念兩次）
+      // 提示與名稱相同，不作為描述（否則名稱會被念兩次）；也沒有會出現原生提示的 title
       expect(node.description).to.equal('');
       expect(button(el).hasAttribute('title')).to.be.false;
-      expect(icon(el).querySelector('title')!.textContent).to.equal('收藏 JSON Formatter');
+      expect(icon(el).querySelector('title')).to.be.null;
       expect(icon(el).getAttribute('aria-hidden')).to.equal('true');
+    });
+
+    it('exposes a tooltip that differs from the label as the description', async () => {
+      const el = await fixture<AuiFavoriteBtn>(
+        html`<aui-favorite-btn label="我的最愛" tooltip="加入常用工具"></aui-favorite-btn>`,
+      );
+      const tip = tooltip(el);
+      setTimeout(() => tip.show());
+      await oneEvent(tip, 'aui-after-show');
+
+      const node = await getAxNode(button(el));
+      expect(node.name).to.equal('我的最愛');
+      expect(node.description).to.equal('加入常用工具');
     });
   });
 

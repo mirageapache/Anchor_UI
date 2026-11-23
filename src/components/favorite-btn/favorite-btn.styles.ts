@@ -11,6 +11,12 @@ export const favoriteBtnStyles = css`
     display: none !important;
   }
 
+  /* 內建的 Tooltip 只包住按鈕，維持 host 等於按鈕大小 */
+  aui-tooltip,
+  aui-tooltip::part(trigger) {
+    display: inline-flex;
+  }
+
   /* ─── 按鈕本體 ─── */
   .fav-btn {
     display: inline-flex;

@@ -69,7 +69,7 @@ export class AuiHeader extends LitElement {
   @property({ type: Boolean, reflect: true })
   favorite = false;
 
-  /** 收藏鈕的無障礙名稱 */
+  /** 收藏鈕的無障礙名稱，也是懸停或聚焦時顯示的提示文字 */
   @property({ type: String, attribute: 'favorite-label' })
   favoriteLabel = '我的最愛';
 
@@ -125,7 +125,7 @@ export class AuiHeader extends LitElement {
           <slot name="tags"></slot>
           ${
             this.hot
-              ? html`<aui-tag class="header__hot" part="hot-badge" variant="warning" preserve-case
+              ? html`<aui-tag class="header__hot" part="hot-badge" variant="warning"
                   >${this.hotLabel}</aui-tag
                 >`
               : nothing

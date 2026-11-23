@@ -48,9 +48,32 @@
 
 ## 三、各版本注意事項
 
-### `0.3.0` 之後的下一版（Phase 4）
+### `1.0.0-beta.1`
 
-> 尚未發布。Phase 4 結束時預計以 `1.0.0-beta`、`1.0.0` 發布；實際版號以 Releases 為準。
+> 內容為 `1.0.0-beta` 整合測試回饋的修正，先以預覽版提供測試，確認後再發布 `1.0.0` 正式版。
+
+不相容的變更：
+
+- **`<aui-tag>` 不再把文字轉成小寫**：文字照原樣顯示。先前預設套用 `text-transform: lowercase`，
+  `<aui-tag>Verified</aui-tag>` 會顯示成 `verified`，需要加上 `preserve-case` 才保留原本的大小寫。
+  - 依賴自動轉小寫的標籤（例如傳入 `JSON`、想顯示成 `json`）請改成直接寫小寫，或自行加上
+    `aui-tag::part(base) { text-transform: lowercase; }`。
+  - `preserve-case` 已無作用，可以移除；保留也不影響顯示，下一個主要版本才會刪除這個屬性。
+
+行為修正（下列情況請檢查）：
+
+- **`<aui-favorite-btn>` 的提示改用 `<aui-tooltip>`**：先前懸停時出現的是瀏覽器原生提示（來自 SVG `<title>`），
+  與 `<aui-icon-button>` 不一致；`<aui-header>` 的收藏鈕同樣受影響。新增 `tooltip`（預設沿用 `label`）、
+  `tooltip-placement`（預設 `top`）與 `no-tooltip`。載入 favorite-btn（或 header）時會一併註冊 `<aui-tooltip>`，
+  兩者的入口體積因此包含 Tooltip 與 `@floating-ui/dom`。自行在外層包 `<aui-tooltip>` 的專案請移除外層，或加上 `no-tooltip`。
+- **`<aui-tag>` 的移除鈕不再顯示懸停提示**：先前同樣是瀏覽器原生提示（SVG `<title>`）。× 的意義本身清楚，
+  無障礙名稱仍由 `remove-label`（預設「移除標籤」）提供。
+- **`<aui-tooltip>` 的文字與目標的名稱相同時，不再作為目標的描述**：例如圖示按鈕的 `aria-label` 與提示同為「刪除」，
+  先前螢幕閱讀器會念兩次。比對目標的 `aria-label`（沒有時比對文字內容）；以 `aria-labelledby` 命名的目標不受影響。
+- **`<aui-tooltip block>` 的觸發容器高度跟隨 host**：在 host 上設定高度時，`::part(trigger)` 也會撐滿，
+  不需要再自行加上 `aui-tooltip::part(trigger) { height: 100%; }`。host 未設定高度時不受影響。
+
+### `1.0.0-beta`（Phase 4）
 
 新增功能，沒有不相容的變更：
 

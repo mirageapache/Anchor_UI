@@ -135,7 +135,7 @@ beta 測試通過、要發布正式版時，不需修改任何設定，只要一
 
 | 情境                 | 方式                                                                                                                             |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| 本機開發同步         | yalc：`pnpm yalc:publish`、`pnpm yalc:push`、`pnpm dev:yalc`（見 README）                                                        |
+| 本機開發同步         | yalc：`pnpm yalc:publish`、`pnpm yalc:push`、`pnpm dev:yalc`（見 [開發指南](development.md)）                                    |
 | 測試專案安裝特定版本 | 從 [GitHub Releases](https://github.com/mirageapache/Anchor_UI/releases) 下載 tarball，`npm install ./anchor-ui-core-<版號>.tgz` |
 
 tarball 由 `scripts/pack.mjs` 產出：檔案內容與 `npm pack` 相同，但發布的 `package.json` 已移除 `prepare` 等安裝時會執行的腳本。它就是實際交付的產物，因此也用來驗證發布產物本身（`exports`、`sideEffects`、`files`，見 `pnpm smoke`）。

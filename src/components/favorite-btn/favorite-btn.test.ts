@@ -3,9 +3,11 @@ import { emulateMedia, resetMouse, sendMouse } from '@web/test-runner-commands';
 import './index.js';
 import type { AuiFavoriteBtn } from './favorite-btn.js';
 import type { FavoriteChangeDetail } from './favorite-btn.types.js';
+import type { AuiTooltip } from '../tooltip/tooltip.js';
 
 const button = (el: AuiFavoriteBtn) => el.shadowRoot!.querySelector('button')!;
 const icon = (el: AuiFavoriteBtn) => el.shadowRoot!.querySelector<SVGElement>('.fav-btn__icon')!;
+const tooltip = (el: AuiFavoriteBtn) => el.shadowRoot!.querySelector<AuiTooltip>('aui-tooltip')!;
 
 describe('AuiFavoriteBtn (<aui-favorite-btn>)', () => {
   describe('rendering', () => {
@@ -237,6 +239,69 @@ describe('AuiFavoriteBtn (<aui-favorite-btn>)', () => {
       });
       expect(button(el).matches(':hover'), 'pointer is over the button').to.be.true;
       expect(getComputedStyle(button(el)).transform).to.equal('none');
+    });
+  });
+
+  describe('tooltip', () => {
+    afterEach(() => resetMouse());
+
+    it('shows the library tooltip with the label on hover, without a native title', async () => {
+      const el = await fixture<AuiFavoriteBtn>(
+        html`<aui-favorite-btn label="收藏 JSON Formatter"></aui-favorite-btn>`,
+      );
+      const tip = tooltip(el);
+      expect(tip, 'built-in tooltip').to.exist;
+      expect(tip.content).to.equal('收藏 JSON Formatter');
+      expect(tip.placement).to.equal('top');
+      // 原生提示的來源都不存在
+      expect(el.shadowRoot!.querySelector('title')).to.be.null;
+      expect(button(el).hasAttribute('title')).to.be.false;
+
+      const rect = button(el).getBoundingClientRect();
+      const shown = oneEvent(tip, 'aui-after-show');
+      await sendMouse({
+        type: 'move',
+        position: [Math.round(rect.x + rect.width / 2), Math.round(rect.y + rect.height / 2)],
+      });
+      await shown;
+      expect(tip.open).to.be.true;
+    });
+
+    it('shows the tooltip when the button receives keyboard focus', async () => {
+      const el = await fixture<AuiFavoriteBtn>(html`<aui-favorite-btn></aui-favorite-btn>`);
+      const tip = tooltip(el);
+      const shown = oneEvent(tip, 'aui-after-show');
+      button(el).focus();
+      await shown;
+      expect(tip.open).to.be.true;
+    });
+
+    it('uses tooltip and tooltip-placement when set', async () => {
+      const el = await fixture<AuiFavoriteBtn>(
+        html`<aui-favorite-btn
+          tooltip="加入常用工具"
+          tooltip-placement="bottom"
+        ></aui-favorite-btn>`,
+      );
+      expect(tooltip(el).content).to.equal('加入常用工具');
+      expect(tooltip(el).placement).to.equal('bottom');
+      // 名稱仍是 label
+      expect(button(el).getAttribute('aria-label')).to.equal('我的最愛');
+    });
+
+    it('renders no tooltip with no-tooltip', async () => {
+      const el = await fixture<AuiFavoriteBtn>(
+        html`<aui-favorite-btn no-tooltip></aui-favorite-btn>`,
+      );
+      expect(el.shadowRoot!.querySelector('aui-tooltip')).to.be.null;
+      expect(button(el).getAttribute('aria-label')).to.equal('我的最愛');
+    });
+
+    it('disables the tooltip together with the button', async () => {
+      const el = await fixture<AuiFavoriteBtn>(
+        html`<aui-favorite-btn disabled></aui-favorite-btn>`,
+      );
+      expect(tooltip(el).disabled).to.be.true;
     });
   });
 });

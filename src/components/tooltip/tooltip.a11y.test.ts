@@ -243,6 +243,75 @@ describe('AuiTooltip Accessibility (<aui-tooltip>)', () => {
       await el.updateComplete;
       expect((await getAxNode(triggerBtn)).description).to.equal('Copied!');
     });
+
+    describe('does not repeat the accessible name as the description', () => {
+      it('skips a tooltip equal to the aria-label of an icon button', async () => {
+        const el = await fixture<AuiTooltip>(html`
+          <aui-tooltip content="刪除">
+            <button aria-label=" 刪除 ">✕</button>
+          </aui-tooltip>
+        `);
+        const triggerBtn = el.querySelector('button') as HTMLButtonElement;
+
+        setTimeout(() => el.show());
+        await oneEvent(el, 'aui-after-show');
+        expect(triggerBtn.hasAttribute('aria-describedby')).to.be.false;
+        const node = await getAxNode(triggerBtn);
+        expect(node.name.trim()).to.equal('刪除');
+        expect(node.description).to.equal('');
+      });
+
+      it('skips a tooltip equal to the text of the trigger', async () => {
+        const el = await fixture<AuiTooltip>(html`
+          <aui-tooltip content="Save draft">
+            <button>Save draft</button>
+          </aui-tooltip>
+        `);
+        setTimeout(() => el.show());
+        await oneEvent(el, 'aui-after-show');
+        expect((await getAxNode(el.querySelector('button')!)).description).to.equal('');
+      });
+
+      it('keeps the description when the target is named by aria-labelledby', async () => {
+        const el = await fixture<AuiTooltip>(html`
+          <aui-tooltip content="Delete">
+            <button aria-labelledby="name">Delete</button>
+            <span id="name" hidden>Remove row</span>
+          </aui-tooltip>
+        `);
+        setTimeout(() => el.show());
+        await oneEvent(el, 'aui-after-show');
+        expect((await getAxNode(el.querySelector('button')!)).description).to.equal('Delete');
+      });
+
+      it('adds and removes the description as content changes while open', async () => {
+        const el = await fixture<AuiTooltip>(html`
+          <aui-tooltip content="Copy">
+            <button aria-label="Copy">⧉</button>
+          </aui-tooltip>
+        `);
+        const triggerBtn = el.querySelector('button') as HTMLButtonElement;
+        setTimeout(() => el.show());
+        await oneEvent(el, 'aui-after-show');
+        expect((await getAxNode(triggerBtn)).description).to.equal('');
+
+        el.content = 'Copied!';
+        await el.updateComplete;
+        expect((await getAxNode(triggerBtn)).description).to.equal('Copied!');
+
+        el.content = 'Copy';
+        await el.updateComplete;
+        expect(triggerBtn.hasAttribute('aria-describedby')).to.be.false;
+        expect((await getAxNode(triggerBtn)).description).to.equal('');
+
+        // 關閉後再改內容，不會重新寫入描述
+        setTimeout(() => el.hide());
+        await oneEvent(el, 'aui-hide');
+        el.content = 'Copied!';
+        await el.updateComplete;
+        expect(triggerBtn.hasAttribute('aria-describedby')).to.be.false;
+      });
+    });
   });
 
   describe('Keyboard dismissibility and focus control', () => {

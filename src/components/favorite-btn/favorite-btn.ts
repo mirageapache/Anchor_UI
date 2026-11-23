@@ -3,6 +3,8 @@ import { property, query } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { favoriteBtnStyles } from './favorite-btn.styles.js';
 import type { FavoriteBtnSize, FavoriteChangeDetail } from './favorite-btn.types.js';
+import type { TooltipPlacement } from '../tooltip/tooltip.types.js';
+import '../tooltip/index.js';
 
 /** 切換時的微縮放彈跳 */
 const BOUNCE_KEYFRAMES: Keyframe[] = [
@@ -30,10 +32,14 @@ const FAVORITE_BTN_SIZES = new Set<FavoriteBtnSize>(['sm', 'md', 'lg']);
  * 元件會自行切換 `favorite` 並觸發 `aui-change`；需要由外部決定是否生效時（例如等待 API 回應），
  * 可在事件中把 `favorite` 設回原值。
  *
+ * 懸停或聚焦時以內建的 `<aui-tooltip>` 顯示提示（預設為 `label`），與 `<aui-icon-button>` 一致；
+ * 載入本元件時會一併註冊 `<aui-tooltip>`。
+ *
  * @element aui-favorite-btn
  *
  * @csspart base - 內部的原生 `<button>`
  * @csspart icon - 星號圖示（SVG）
+ * @csspart tooltip - 內建的 `<aui-tooltip>`（`no-tooltip` 時不存在）
  *
  * @fires aui-change - 使用者切換收藏狀態後觸發（由程式設定 `favorite` 不會觸發），`detail.favorite` 為新狀態；支援 bubbles 與 composed
  */
@@ -58,9 +64,21 @@ export class AuiFavoriteBtn extends LitElement {
   @property({ type: String, reflect: true })
   size: FavoriteBtnSize = 'md';
 
-  /** 無障礙名稱（同時作為滑鼠懸停提示）；描述按鈕控制的對象，不隨收藏狀態改變。空字串時使用預設名稱 */
+  /** 無障礙名稱；描述按鈕控制的對象，不隨收藏狀態改變。空字串時使用預設名稱。未設定 `tooltip` 時也作為提示文字 */
   @property({ type: String })
   label = DEFAULT_LABEL;
+
+  /** 提示文字；空字串時沿用 `label`。與名稱相同時不會再作為按鈕的描述，螢幕閱讀器不會念兩次 */
+  @property({ type: String })
+  tooltip = '';
+
+  /** 提示的顯示方位 */
+  @property({ type: String, attribute: 'tooltip-placement' })
+  tooltipPlacement: TooltipPlacement = 'top';
+
+  /** 不顯示提示 */
+  @property({ type: Boolean, attribute: 'no-tooltip' })
+  noTooltip = false;
 
   @query('.fav-btn__icon')
   private icon?: SVGElement;
@@ -101,13 +119,13 @@ export class AuiFavoriteBtn extends LitElement {
     const size = FAVORITE_BTN_SIZES.has(this.size) ? this.size : 'md';
     // 沒有名稱的圖示按鈕無法被辨識，label 為空時退回預設名稱
     const label = this.label || DEFAULT_LABEL;
+    const tooltip = this.tooltip || label;
 
-    // 滑鼠懸停提示放在 SVG 的 <title>，而不是按鈕的 title 屬性：後者即使與 aria-label 相同，
-    // 瀏覽器仍會把它當成額外的描述，螢幕閱讀器會重複念兩次。SVG 已 aria-hidden，不進入無障礙樹；
-    // 透明的 rect 讓整個圖示範圍（而不只是線條）都能觸發提示。
+    // 提示由 <aui-tooltip> 顯示，不使用按鈕的 title 屬性或 SVG 的 <title>：兩者都會出現瀏覽器原生提示，
+    // 與元件庫其他按鈕不一致。提示與名稱相同時，Tooltip 不會把它寫成按鈕的描述。
     // （說明寫在這裡而不是範本內的 HTML 註解，避免註解進入發布產物。）
 
-    return html`
+    const button = html`
       <button
         type="button"
         class=${classMap({
@@ -132,13 +150,24 @@ export class AuiFavoriteBtn extends LitElement {
           stroke-linejoin="round"
           aria-hidden="true"
         >
-          <title>${label}</title>
-          <rect width="24" height="24" fill="transparent" stroke="none" />
           <path
             d="M12 3.5l2.63 5.33 5.87.86-4.25 4.14 1 5.85L12 16.92l-5.25 2.76 1-5.85L3.5 9.69l5.87-.86L12 3.5z"
           />
         </svg>
       </button>
+    `;
+
+    if (this.noTooltip) return button;
+
+    return html`
+      <aui-tooltip
+        part="tooltip"
+        .content=${tooltip}
+        .placement=${this.tooltipPlacement}
+        ?disabled=${this.disabled}
+      >
+        ${button}
+      </aui-tooltip>
     `;
   }
 }

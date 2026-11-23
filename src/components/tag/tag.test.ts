@@ -20,20 +20,34 @@ describe('AuiTag (<aui-tag>)', () => {
     expect(base?.classList.contains('tag--sm')).to.be.true;
   });
 
-  it('reflects variant, size, pill and preserve-case attributes', async () => {
+  it('reflects variant, size and pill attributes', async () => {
     const el = await fixture<AuiTag>(
-      html`<aui-tag variant="brand" size="lg" pill preserve-case>v1.0.0</aui-tag>`,
+      html`<aui-tag variant="brand" size="lg" pill>v1.0.0</aui-tag>`,
     );
     expect(el.getAttribute('variant')).to.equal('brand');
     expect(el.getAttribute('size')).to.equal('lg');
     expect(el.hasAttribute('pill')).to.be.true;
-    expect(el.hasAttribute('preserve-case')).to.be.true;
 
     const base = el.shadowRoot?.querySelector('.tag');
     expect(base?.classList.contains('tag--brand')).to.be.true;
     expect(base?.classList.contains('tag--lg')).to.be.true;
     expect(base?.classList.contains('tag--pill')).to.be.true;
-    expect(base?.classList.contains('tag--preserve-case')).to.be.true;
+  });
+
+  it('shows the text in its original case', async () => {
+    const wrapper = await fixture<HTMLDivElement>(html`
+      <div>
+        <aui-tag>Verified</aui-tag>
+        <aui-tag>US</aui-tag>
+        <aui-tag preserve-case>HTTP 200</aui-tag>
+      </div>
+    `);
+    for (const el of wrapper.querySelectorAll<AuiTag>('aui-tag')) {
+      const base = el.shadowRoot!.querySelector('.tag')!;
+      expect(getComputedStyle(base).textTransform, el.textContent!).to.equal('none');
+    }
+    // 已無作用的 preserve-case 仍可設定，不影響顯示
+    expect(wrapper.querySelector<AuiTag>('[preserve-case]')!.preserveCase).to.be.true;
   });
 
   it('supports prefix and suffix slots', async () => {
@@ -92,9 +106,9 @@ describe('AuiTag (<aui-tag>)', () => {
     const removeBtn = el.shadowRoot?.querySelector<HTMLButtonElement>('.tag__remove');
     expect(removeBtn).to.exist;
     expect(removeBtn?.getAttribute('aria-label')).to.equal('移除標籤');
-    // 提示文字在 SVG 的 <title>；按鈕本身不設 title，避免螢幕閱讀器重複念兩次
+    // 不顯示瀏覽器原生提示：按鈕沒有 title，SVG 也沒有 <title>
     expect(removeBtn?.hasAttribute('title')).to.be.false;
-    expect(removeBtn?.querySelector('svg title')?.textContent).to.equal('移除標籤');
+    expect(removeBtn?.querySelector('title')).to.be.null;
 
     const base = el.shadowRoot?.querySelector('.tag');
     expect(base?.classList.contains('tag--removable')).to.be.true;
@@ -111,7 +125,6 @@ describe('AuiTag (<aui-tag>)', () => {
     );
     const removeBtn = el.shadowRoot?.querySelector<HTMLButtonElement>('.tag__remove');
     expect(removeBtn?.getAttribute('aria-label')).to.equal('Delete item');
-    expect(removeBtn?.querySelector('svg title')?.textContent).to.equal('Delete item');
   });
 
   describe('interactive hover feedback', () => {

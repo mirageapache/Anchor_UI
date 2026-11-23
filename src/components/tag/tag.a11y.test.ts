@@ -123,19 +123,20 @@ describe('AuiTag Accessibility (<aui-tag>)', () => {
       expect(node.name).to.equal('frontend');
     });
 
-    it('provides accessible name and a hover hint for removal button', async () => {
+    it('names the removal button without a description or native tooltip', async () => {
       const defaultEl = await fixture<AuiTag>(html`<aui-tag removable>Item</aui-tag>`);
-      const defaultBtn = defaultEl.shadowRoot?.querySelector<HTMLButtonElement>('.tag__remove');
-      expect(defaultBtn?.getAttribute('aria-label')).to.equal('移除標籤');
-      expect(defaultBtn?.hasAttribute('title'), 'no duplicate description').to.be.false;
-      expect(defaultBtn?.querySelector('svg title')?.textContent).to.equal('移除標籤');
+      const defaultBtn = defaultEl.shadowRoot!.querySelector<HTMLButtonElement>('.tag__remove')!;
+      const node = await getAxNode(defaultBtn);
+      expect(node.name).to.equal('移除標籤');
+      expect(node.description, 'no duplicate description').to.equal('');
+      expect(defaultBtn.hasAttribute('title')).to.be.false;
+      expect(defaultBtn.querySelector('title')).to.be.null;
 
       const customEl = await fixture<AuiTag>(
         html`<aui-tag removable remove-label="Delete Tag">Item</aui-tag>`,
       );
-      const customBtn = customEl.shadowRoot?.querySelector<HTMLButtonElement>('.tag__remove');
-      expect(customBtn?.getAttribute('aria-label')).to.equal('Delete Tag');
-      expect(customBtn?.querySelector('svg title')?.textContent).to.equal('Delete Tag');
+      const customBtn = customEl.shadowRoot!.querySelector<HTMLButtonElement>('.tag__remove')!;
+      expect((await getAxNode(customBtn)).name).to.equal('Delete Tag');
     });
 
     it('removes accessibility attributes when interactive is turned off dynamically', async () => {

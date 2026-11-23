@@ -7,6 +7,7 @@ import type {
   FavoriteBtnSize,
   FavoriteChangeDetail,
 } from '../components/favorite-btn/favorite-btn.types.js';
+import type { TooltipPlacement } from '../components/tooltip/tooltip.types.js';
 import { inShadow, query } from './play-utils.js';
 
 interface FavoriteBtnStoryArgs {
@@ -14,6 +15,9 @@ interface FavoriteBtnStoryArgs {
   disabled: boolean;
   size: FavoriteBtnSize;
   label: string;
+  tooltip: string;
+  tooltipPlacement: TooltipPlacement;
+  noTooltip: boolean;
 }
 
 const meta: Meta<FavoriteBtnStoryArgs> = {
@@ -29,6 +33,7 @@ const meta: Meta<FavoriteBtnStoryArgs> = {
 未收藏時為灰階線條，已收藏時以實心琥珀色高亮；使用者切換時有微縮放彈跳動態（遵循減少動畫設定）。
 
 - 語意為切換按鈕（\`aria-pressed\`）：\`label\` 描述按鈕控制的對象，不隨狀態改變。
+- 懸停或聚焦時以內建的 \`<aui-tooltip>\` 顯示提示（預設為 \`label\`），與 Icon Button 一致；\`no-tooltip\` 可停用。
 - 使用者切換後觸發 \`aui-change\`（\`detail.favorite\`）；由程式設定 \`favorite\` 不會觸發。
 - 需要由外部決定是否生效時（例如 API 失敗），在事件中把 \`favorite\` 設回原值即可。
 `,
@@ -54,8 +59,24 @@ const meta: Meta<FavoriteBtnStoryArgs> = {
     },
     label: {
       control: 'text',
-      description: '無障礙名稱與懸停提示；描述按鈕控制的對象，不隨狀態改變',
+      description: '無障礙名稱；描述按鈕控制的對象，不隨狀態改變。未設定 tooltip 時也作為提示文字',
       table: { defaultValue: { summary: '我的最愛' } },
+    },
+    tooltip: {
+      control: 'text',
+      description: '提示文字；空字串時沿用 label',
+      table: { defaultValue: { summary: '' } },
+    },
+    tooltipPlacement: {
+      control: 'select',
+      options: ['top', 'bottom', 'left', 'right'],
+      description: '提示的顯示方位',
+      table: { defaultValue: { summary: 'top' } },
+    },
+    noTooltip: {
+      control: 'boolean',
+      description: '不顯示提示',
+      table: { defaultValue: { summary: 'false' } },
     },
   },
   args: {
@@ -63,6 +84,9 @@ const meta: Meta<FavoriteBtnStoryArgs> = {
     disabled: false,
     size: 'md',
     label: '我的最愛',
+    tooltip: '',
+    tooltipPlacement: 'top',
+    noTooltip: false,
   },
 };
 
@@ -76,6 +100,9 @@ export const Default: Story = {
       ?disabled=${args.disabled}
       .size=${args.size}
       label=${args.label}
+      tooltip=${args.tooltip}
+      .tooltipPlacement=${args.tooltipPlacement}
+      ?no-tooltip=${args.noTooltip}
       @aui-change=${(event: CustomEvent<FavoriteChangeDetail>) =>
         console.log('aui-change', event.detail)}
     ></aui-favorite-btn>

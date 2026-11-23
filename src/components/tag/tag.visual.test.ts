@@ -21,7 +21,7 @@ describeVisual('AuiTag visual regression', [
         <aui-tag size="md">medium</aui-tag>
         <aui-tag size="lg">large</aui-tag>
         <aui-tag pill variant="brand">pill</aui-tag>
-        <aui-tag preserve-case variant="info">PreserveCase</aui-tag>
+        <aui-tag variant="info">MixedCase</aui-tag>
         <aui-tag removable variant="success">removable</aui-tag>
         <aui-tag interactive removable variant="purple">interactive</aui-tag>
       </div>

@@ -21,9 +21,11 @@ export const tooltipStyles = css`
     outline: none;
   }
 
+  /* block：觸發容器的寬高跟隨 host（例如圖表長條在 host 上設定高度）；host 未設高度時 100% 等同 auto */
   :host([block]) .tooltip__trigger {
     display: block;
     width: 100%;
+    height: 100%;
   }
 
   /* ─── Shadcn 風格冷黑浮層氣泡 (Popup) ─── */
