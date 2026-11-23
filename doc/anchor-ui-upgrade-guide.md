@@ -60,6 +60,8 @@
   兩者的入口體積因此包含 Tooltip 與 `@floating-ui/dom`。自行在外層包 `<aui-tooltip>` 的專案請移除外層，或加上 `no-tooltip`。
 - **`<aui-tooltip>` 的文字與目標的名稱相同時，不再作為目標的描述**：例如圖示按鈕的 `aria-label` 與提示同為「刪除」，
   先前螢幕閱讀器會念兩次。比對目標的 `aria-label`（沒有時比對文字內容）；以 `aria-labelledby` 命名的目標不受影響。
+- **`<aui-tooltip block>` 的觸發容器高度跟隨 host**：在 host 上設定高度時，`::part(trigger)` 也會撐滿，
+  不需要再自行加上 `aui-tooltip::part(trigger) { height: 100%; }`。host 未設定高度時不受影響。
 
 ### `1.0.0-beta`（Phase 4）
 

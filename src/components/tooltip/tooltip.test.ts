@@ -22,6 +22,30 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
     expect(popup?.getAttribute('aria-hidden')).to.equal('true');
   });
 
+  it('sizes the trigger wrapper to the host in block mode', async () => {
+    const wrapper = await fixture<HTMLDivElement>(html`
+      <div style="width: 200px">
+        <aui-tooltip block content="42" style="height: 80px">
+          <div style="height: 100%; background: currentColor"></div>
+        </aui-tooltip>
+        <aui-tooltip block content="auto">
+          <span>Label</span>
+        </aui-tooltip>
+      </div>
+    `);
+    const [sized, auto] = [...wrapper.querySelectorAll('aui-tooltip')];
+    const trigger = (el: Element) => el.shadowRoot!.querySelector('[part="trigger"]')!;
+
+    // 圖表長條等用法：host 設定高度時，觸發容器與其中的元素都撐滿
+    expect(trigger(sized).getBoundingClientRect().width).to.equal(200);
+    expect(trigger(sized).getBoundingClientRect().height).to.equal(80);
+    expect(sized.querySelector('div')!.getBoundingClientRect().height).to.equal(80);
+    // host 未設定高度時仍由內容決定
+    expect(trigger(auto).getBoundingClientRect().height).to.equal(
+      auto.querySelector('span')!.getBoundingClientRect().height,
+    );
+  });
+
   it('shows and hides programmatically via show() and hide()', async () => {
     const el = await fixture<AuiTooltip>(html`
       <aui-tooltip content="Tooltip message">

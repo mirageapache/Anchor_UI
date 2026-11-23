@@ -152,7 +152,8 @@ export class AuiTooltip extends LitElement {
   for = '';
 
   /**
-   * 是否使觸發包裝層以區塊元素（display: block）呈現
+   * 是否使觸發包裝層以區塊元素（display: block）呈現；包裝層的寬高跟隨 host，
+   * 例如在 host 上設定高度後，觸發元素以 `height: 100%` 即可撐滿
    */
   @property({ type: Boolean, reflect: true })
   block = false;
