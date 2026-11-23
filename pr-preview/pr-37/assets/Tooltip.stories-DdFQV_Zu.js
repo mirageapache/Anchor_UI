@@ -1,4 +1,4 @@
-import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./lit-DvaG8Cmk.js";import{t as r}from"./button-DdPjZonN.js";import{t as i}from"./tag-CMhbmpIm.js";import{t as a}from"./tooltip-D3qTtrbm.js";var o,s,c,l,u,d,f,p,m;function h(){return(h=e((()=>{n(),a(),r(),i(),o={title:`Components/Tooltip`,component:`aui-tooltip`,parameters:{docs:{description:{component:`
+import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./lit-DvaG8Cmk.js";import{t as r}from"./button-DdPjZonN.js";import{t as i}from"./tag-CQtnWGOn.js";import{t as a}from"./tooltip-D3qTtrbm.js";var o,s,c,l,u,d,f,p,m;function h(){return(h=e((()=>{n(),a(),r(),i(),o={title:`Components/Tooltip`,component:`aui-tooltip`,parameters:{docs:{description:{component:`
 **Anchor UI — Tooltip 懸浮氣泡提示 (\`<aui-tooltip>\`)**
 
 全域浮動氣泡提示元件，提供 Shadcn/ui 風格冷黑外觀、微縮放進出場動畫（0.95 -> 1.0）、
