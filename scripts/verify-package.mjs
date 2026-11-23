@@ -26,6 +26,7 @@ const toPosix = (path) => path.split('\\').join('/');
  */
 const ALLOWED_COMPONENT_DEPS = {
   'icon-button': ['tooltip'],
+  'favorite-btn': ['tooltip'],
   field: ['icon-button'],
   alert: ['button', 'input', 'modal'],
   header: ['favorite-btn', 'tag'],

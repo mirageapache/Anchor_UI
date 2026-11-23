@@ -25,8 +25,8 @@ const BASELINES = {
   card: 3384, // TASK-301
   accordion: 2665, // TASK-302
   dropzone: 4616, // TASK-303
-  'favorite-btn': 2423, // TASK-304
-  header: 6503, // TASK-305
+  'favorite-btn': 12693, // 提示改用內建的 Tooltip，含相依的 Tooltip 與 @floating-ui/dom（原 2423）
+  header: 17034, // 含相依的 Favorite Btn（連同 Tooltip 與 @floating-ui/dom）與 Tag（原 6503）
   kbd: 1494, // TASK-306
   drawer: 5376, // TASK-402（與 Modal 共用 internal/modal-dialog 的範本與樣式；原 5150）
   navbar: 6096, // TASK-403（含相依的 Kbd）

@@ -65,6 +65,11 @@ export class AuiTooltip extends LitElement {
   private describedTarget: HTMLElement | null = null;
   private describedById = '';
   /**
+   * 開啟期間（展開到開始收合）提示應作為目標的描述。與 describedTarget 分開記錄：
+   * 提示文字與目標名稱相同時不寫入描述，但內容或目標改變後仍須重新判斷。
+   */
+  private describing = false;
+  /**
    * 置於 host light DOM 的隱藏描述節點。
    * aria-describedby 為 IDREF，無法跨 Shadow DOM 邊界解析，
    * 因此必須在觸發目標所在的同一棵 tree 內提供描述文字。
@@ -174,7 +179,7 @@ export class AuiTooltip extends LitElement {
     this.clearTimeouts();
     this.stopAutoUpdate();
     this.detachTargetListeners();
-    this.removeAriaDescribedBy();
+    this.clearAriaDescribedBy();
     // 離開 document 時瀏覽器會自動關閉 popover，同步內部狀態並作廢尚未執行的轉場回呼
     this.transitionId++;
     this.isShowing = false;
@@ -203,8 +208,9 @@ export class AuiTooltip extends LitElement {
       this.setupTarget();
     }
 
-    if (changedProperties.has('content') && this.descriptionElement?.isConnected) {
-      this.descriptionElement.textContent = this.descriptionText;
+    // 內容改變可能讓提示與目標名稱變得相同或不同，須重新判斷是否作為描述
+    if (changedProperties.has('content') && this.describing) {
+      this.syncAriaDescribedBy();
     }
 
     if (changedProperties.has('open')) {
@@ -231,7 +237,6 @@ export class AuiTooltip extends LitElement {
    */
   private setupTarget(): void {
     // 目標切換時，描述關聯須跟著從舊目標移到新目標
-    const wasDescribed = this.describedTarget !== null;
     this.removeAriaDescribedBy();
     this.detachTargetListeners();
 
@@ -247,8 +252,8 @@ export class AuiTooltip extends LitElement {
 
     this.attachTargetListeners();
 
-    if (wasDescribed) {
-      this.addAriaDescribedBy();
+    if (this.describing) {
+      this.syncAriaDescribedBy();
     }
 
     // 開啟中更換目標：重新定位，並改為觀察新目標的捲動祖先與尺寸
@@ -468,7 +473,7 @@ export class AuiTooltip extends LitElement {
     this.isHiding = true;
     this.isVisible = false;
     document.removeEventListener('keydown', this.handleDocumentKeyDown);
-    this.removeAriaDescribedBy();
+    this.clearAriaDescribedBy();
 
     // 等待退場動畫結束後關閉 popover 並停止監聽（時長取自 CSS，避免與樣式隱性耦合）
     window.setTimeout(() => {
@@ -574,10 +579,38 @@ export class AuiTooltip extends LitElement {
     return slotted || this.content;
   }
 
+  /** 開啟時：提示開始作為目標的描述 */
   private addAriaDescribedBy(): void {
-    const target = this.targetElement;
-    if (!target) return;
+    this.describing = true;
+    this.syncAriaDescribedBy();
+  }
+
+  /** 收合或移出頁面時：解除描述 */
+  private clearAriaDescribedBy(): void {
+    this.describing = false;
     this.removeAriaDescribedBy();
+  }
+
+  /**
+   * 提示文字是否與目標的無障礙名稱相同（例如圖示按鈕的 aria-label 與提示同為「刪除」）。
+   * 相同時不作為描述，否則螢幕閱讀器會把同一段文字念兩次。
+   * 只比對 aria-label 與文字內容；以 aria-labelledby 命名的目標無法可靠取得名稱，一律視為不同。
+   */
+  private duplicatesTargetName(target: HTMLElement): boolean {
+    const normalize = (text: string) => text.replace(/\s+/g, ' ').trim();
+    const text = normalize(this.descriptionText);
+    if (!text) return false;
+    const label = target.getAttribute('aria-label');
+    if (label !== null) return normalize(label) === text;
+    if (target.hasAttribute('aria-labelledby')) return false;
+    return normalize(target.textContent ?? '') === text;
+  }
+
+  /** 依目前的目標與提示內容，寫入或移除 aria-describedby */
+  private syncAriaDescribedBy(): void {
+    this.removeAriaDescribedBy();
+    const target = this.targetElement;
+    if (!this.describing || !target || this.duplicatesTargetName(target)) return;
 
     // 目標位於本元件 shadow root 內（slot 無元素時退回 wrapper）可直接指向 popup；
     // 否則（slotted 元素或 for 指定的外部元素）必須指向同一棵 tree 內的描述節點
