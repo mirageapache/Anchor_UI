@@ -104,9 +104,9 @@ export class AuiTag extends LitElement {
   };
 
   override render() {
-    // 移除鈕的滑鼠懸停提示放在 SVG 的 <title>，而不是按鈕的 title 屬性：後者即使與 aria-label 相同，
-    // 瀏覽器仍會把它當成額外的描述，螢幕閱讀器會重複念兩次。
-    // SVG 已 aria-hidden，不進入無障礙樹；透明的 rect 讓整個圖示範圍都能觸發提示。
+    // 移除鈕不顯示懸停提示：× 的意義本身清楚，名稱由 aria-label 提供。
+    // 不用按鈕的 title 屬性或 SVG 的 <title>，兩者都會出現與元件庫 Tooltip 不一致的瀏覽器原生提示，
+    // title 屬性還會成為額外的描述，螢幕閱讀器會念兩次。
     return html`
       <span
         part="base"
@@ -150,8 +150,6 @@ export class AuiTag extends LitElement {
                   @click=${this.handleRemoveClick}
                 >
                   <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                    <title>${this.removeLabel}</title>
-                    <rect width="16" height="16" fill="transparent" />
                     <path
                       d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"
                     />

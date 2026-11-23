@@ -106,9 +106,9 @@ describe('AuiTag (<aui-tag>)', () => {
     const removeBtn = el.shadowRoot?.querySelector<HTMLButtonElement>('.tag__remove');
     expect(removeBtn).to.exist;
     expect(removeBtn?.getAttribute('aria-label')).to.equal('移除標籤');
-    // 提示文字在 SVG 的 <title>；按鈕本身不設 title，避免螢幕閱讀器重複念兩次
+    // 不顯示瀏覽器原生提示：按鈕沒有 title，SVG 也沒有 <title>
     expect(removeBtn?.hasAttribute('title')).to.be.false;
-    expect(removeBtn?.querySelector('svg title')?.textContent).to.equal('移除標籤');
+    expect(removeBtn?.querySelector('title')).to.be.null;
 
     const base = el.shadowRoot?.querySelector('.tag');
     expect(base?.classList.contains('tag--removable')).to.be.true;
@@ -125,7 +125,6 @@ describe('AuiTag (<aui-tag>)', () => {
     );
     const removeBtn = el.shadowRoot?.querySelector<HTMLButtonElement>('.tag__remove');
     expect(removeBtn?.getAttribute('aria-label')).to.equal('Delete item');
-    expect(removeBtn?.querySelector('svg title')?.textContent).to.equal('Delete item');
   });
 
   describe('interactive hover feedback', () => {

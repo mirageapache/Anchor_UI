@@ -66,6 +66,8 @@
   與 `<aui-icon-button>` 不一致；`<aui-header>` 的收藏鈕同樣受影響。新增 `tooltip`（預設沿用 `label`）、
   `tooltip-placement`（預設 `top`）與 `no-tooltip`。載入 favorite-btn（或 header）時會一併註冊 `<aui-tooltip>`，
   兩者的入口體積因此包含 Tooltip 與 `@floating-ui/dom`。自行在外層包 `<aui-tooltip>` 的專案請移除外層，或加上 `no-tooltip`。
+- **`<aui-tag>` 的移除鈕不再顯示懸停提示**：先前同樣是瀏覽器原生提示（SVG `<title>`）。× 的意義本身清楚，
+  無障礙名稱仍由 `remove-label`（預設「移除標籤」）提供。
 - **`<aui-tooltip>` 的文字與目標的名稱相同時，不再作為目標的描述**：例如圖示按鈕的 `aria-label` 與提示同為「刪除」，
   先前螢幕閱讀器會念兩次。比對目標的 `aria-label`（沒有時比對文字內容）；以 `aria-labelledby` 命名的目標不受影響。
 - **`<aui-tooltip block>` 的觸發容器高度跟隨 host**：在 host 上設定高度時，`::part(trigger)` 也會撐滿，
