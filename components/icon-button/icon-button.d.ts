@@ -114,6 +114,8 @@ export declare class AuiIconButton extends LitElement {
      * 螢幕閱讀器即時播報文字
      */
     private announcement;
+    /** 複製進行中（等待剪貼簿）：期間不重複複製 */
+    private copying;
     constructor();
     disconnectedCallback(): void;
     /**
@@ -172,7 +174,8 @@ export declare class AuiIconButton extends LitElement {
     resetFeedback(): void;
     private clearFeedbackTimer;
     /**
-     * 回饋狀態的唯一轉換點：同步 active、播報文字，並在狀態實際改變時分派 aui-status-change
+     * 回饋狀態的唯一轉換點：更新播報文字，並在狀態實際改變時分派 aui-status-change。
+     * 成功時的高亮由 render 依 status 推導，不改寫使用端設定的 `active`
      */
     private setStatus;
     private showTooltipTemporarily;

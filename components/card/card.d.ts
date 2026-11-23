@@ -33,7 +33,10 @@ export declare class AuiCard extends LitElement {
     heading: string;
     /** 簡介描述 */
     description: string;
-    /** 連結網址；設定後（包含空字串，同原生 `<a href="">`）整張卡片成為連結 */
+    /**
+     * 連結網址；設定後（包含空字串，同原生 `<a href="">`）整張卡片成為連結。
+     * 只接受 http(s)、`mailto:`、`tel:` 與相對路徑，其他協定（如 `javascript:`）視為未設定
+     */
     href?: string;
     /** 連結開啟目標（同原生 `<a target>`），僅在設定 `href` 時有效 */
     target?: CardTarget;

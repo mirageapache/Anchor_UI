@@ -5,6 +5,8 @@ import { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
  *
  * 系統核心互動元件，支援 5 種語意層級變體、3 種尺寸規格、鍵盤可聚焦性、
  * 點擊微縮放動態、載入中 Spinner 以及與宿主表單（form）的原生提交互動。
+ * `type="submit"` / `"reset"` 的表單動作與原生按鈕相同，是點擊的預設行為：在 `click` 監聽器中
+ * `preventDefault()` 可取消（因此在事件分派完畢後才執行）；所屬的 `<fieldset disabled>` 也會停用按鈕。
  * host 上的 `aria-describedby`（例如被 `<aui-tooltip>` 包住時的提示描述）會轉交給內部的 `<button>`。
  *
  * @element aui-button
@@ -59,11 +61,16 @@ export declare class AuiButton extends LitElement {
      * 因此在 host 所在的 tree 中解析為元素，再以 ariaDescribedByElements 交給內部按鈕
      */
     private hostDescribedBy;
+    /** 由所屬 `<fieldset disabled>` 或自身 disabled 屬性決定的表單停用狀態 */
+    private formDisabled;
     constructor();
     /**
      * 所屬的表單（包含以 `form` 屬性指定的外部表單）
      */
     get form(): HTMLFormElement | null;
+    /** @internal 自身 disabled 屬性或所屬 `<fieldset disabled>` 改變時由瀏覽器呼叫 */
+    formDisabledCallback(disabled: boolean): void;
+    private get isDisabled();
     private handleHostClick;
     /** host 的 aria-describedby 所指向的元素；指向的元素須在設定屬性前已存在 */
     private get describedByElements();

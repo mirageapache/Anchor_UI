@@ -33,6 +33,8 @@ export declare class AuiTooltip extends LitElement {
     private targetElement;
     /** popover 是否已開啟（進場動畫的 rAF 前即為 true，與視覺狀態 isVisible 分開追蹤） */
     private isShowing;
+    /** 退場動畫中（aui-hide 已分派、aui-after-hide 尚未分派） */
+    private isHiding;
     /**
      * 開/關轉場序號：每次開始開啟或關閉都會遞增，
      * 延遲執行的 rAF / setTimeout 回呼若序號已過期即放棄，避免快速開關時互相覆蓋狀態
@@ -101,6 +103,7 @@ export declare class AuiTooltip extends LitElement {
     private isVisible;
     connectedCallback(): void;
     disconnectedCallback(): void;
+    /** 初次渲染後綁定觸發目標；`open` 的初始值由同一輪的 updated() 處理 */
     firstUpdated(): void;
     updated(changedProperties: Map<string, unknown>): void;
     /**

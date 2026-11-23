@@ -6,6 +6,8 @@ import { InputType } from './input.types.js';
  * 等寬字體的單行／多行文字輸入框，具備 Focus 雙層光環與錯誤狀態。
  * 為 form-associated custom element：可參與原生 `<form>` 提交、`required` 等驗證、
  * `form.reset()` 與 `<fieldset disabled>`；不支援 ElementInternals 時退回以 light DOM 隱藏 input 提交。
+ * 單行輸入時按 Enter 會送出所屬表單（與原生 `<input>` 相同：有送出按鈕時等同點擊它，
+ * 沒有時僅在表單只有一個單行欄位時送出）；在 `keydown` 監聽器中 `preventDefault()` 可取消。
  *
  * 標題與描述（`label` / `description`）在元件自身的 Shadow DOM 內與輸入框建立關聯，
  * 因 IDREF 無法跨 Shadow DOM 邊界解析；搭配 `<aui-field>` 時由 field 自動傳入。
@@ -152,6 +154,11 @@ export declare class AuiInput extends LitElement {
     private handleInput;
     /** 原生 change 不具 composed、不會穿出 Shadow DOM，須於 host 重新分派 */
     private handleChange;
+    /**
+     * 單行輸入按 Enter：送出所屬表單（隱式送出）。內部的 <input> 位於 Shadow DOM、沒有表單擁有者，
+     * 瀏覽器不會代為處理。輸入法選字中的 Enter 與帶修飾鍵的 Enter 不算
+     */
+    private handleKeydown;
     willUpdate(changed: PropertyValues<this>): void;
     updated(): void;
     render(): import('lit').TemplateResult<1>;
