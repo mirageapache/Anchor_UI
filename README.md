@@ -39,7 +39,7 @@ Toast 與 Alert 另有以程式呼叫的服務：`ToastService`（`@anchor-ui/co
 
 ## 在其他專案中導入 (Installation)
 
-> 套件以 [GitHub Releases](https://github.com/mirageapache/Anchor_UI/releases) 附上的 tarball 發布（不在 npm registry 上）。以下以 `v1.0.0-beta` 為例，換成需要的版本即可。
+> 套件以 [GitHub Releases](https://github.com/mirageapache/Anchor_UI/releases) 附上的 tarball 發布（不在 npm registry 上）。以下以 `v1.0.0` 為例，換成需要的版本即可。
 
 ### 1. 前置需求
 
@@ -52,13 +52,13 @@ Toast 與 Alert 另有以程式呼叫的服務：`ToastService`（`@anchor-ui/co
 直接以 Release 附檔的網址安裝（repo 為公開，不需登入）：
 
 ```bash
-npm install https://github.com/mirageapache/Anchor_UI/releases/download/v1.0.0-beta/anchor-ui-core-1.0.0-beta.tgz
+npm install https://github.com/mirageapache/Anchor_UI/releases/download/v1.0.0/anchor-ui-core-1.0.0.tgz
 # 或
-pnpm add https://github.com/mirageapache/Anchor_UI/releases/download/v1.0.0-beta/anchor-ui-core-1.0.0-beta.tgz
+pnpm add https://github.com/mirageapache/Anchor_UI/releases/download/v1.0.0/anchor-ui-core-1.0.0.tgz
 ```
 
 - `package.json` 的相依會記錄成這個網址，其他人安裝時會下載同一個檔案；`lit` 與 `@floating-ui/dom` 會一併自動安裝。
-- 也可以先下載 tarball 再安裝：`gh release download v1.0.0-beta --repo mirageapache/Anchor_UI --pattern "*.tgz"`，接著 `npm install ./anchor-ui-core-1.0.0-beta.tgz`。這種做法需把 `.tgz` 提交進專案，否則其他人安裝不到。
+- 也可以先下載 tarball 再安裝：`gh release download v1.0.0 --repo mirageapache/Anchor_UI --pattern "*.tgz"`，接著 `npm install ./anchor-ui-core-1.0.0.tgz`。這種做法需把 `.tgz` 提交進專案，否則其他人安裝不到。
 
 ### 3. 載入樣式
 
