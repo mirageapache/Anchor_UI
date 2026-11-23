@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.0](https://github.com/mirageapache/Anchor_UI/compare/v1.0.0-beta.1...v1.0.0) (2026-11-23)
+
+
+### 發布
+
+* **release:** 發布 1.0.0 正式版 ([6acd47d](https://github.com/mirageapache/Anchor_UI/commit/6acd47d53be92c7f138c7097177e4e7a6b006773))
+
 ## [1.0.0-beta.1](https://github.com/mirageapache/Anchor_UI/compare/v1.0.0-beta...v1.0.0-beta.1) (2026-11-23)
 
 
