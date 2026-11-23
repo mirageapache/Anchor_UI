@@ -29,7 +29,7 @@ import '@anchor-ui/core';
 `,(0,c.jsx)(r.p,{children:`字型檔不隨套件提供，請自行載入 Inter 與 JetBrains Mono（否則退回系統字型）。`}),`
 `,(0,c.jsx)(r.h2,{id:`搭配框架`,children:`搭配框架`}),`
 `,(0,c.jsxs)(r.ul,{children:[`
-`,(0,c.jsxs)(r.li,{children:[(0,c.jsx)(r.strong,{children:`Vue 3`}),`：在 `,(0,c.jsx)(r.code,{children:`vite.config.ts`}),` 以 `,(0,c.jsx)(r.code,{children:`compilerOptions.isCustomElement`}),` 排除 `,(0,c.jsx)(r.code,{children:`aui-`}),` 開頭的標籤；表單元件可直接用 `,(0,c.jsx)(r.code,{children:`v-model`}),`。`]}),`
+`,(0,c.jsxs)(r.li,{children:[(0,c.jsx)(r.strong,{children:`Vue 3`}),`：在 `,(0,c.jsx)(r.code,{children:`vite.config.ts`}),` 以 `,(0,c.jsx)(r.code,{children:`compilerOptions.isCustomElement`}),` 排除 `,(0,c.jsx)(r.code,{children:`aui-`}),` 開頭的標籤；表單元件可直接用 `,(0,c.jsx)(r.code,{children:`v-model`}),`。動態綁定多字的布林屬性請用 camelCase（`,(0,c.jsx)(r.code,{children:`:fullWidth="flag"`}),`），kebab-case 的 `,(0,c.jsx)(r.code,{children:`false`}),` 會被當成 true。`]}),`
 `,(0,c.jsxs)(r.li,{children:[(0,c.jsx)(r.strong,{children:`Angular`}),`：使用 `,(0,c.jsx)(r.code,{children:`aui-`}),` 標籤的元件加上 `,(0,c.jsx)(r.code,{children:`CUSTOM_ELEMENTS_SCHEMA`}),`；表單元件的 `,(0,c.jsx)(r.code,{children:`[(ngModel)]`}),` / `,(0,c.jsx)(r.code,{children:`[formControl]`}),` 需加 `,(0,c.jsx)(r.code,{children:`ngDefaultControl`}),`。`]}),`
 `]}),`
 `,(0,c.jsxs)(r.p,{children:[`完整步驟（含設定範例、表單綁定與測試注意事項）見

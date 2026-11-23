@@ -5,7 +5,7 @@ import { TagSize, TagVariant } from './tag.types.js';
  *
  * 採用 JetBrains Mono 等寬字體呈現的專業標籤，用於技術分類、版本標號、格式與狀態標記。
  * 支援 7 種語意色彩變體（另有 6 個相容別名）、3 種尺寸規格、膠囊圓角 (pill)、可點擊互動 (interactive)、
- * 可移除操作 (removable)，並預設落實全小寫標籤規範（支援 preserve-case 跳脫）。
+ * 可移除操作 (removable)。文字照原樣顯示，不轉換大小寫。
  *
  * @element aui-tag
  *
@@ -38,7 +38,8 @@ export declare class AuiTag extends LitElement {
      */
     pill: boolean;
     /**
-     * 是否保留文字原始大小寫（預設依規範轉為全小寫）
+     * 已無作用：文字預設即保留原始大小寫。保留這個屬性只為相容舊的寫法，下一個主要版本移除。
+     * @deprecated 文字一律照原樣顯示，不需要再設定
      */
     preserveCase: boolean;
     /**

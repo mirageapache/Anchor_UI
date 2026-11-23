@@ -44,7 +44,7 @@ export declare class AuiHeader extends LitElement {
     favoritable: boolean;
     /** 是否已收藏（需搭配 `favoritable`） */
     favorite: boolean;
-    /** 收藏鈕的無障礙名稱 */
+    /** 收藏鈕的無障礙名稱，也是懸停或聚焦時顯示的提示文字 */
     favoriteLabel: string;
     constructor();
     /** 把收藏鈕的 aui-change 轉發為語意明確的 aui-favorite-change，並同步 favorite 屬性 */

@@ -1,4 +1,4 @@
-import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{h as t,n,s as r,t as i}from"./lit-DvaG8Cmk.js";import{i as a,p as o,r as s,t as c,u as l,v as u}from"./decorate-B5jhCMz7.js";var d;function f(){return(f=e((()=>{i(),d=t`
+import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{h as t,n,s as r,t as i}from"./lit-DvaG8Cmk.js";import{i as a,p as o,r as s,t as c,u as l,v as u}from"./decorate-B5jhCMz7.js";import{t as d}from"./tooltip-D3qTtrbm.js";var f;function p(){return(p=e((()=>{i(),f=t`
   :host {
     /* inline-flex：host 的大小等於按鈕本身，不受所在行的字級與行高影響（例如放在大標題旁） */
     display: inline-flex;
@@ -7,6 +7,12 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{h as t,n,s as r,t as i
 
   :host([hidden]) {
     display: none !important;
+  }
+
+  /* 內建的 Tooltip 只包住按鈕，維持 host 等於按鈕大小 */
+  aui-tooltip,
+  aui-tooltip::part(trigger) {
+    display: inline-flex;
   }
 
   /* ─── 按鈕本體 ─── */
@@ -92,7 +98,7 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{h as t,n,s as r,t as i
       transform: none !important;
     }
   }
-`})))()}var p,m,h,g,_;function v(){return(v=e((()=>{i(),l(),s(),f(),p=[{transform:`scale(1)`},{transform:`scale(1.3)`,offset:.4},{transform:`scale(0.92)`,offset:.7},{transform:`scale(1)`}],m=320,h=`我的最愛`,g=new Set([`sm`,`md`,`lg`]),_=class extends n{constructor(...e){super(...e),this.favorite=!1,this.disabled=!1,this.size=`md`,this.label=h,this.handleClick=()=>{if(this.disabled)return;let e=!this.favorite;this.favorite=e,this.dispatchEvent(new CustomEvent(`aui-change`,{detail:{favorite:e},bubbles:!0,composed:!0})),this.favorite===e&&this.bounce()}}static{this.styles=d}static{this.shadowRootOptions={...n.shadowRootOptions,delegatesFocus:!0}}bounce(){this.icon?.animate&&(window.matchMedia?.(`(prefers-reduced-motion: reduce)`).matches||(this.bounceAnimation?.cancel(),this.bounceAnimation=this.icon.animate(p,{duration:m,easing:`ease`})))}render(){let e=g.has(this.size)?this.size:`md`,t=this.label||h;return r`
+`})))()}var m,h,g,_,v;function y(){return(y=e((()=>{i(),l(),s(),p(),d(),m=[{transform:`scale(1)`},{transform:`scale(1.3)`,offset:.4},{transform:`scale(0.92)`,offset:.7},{transform:`scale(1)`}],h=320,g=`我的最愛`,_=new Set([`sm`,`md`,`lg`]),v=class extends n{constructor(...e){super(...e),this.favorite=!1,this.disabled=!1,this.size=`md`,this.label=g,this.tooltip=``,this.tooltipPlacement=`top`,this.noTooltip=!1,this.handleClick=()=>{if(this.disabled)return;let e=!this.favorite;this.favorite=e,this.dispatchEvent(new CustomEvent(`aui-change`,{detail:{favorite:e},bubbles:!0,composed:!0})),this.favorite===e&&this.bounce()}}static{this.styles=f}static{this.shadowRootOptions={...n.shadowRootOptions,delegatesFocus:!0}}bounce(){this.icon?.animate&&(window.matchMedia?.(`(prefers-reduced-motion: reduce)`).matches||(this.bounceAnimation?.cancel(),this.bounceAnimation=this.icon.animate(m,{duration:h,easing:`ease`})))}render(){let e=_.has(this.size)?this.size:`md`,t=this.label||g,n=this.tooltip||t,i=r`
       <button
         type="button"
         class=${a({"fav-btn":!0,[`fav-btn--${e}`]:!0,"is-favorite":this.favorite})}
@@ -113,11 +119,18 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{h as t,n,s as r,t as i
           stroke-linejoin="round"
           aria-hidden="true"
         >
-          <title>${t}</title>
-          <rect width="24" height="24" fill="transparent" stroke="none" />
           <path
             d="M12 3.5l2.63 5.33 5.87.86-4.25 4.14 1 5.85L12 16.92l-5.25 2.76 1-5.85L3.5 9.69l5.87-.86L12 3.5z"
           />
         </svg>
       </button>
-    `}},c([u({type:Boolean,reflect:!0})],_.prototype,`favorite`,void 0),c([u({type:Boolean,reflect:!0})],_.prototype,`disabled`,void 0),c([u({type:String,reflect:!0})],_.prototype,`size`,void 0),c([u({type:String})],_.prototype,`label`,void 0),c([o(`.fav-btn__icon`)],_.prototype,`icon`,void 0),customElements.get(`aui-favorite-btn`)||customElements.define(`aui-favorite-btn`,_)})))()}function y(){return(y=e((()=>{v()})))()}export{y as t};
+    `;return this.noTooltip?i:r`
+      <aui-tooltip
+        part="tooltip"
+        .content=${n}
+        .placement=${this.tooltipPlacement}
+        ?disabled=${this.disabled}
+      >
+        ${i}
+      </aui-tooltip>
+    `}},c([u({type:Boolean,reflect:!0})],v.prototype,`favorite`,void 0),c([u({type:Boolean,reflect:!0})],v.prototype,`disabled`,void 0),c([u({type:String,reflect:!0})],v.prototype,`size`,void 0),c([u({type:String})],v.prototype,`label`,void 0),c([u({type:String})],v.prototype,`tooltip`,void 0),c([u({type:String,attribute:`tooltip-placement`})],v.prototype,`tooltipPlacement`,void 0),c([u({type:Boolean,attribute:`no-tooltip`})],v.prototype,`noTooltip`,void 0),c([o(`.fav-btn__icon`)],v.prototype,`icon`,void 0),customElements.get(`aui-favorite-btn`)||customElements.define(`aui-favorite-btn`,v)})))()}function b(){return(b=e((()=>{y()})))()}export{b as t};

@@ -1,9 +1,12 @@
-import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./lit-DvaG8Cmk.js";import{a as r,i,o as a}from"./play-utils-DUto8Om5.js";import{t as o}from"./favorite-btn-DbU-bX1h.js";var s,c,l,u,d,f,p;function m(){return(m=e((()=>{n(),o(),r(),{expect:s,userEvent:c}=__STORYBOOK_MODULE_TEST__,l={title:`Components/FavoriteBtn`,component:`aui-favorite-btn`,parameters:{docs:{description:{component:"\n**Anchor UI — Favorite Toggle Button 收藏星號按鈕 (`<aui-favorite-btn>`)**\n\n星號形狀的開關按鈕，用於把常用工具或項目加入我的最愛。\n未收藏時為灰階線條，已收藏時以實心琥珀色高亮；使用者切換時有微縮放彈跳動態（遵循減少動畫設定）。\n\n- 語意為切換按鈕（`aria-pressed`）：`label` 描述按鈕控制的對象，不隨狀態改變。\n- 使用者切換後觸發 `aui-change`（`detail.favorite`）；由程式設定 `favorite` 不會觸發。\n- 需要由外部決定是否生效時（例如 API 失敗），在事件中把 `favorite` 設回原值即可。\n"}}},argTypes:{favorite:{control:`boolean`,description:`是否已收藏`,table:{defaultValue:{summary:`false`}}},disabled:{control:`boolean`,description:`是否停用`,table:{defaultValue:{summary:`false`}}},size:{control:`inline-radio`,options:[`sm`,`md`,`lg`],description:`尺寸規格（圖示 16 / 20 / 24px）`,table:{defaultValue:{summary:`md`}}},label:{control:`text`,description:`無障礙名稱與懸停提示；描述按鈕控制的對象，不隨狀態改變`,table:{defaultValue:{summary:`我的最愛`}}}},args:{favorite:!1,disabled:!1,size:`md`,label:`我的最愛`}},u={render:e=>t`
+import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./lit-DvaG8Cmk.js";import{a as r,i,o as a}from"./play-utils-DUto8Om5.js";import{t as o}from"./favorite-btn-DhW5MPw4.js";var s,c,l,u,d,f,p;function m(){return(m=e((()=>{n(),o(),r(),{expect:s,userEvent:c}=__STORYBOOK_MODULE_TEST__,l={title:`Components/FavoriteBtn`,component:`aui-favorite-btn`,parameters:{docs:{description:{component:"\n**Anchor UI — Favorite Toggle Button 收藏星號按鈕 (`<aui-favorite-btn>`)**\n\n星號形狀的開關按鈕，用於把常用工具或項目加入我的最愛。\n未收藏時為灰階線條，已收藏時以實心琥珀色高亮；使用者切換時有微縮放彈跳動態（遵循減少動畫設定）。\n\n- 語意為切換按鈕（`aria-pressed`）：`label` 描述按鈕控制的對象，不隨狀態改變。\n- 懸停或聚焦時以內建的 `<aui-tooltip>` 顯示提示（預設為 `label`），與 Icon Button 一致；`no-tooltip` 可停用。\n- 使用者切換後觸發 `aui-change`（`detail.favorite`）；由程式設定 `favorite` 不會觸發。\n- 需要由外部決定是否生效時（例如 API 失敗），在事件中把 `favorite` 設回原值即可。\n"}}},argTypes:{favorite:{control:`boolean`,description:`是否已收藏`,table:{defaultValue:{summary:`false`}}},disabled:{control:`boolean`,description:`是否停用`,table:{defaultValue:{summary:`false`}}},size:{control:`inline-radio`,options:[`sm`,`md`,`lg`],description:`尺寸規格（圖示 16 / 20 / 24px）`,table:{defaultValue:{summary:`md`}}},label:{control:`text`,description:`無障礙名稱；描述按鈕控制的對象，不隨狀態改變。未設定 tooltip 時也作為提示文字`,table:{defaultValue:{summary:`我的最愛`}}},tooltip:{control:`text`,description:`提示文字；空字串時沿用 label`,table:{defaultValue:{summary:``}}},tooltipPlacement:{control:`select`,options:[`top`,`bottom`,`left`,`right`],description:`提示的顯示方位`,table:{defaultValue:{summary:`top`}}},noTooltip:{control:`boolean`,description:`不顯示提示`,table:{defaultValue:{summary:`false`}}}},args:{favorite:!1,disabled:!1,size:`md`,label:`我的最愛`,tooltip:``,tooltipPlacement:`top`,noTooltip:!1}},u={render:e=>t`
     <aui-favorite-btn
       ?favorite=${e.favorite}
       ?disabled=${e.disabled}
       .size=${e.size}
       label=${e.label}
+      tooltip=${e.tooltip}
+      .tooltipPlacement=${e.tooltipPlacement}
+      ?no-tooltip=${e.noTooltip}
       @aui-change=${e=>console.log(`aui-change`,e.detail)}
     ></aui-favorite-btn>
   `},d={render:()=>t`
@@ -36,6 +39,9 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./l
       ?disabled=\${args.disabled}
       .size=\${args.size}
       label=\${args.label}
+      tooltip=\${args.tooltip}
+      .tooltipPlacement=\${args.tooltipPlacement}
+      ?no-tooltip=\${args.noTooltip}
       @aui-change=\${(event: CustomEvent<FavoriteChangeDetail>) => console.log('aui-change', event.detail)}
     ></aui-favorite-btn>
   \`

@@ -1,5 +1,6 @@
 import { LitElement } from 'lit';
 import { FavoriteBtnSize } from './favorite-btn.types.js';
+import { TooltipPlacement } from '../tooltip/tooltip.types.js';
 /**
  * Anchor UI — Favorite Toggle Button 元件 (`<aui-favorite-btn>`)
  *
@@ -12,10 +13,14 @@ import { FavoriteBtnSize } from './favorite-btn.types.js';
  * 元件會自行切換 `favorite` 並觸發 `aui-change`；需要由外部決定是否生效時（例如等待 API 回應），
  * 可在事件中把 `favorite` 設回原值。
  *
+ * 懸停或聚焦時以內建的 `<aui-tooltip>` 顯示提示（預設為 `label`），與 `<aui-icon-button>` 一致；
+ * 載入本元件時會一併註冊 `<aui-tooltip>`。
+ *
  * @element aui-favorite-btn
  *
  * @csspart base - 內部的原生 `<button>`
  * @csspart icon - 星號圖示（SVG）
+ * @csspart tooltip - 內建的 `<aui-tooltip>`（`no-tooltip` 時不存在）
  *
  * @fires aui-change - 使用者切換收藏狀態後觸發（由程式設定 `favorite` 不會觸發），`detail.favorite` 為新狀態；支援 bubbles 與 composed
  */
@@ -29,8 +34,14 @@ export declare class AuiFavoriteBtn extends LitElement {
     disabled: boolean;
     /** 尺寸規格 */
     size: FavoriteBtnSize;
-    /** 無障礙名稱（同時作為滑鼠懸停提示）；描述按鈕控制的對象，不隨收藏狀態改變。空字串時使用預設名稱 */
+    /** 無障礙名稱；描述按鈕控制的對象，不隨收藏狀態改變。空字串時使用預設名稱。未設定 `tooltip` 時也作為提示文字 */
     label: string;
+    /** 提示文字；空字串時沿用 `label`。與名稱相同時不會再作為按鈕的描述，螢幕閱讀器不會念兩次 */
+    tooltip: string;
+    /** 提示的顯示方位 */
+    tooltipPlacement: TooltipPlacement;
+    /** 不顯示提示 */
+    noTooltip: boolean;
     private icon?;
     /** 目前播放中的彈跳動態（只取消自己建立的動畫，不影響使用端透過 ::part(icon) 加上的動畫） */
     private bounceAnimation?;

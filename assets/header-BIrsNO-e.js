@@ -1,4 +1,4 @@
-import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{h as t,i as n,n as r,s as i,t as a}from"./lit-DvaG8Cmk.js";import{t as o,u as s,v as c}from"./decorate-B5jhCMz7.js";import{r as l,t as u}from"./live-BIRawy0c.js";import{n as d,r as f,t as p}from"./heading-CK0tPUd9.js";import{n as m,r as h,t as g}from"./slot-BP5G2qTd.js";import{t as _}from"./tag-VGG5e3M6.js";import{t as v}from"./favorite-btn-DbU-bX1h.js";var y;function b(){return(b=e((()=>{a(),y=t`
+import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{h as t,i as n,n as r,s as i,t as a}from"./lit-DvaG8Cmk.js";import{t as o,u as s,v as c}from"./decorate-B5jhCMz7.js";import{r as l,t as u}from"./live-_ZmdJYXX.js";import{n as d,r as f,t as p}from"./heading-CK0tPUd9.js";import{n as m,r as h,t as g}from"./slot-BP5G2qTd.js";import{t as _}from"./tag-CQtnWGOn.js";import{t as v}from"./favorite-btn-DhW5MPw4.js";var y;function b(){return(b=e((()=>{a(),y=t`
   :host {
     display: block;
     min-width: 0;
@@ -84,7 +84,7 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{h as t,i as n,n as r,s
       <div class="header" part="base">
         <div class="header__tags" part="tags" ?hidden=${!e&&!this.hot}>
           <slot name="tags"></slot>
-          ${this.hot?i`<aui-tag class="header__hot" part="hot-badge" variant="warning" preserve-case
+          ${this.hot?i`<aui-tag class="header__hot" part="hot-badge" variant="warning"
                   >${this.hotLabel}</aui-tag
                 >`:n}
         </div>

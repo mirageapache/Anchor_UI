@@ -19,7 +19,7 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{h as t,i as n,n as r,s
     font-weight: var(--weight-medium, 500);
     line-height: var(--leading-none, 1);
     letter-spacing: 0.02em;
-    text-transform: lowercase; /* 全小寫標籤規範 (TASK-102) */
+    /* 文字照原樣顯示，不轉換大小寫：專有名詞、代碼（US、HTTP 200）與狀態文字都很常見 */
     white-space: nowrap;
     user-select: none;
     border: 1px solid var(--color-border, #e2e8f0);
@@ -32,12 +32,6 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{h as t,i as n,n as r,s
       color var(--transition-fast, 100ms ease),
       box-shadow var(--transition-fast, 100ms ease),
       transform var(--transition-fast, 100ms ease);
-  }
-
-  /* ─── 大小寫保留例外開關 ─── */
-  :host([preserve-case]) .tag,
-  .tag--preserve-case {
-    text-transform: none;
   }
 
   /* ─── 尺寸規格 (Sizes) ─── */
@@ -248,7 +242,7 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{h as t,i as n,n as r,s
 `})))()}var p;function m(){return(m=e((()=>{a(),l(),s(),f(),p=class extends r{constructor(...e){super(...e),this.variant=`neutral`,this.size=`sm`,this.pill=!1,this.preserveCase=!1,this.removable=!1,this.interactive=!1,this.removeLabel=`移除標籤`,this.handleActionKeyDown=e=>{this.interactive&&!e.repeat&&(e.key===`Enter`||e.key===` `)&&(e.preventDefault(),this.click())},this.handleRemoveClick=e=>{e.stopPropagation();let t=new CustomEvent(`aui-remove`,{bubbles:!0,composed:!0,cancelable:!0,detail:{tag:this}});this.dispatchEvent(t)}}static{this.styles=d}static{this.shadowRootOptions={...r.shadowRootOptions,delegatesFocus:!0}}render(){return i`
       <span
         part="base"
-        class=${o({tag:!0,[`tag--${this.variant}`]:!!this.variant,[`tag--${this.size}`]:!!this.size,"tag--pill":this.pill,"tag--preserve-case":this.preserveCase,"tag--interactive":this.interactive,"tag--removable":this.removable})}
+        class=${o({tag:!0,[`tag--${this.variant}`]:!!this.variant,[`tag--${this.size}`]:!!this.size,"tag--pill":this.pill,"tag--interactive":this.interactive,"tag--removable":this.removable})}
       >
         <span
           class="tag__action"
@@ -279,8 +273,6 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{h as t,i as n,n as r,s
                   @click=${this.handleRemoveClick}
                 >
                   <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-                    <title>${this.removeLabel}</title>
-                    <rect width="16" height="16" fill="transparent" />
                     <path
                       d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"
                     />

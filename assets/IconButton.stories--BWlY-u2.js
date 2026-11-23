@@ -1,4 +1,4 @@
-import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./lit-DvaG8Cmk.js";import{t as r}from"./icon-button-DdaWk5Yr.js";var i,a,o,s,c,l,u,d,f,p,m,h,g;function _(){return(_=e((()=>{n(),r(),i={title:`Components/IconButton`,component:`aui-icon-button`,parameters:{docs:{description:{component:`
+import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./lit-DvaG8Cmk.js";import{t as r}from"./icon-button-D_dhJfw8.js";var i,a,o,s,c,l,u,d,f,p,m,h,g;function _(){return(_=e((()=>{n(),r(),i={title:`Components/IconButton`,component:`aui-icon-button`,parameters:{docs:{description:{component:`
 **Anchor UI — Icon Button 微型圖示操作鈕 (\`<aui-icon-button>\`)**
 
 專為複製 (Copy)、下載 (Download)、關閉、重新整理等高頻操作量身打造之標準 32×32px 微型操作鈕。

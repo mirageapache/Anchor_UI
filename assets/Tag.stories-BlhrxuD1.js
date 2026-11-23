@@ -1,15 +1,8 @@
-import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./lit-DvaG8Cmk.js";import{t as r}from"./tag-VGG5e3M6.js";var i,a,o,s,c,l,u,d,f,p;function m(){return(m=e((()=>{n(),r(),i={title:`Components/Tag`,component:`aui-tag`,parameters:{docs:{description:{component:`
-**Anchor UI — Tag / Badge 標籤徽章 (\`<aui-tag>\`)**
-
-採用 JetBrains Mono 等寬字體呈現的專業標籤，用於技術分類、版本標號、格式與狀態標記。
-支援 7 種語意色彩變體、3 種尺寸階層、膠囊圓角 (pill)、可點擊互動 (interactive)、
-可移除操作 (removable)，並預設貫徹「全小寫標籤規範」（全域文字轉為小寫，具備 preserve-case 跳脫選項）。
-`}}},argTypes:{variant:{control:`select`,options:[`brand`,`success`,`warning`,`purple`,`danger`,`info`,`neutral`,`deep-blue`,`blue`],description:`7 種語意色彩多態變體（支援 deep-blue / blue / green / amber / red 別名）`,table:{defaultValue:{summary:`neutral`}}},size:{control:`inline-radio`,options:[`sm`,`md`,`lg`],description:`尺寸規格（sm: 20px/11px字體, md: 24px/12px字體, lg: 28px/14px字體）`,table:{defaultValue:{summary:`sm`}}},pill:{control:`boolean`,description:`是否呈現膠囊全圓角造型`,table:{defaultValue:{summary:`false`}}},preserveCase:{control:`boolean`,description:`是否保留原始大小寫（預設依全小寫規範轉為 lowercase）`,table:{defaultValue:{summary:`false`}}},removable:{control:`boolean`,description:`是否顯示移除按鈕（觸發 aui-remove 事件）`,table:{defaultValue:{summary:`false`}}},interactive:{control:`boolean`,description:`是否啟用點擊互動（例如篩選分類標籤）`,table:{defaultValue:{summary:`false`}}},removeLabel:{control:`text`,description:`移除按鈕的無障礙 aria-label 提示文字`,table:{defaultValue:{summary:`移除標籤`}}},label:{control:`text`,description:`標籤文字內容（預設 Slot）`}},args:{label:`v1.4.0`,variant:`brand`,size:`sm`,pill:!1,preserveCase:!1,removable:!1,interactive:!1,removeLabel:`移除標籤`}},a={render:e=>t`
+import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./lit-DvaG8Cmk.js";import{t as r}from"./tag-CQtnWGOn.js";var i,a,o,s,c,l,u,d,f,p;function m(){return(m=e((()=>{n(),r(),i={title:`Components/Tag`,component:`aui-tag`,parameters:{docs:{description:{component:"\n**Anchor UI — Tag / Badge 標籤徽章 (`<aui-tag>`)**\n\n採用 JetBrains Mono 等寬字體呈現的專業標籤，用於技術分類、版本標號、格式與狀態標記。\n支援 7 種語意色彩變體、3 種尺寸階層、膠囊圓角 (pill)、可點擊互動 (interactive)、\n可移除操作 (removable)。\n\n- 文字照原樣顯示，不轉換大小寫：專有名詞、代碼與狀態文字（`US`、`HTTP 200`、`Verified`）都保留原本的寫法。\n- 技術分類標籤習慣以小寫書寫（`json`、`uuid`），直接以小寫輸入即可。\n- `preserve-case` 已無作用，保留只為相容舊的寫法。\n"}}},argTypes:{variant:{control:`select`,options:[`brand`,`success`,`warning`,`purple`,`danger`,`info`,`neutral`,`deep-blue`,`blue`],description:`7 種語意色彩多態變體（支援 deep-blue / blue / green / amber / red 別名）`,table:{defaultValue:{summary:`neutral`}}},size:{control:`inline-radio`,options:[`sm`,`md`,`lg`],description:`尺寸規格（sm: 20px/11px字體, md: 24px/12px字體, lg: 28px/14px字體）`,table:{defaultValue:{summary:`sm`}}},pill:{control:`boolean`,description:`是否呈現膠囊全圓角造型`,table:{defaultValue:{summary:`false`}}},removable:{control:`boolean`,description:`是否顯示移除按鈕（觸發 aui-remove 事件）`,table:{defaultValue:{summary:`false`}}},interactive:{control:`boolean`,description:`是否啟用點擊互動（例如篩選分類標籤）`,table:{defaultValue:{summary:`false`}}},removeLabel:{control:`text`,description:`移除按鈕的無障礙 aria-label 提示文字`,table:{defaultValue:{summary:`移除標籤`}}},label:{control:`text`,description:`標籤文字內容（預設 Slot）`}},args:{label:`v1.4.0`,variant:`brand`,size:`sm`,pill:!1,removable:!1,interactive:!1,removeLabel:`移除標籤`}},a={render:e=>t`
     <aui-tag
       .variant=${e.variant}
       .size=${e.size}
       ?pill=${e.pill}
-      ?preserve-case=${e.preserveCase}
       ?removable=${e.removable}
       ?interactive=${e.interactive}
       remove-label=${e.removeLabel}
@@ -93,13 +86,12 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./l
         <div
           style="font-size: 12px; font-weight: 600; color: var(--color-text-muted); margin-bottom: 8px;"
         >
-          預設：全小寫標籤規範（傳入大寫字串自動轉為小寫）
+          技術分類：習慣以小寫書寫
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <aui-tag variant="brand">JSON-SCHEMA</aui-tag>
-          <aui-tag variant="success">HTTP 200 OK</aui-tag>
-          <aui-tag variant="purple">WEBASSEMBLY</aui-tag>
-          <aui-tag variant="danger">OAUTH2_ERROR</aui-tag>
+          <aui-tag variant="brand">json</aui-tag>
+          <aui-tag variant="purple">uuid</aui-tag>
+          <aui-tag variant="neutral">wasm</aui-tag>
         </div>
       </div>
 
@@ -107,13 +99,14 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./l
         <div
           style="font-size: 12px; font-weight: 600; color: var(--color-text-muted); margin-bottom: 8px;"
         >
-          跳脫選項：preserve-case（保留原始大小寫）
+          專有名詞、代碼與狀態：保留原本的大小寫
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <aui-tag variant="brand" preserve-case>JSON-SCHEMA</aui-tag>
-          <aui-tag variant="success" preserve-case>HTTP 200 OK</aui-tag>
-          <aui-tag variant="purple" preserve-case>WEBASSEMBLY</aui-tag>
-          <aui-tag variant="danger" preserve-case>OAUTH2_ERROR</aui-tag>
+          <aui-tag variant="success">Verified</aui-tag>
+          <aui-tag variant="info">US</aui-tag>
+          <aui-tag variant="success">HTTP 200 OK</aui-tag>
+          <aui-tag variant="danger">OAUTH2_ERROR</aui-tag>
+          <aui-tag variant="warning">New</aui-tag>
         </div>
       </div>
     </div>
@@ -208,13 +201,12 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./l
           <aui-tag interactive variant="neutral" @click=${e}>security</aui-tag>
         </div>
       </div>
-    `}},p=[`Default`,`SemanticVariants`,`Sizes`,`PillShapes`,`LowercaseEnforcement`,`WithIconsAndDots`,`Removable`,`Interactive`],a.parameters={...a.parameters,docs:{...a.parameters?.docs,source:{originalSource:`{
+    `}},p=[`Default`,`SemanticVariants`,`Sizes`,`PillShapes`,`LetterCase`,`WithIconsAndDots`,`Removable`,`Interactive`],a.parameters={...a.parameters,docs:{...a.parameters?.docs,source:{originalSource:`{
   render: args => html\`
     <aui-tag
       .variant=\${args.variant}
       .size=\${args.size}
       ?pill=\${args.pill}
-      ?preserve-case=\${args.preserveCase}
       ?removable=\${args.removable}
       ?interactive=\${args.interactive}
       remove-label=\${args.removeLabel}
@@ -308,13 +300,12 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./l
         <div
           style="font-size: 12px; font-weight: 600; color: var(--color-text-muted); margin-bottom: 8px;"
         >
-          預設：全小寫標籤規範（傳入大寫字串自動轉為小寫）
+          技術分類：習慣以小寫書寫
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <aui-tag variant="brand">JSON-SCHEMA</aui-tag>
-          <aui-tag variant="success">HTTP 200 OK</aui-tag>
-          <aui-tag variant="purple">WEBASSEMBLY</aui-tag>
-          <aui-tag variant="danger">OAUTH2_ERROR</aui-tag>
+          <aui-tag variant="brand">json</aui-tag>
+          <aui-tag variant="purple">uuid</aui-tag>
+          <aui-tag variant="neutral">wasm</aui-tag>
         </div>
       </div>
 
@@ -322,13 +313,14 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./l
         <div
           style="font-size: 12px; font-weight: 600; color: var(--color-text-muted); margin-bottom: 8px;"
         >
-          跳脫選項：preserve-case（保留原始大小寫）
+          專有名詞、代碼與狀態：保留原本的大小寫
         </div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-          <aui-tag variant="brand" preserve-case>JSON-SCHEMA</aui-tag>
-          <aui-tag variant="success" preserve-case>HTTP 200 OK</aui-tag>
-          <aui-tag variant="purple" preserve-case>WEBASSEMBLY</aui-tag>
-          <aui-tag variant="danger" preserve-case>OAUTH2_ERROR</aui-tag>
+          <aui-tag variant="success">Verified</aui-tag>
+          <aui-tag variant="info">US</aui-tag>
+          <aui-tag variant="success">HTTP 200 OK</aui-tag>
+          <aui-tag variant="danger">OAUTH2_ERROR</aui-tag>
+          <aui-tag variant="warning">New</aui-tag>
         </div>
       </div>
     </div>
@@ -448,4 +440,4 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./l
       </div>
     \`;
   }
-}`,...f.parameters?.docs?.source}}}})))()}m();export{a as Default,f as Interactive,l as LowercaseEnforcement,c as PillShapes,d as Removable,o as SemanticVariants,s as Sizes,u as WithIconsAndDots,p as __namedExportsOrder,i as default};
+}`,...f.parameters?.docs?.source}}}})))()}m();export{a as Default,f as Interactive,l as LetterCase,c as PillShapes,d as Removable,o as SemanticVariants,s as Sizes,u as WithIconsAndDots,p as __namedExportsOrder,i as default};

@@ -44,6 +44,11 @@ export declare class AuiTooltip extends LitElement {
     private describedTarget;
     private describedById;
     /**
+     * 開啟期間（展開到開始收合）提示應作為目標的描述。與 describedTarget 分開記錄：
+     * 提示文字與目標名稱相同時不寫入描述，但內容或目標改變後仍須重新判斷。
+     */
+    private describing;
+    /**
      * 置於 host light DOM 的隱藏描述節點。
      * aria-describedby 為 IDREF，無法跨 Shadow DOM 邊界解析，
      * 因此必須在觸發目標所在的同一棵 tree 內提供描述文字。
@@ -97,7 +102,8 @@ export declare class AuiTooltip extends LitElement {
      */
     for: string;
     /**
-     * 是否使觸發包裝層以區塊元素（display: block）呈現
+     * 是否使觸發包裝層以區塊元素（display: block）呈現；包裝層的寬高跟隨 host，
+     * 例如在 host 上設定高度後，觸發元素以 `height: 100%` 即可撐滿
      */
     block: boolean;
     private isVisible;
@@ -155,7 +161,18 @@ export declare class AuiTooltip extends LitElement {
      * 提示內容的純文字（rich content slot 優先，否則使用 content 屬性）
      */
     private get descriptionText();
+    /** 開啟時：提示開始作為目標的描述 */
     private addAriaDescribedBy;
+    /** 收合或移出頁面時：解除描述 */
+    private clearAriaDescribedBy;
+    /**
+     * 提示文字是否與目標的無障礙名稱相同（例如圖示按鈕的 aria-label 與提示同為「刪除」）。
+     * 相同時不作為描述，否則螢幕閱讀器會把同一段文字念兩次。
+     * 只比對 aria-label 與文字內容；以 aria-labelledby 命名的目標無法可靠取得名稱，一律視為不同。
+     */
+    private duplicatesTargetName;
+    /** 依目前的目標與提示內容，寫入或移除 aria-describedby */
+    private syncAriaDescribedBy;
     private removeAriaDescribedBy;
     /**
      * 將隱藏描述節點掛到 host 的 light DOM（與 slotted / for 目標位於同一棵 tree），回傳其 id
