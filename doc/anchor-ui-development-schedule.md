@@ -296,11 +296,14 @@
 #### 驗收條件 (Acceptance Criteria)
 
 - [ ] 業務專案透過 GitHub Release 的 tarball 網址安裝 `@anchor-ui/core` 後能順利編譯通過生產打包（Production Build）。
-- [ ] `Code View` 載入萬行代碼時捲動順暢無卡頓，Sticky 行號定位精準。
-- [ ] `Drawer`、`Navbar` 與 `Footer` 能作為獨立元件自由嵌入不同專案頁面中，Drawer 展開與收合平滑無殘影，Navbar 具備正常吸頂與主題切換事件驅動。
+- [x] `Code View` 載入萬行代碼時捲動順暢無卡頓，Sticky 行號定位精準。
+      （2026-11-23 於 Chromium 實測：12,002 行 JSON 初次渲染約 100 ms；每幀捲動 400px 由頂端到底共 629 幀，幀間隔平均與 p95 皆為 16.7 ms、最大 16.8 ms，沒有掉幀。在頂端、1/3、2/3、底部四處水平捲到最右，行號列都固定在左緣，行號與該行程式碼上緣對齊，數字與實際行號一致。）
+- [x] `Drawer`、`Navbar` 與 `Footer` 能作為獨立元件自由嵌入不同專案頁面中，Drawer 展開與收合平滑無殘影，Navbar 具備正常吸頂與主題切換事件驅動。
+      （2026-11-23 於 Chromium 實測：三者放在 flex、grid 與另一個 Shadow Root 中皆撐滿容器並正常運作，Navbar 的 `menu-drawer` 可開啟同一 Shadow Root 內的右側 Drawer。Drawer 逐幀取樣的位置在展開時單調滑入、收合時單調滑出；關閉後 dialog 離開 Top Layer、面板不佔版面、頁面可點擊。頁面捲動 1500px 後 Navbar 仍貼齊頂端並顯示陰影；主題開關分派 `aui-theme-change` 並切換 `<html data-theme>`，事件被取消時不切換。各元件的單獨入口由 `examples/*/tests/entries.spec.ts` 與 `pnpm smoke` 驗證。）
 - [ ] 透過 CD 流水線發布版本全程無人為介入，CHANGELOG 內容與 Git Tag 準確對齊。
 - [x] 發布套件的 runtime 依賴經漏洞檢查為 0 High / 0 Critical（範圍見 TASK-406；CI 以 `pnpm audit:runtime` 持續檢查）。
 - [ ] repo 有 MIT `LICENSE` 檔，GitHub 頁面正確顯示授權，發布的 tarball 也包含它。
+      （`LICENSE` 檔與 tarball 收錄已完成，由 `verify:package` 與 `pnpm smoke` 檢查；GitHub 只偵測預設分支 `main` 上的授權檔，待 PR #19 合併後確認。）
 
 ---
 
