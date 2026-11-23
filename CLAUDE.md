@@ -61,4 +61,4 @@ Commits are enforced by commitlint (Conventional Commits; types: feat, fix, docs
 
 - JSDoc on component classes uses the custom-elements-manifest tags (`@element`, `@slot`, `@csspart`, `@fires`); keep them updated when changing a component's API.
 - Source comments and docs are mostly in Traditional Chinese; match the surrounding language.
-- Font files are intentionally not bundled — only font-family tokens are defined (see README "字體載入").
+- Font files are intentionally not bundled — only font-family tokens are defined (see README "載入字型"). The README is for consumers (intro, install, usage); developer docs — structure, scripts, yalc, release — live in `doc/development.md`.

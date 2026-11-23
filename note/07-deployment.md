@@ -50,7 +50,7 @@ Phase 1 做過的那次部署，就是發布 `v0.1.0-alpha`（PR #2 + tag），�
    ```
    網址格式固定為 `.../releases/download/v<版號>/anchor-ui-core-<版號>.tgz`。
 3. **載入樣式**（二擇一）：新專案用 `@anchor-ui/core/styles.css`（tokens + 全域 reset）；已有自己 reset 的專案只用 `@anchor-ui/core/tokens.css`。
-4. **載入字型**：Inter 與 JetBrains Mono 需自行引入（README「字體載入」）。
+4. **載入字型**：Inter 與 JetBrains Mono 需自行引入（README「載入字型」）。
 5. **註冊元件**：按需 `import '@anchor-ui/core/button';`，或全量 `import '@anchor-ui/core';`。
 6. **框架設定**：
    - Vue 3：`vite.config.ts` 設定 `compilerOptions.isCustomElement: (tag) => tag.startsWith('aui-')`。
