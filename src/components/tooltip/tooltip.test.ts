@@ -1,6 +1,7 @@
 import { expect, fixture, html, oneEvent } from '@open-wc/testing';
 import './index.js';
 import type { AuiTooltip } from './tooltip.js';
+import { trackChangeInUpdate } from '../../test-utils/lit.js';
 
 describe('AuiTooltip (<aui-tooltip>)', () => {
   it('renders with default attributes and hidden popup', async () => {
@@ -531,6 +532,31 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
   });
 
   describe('state consistency', () => {
+    it('opens and closes without scheduling another update from updated()', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Tip"><button>Target</button></aui-tooltip>
+      `);
+      const hits = trackChangeInUpdate(el);
+
+      const shown = oneEvent(el, 'aui-after-show');
+      await el.show();
+      await shown;
+      const hidden = oneEvent(el, 'aui-after-hide');
+      await el.hide();
+      await hidden;
+
+      // 開啟中停用：同樣在同一次更新內收合
+      const shownAgain = oneEvent(el, 'aui-after-show');
+      await el.show();
+      await shownAgain;
+      const hiddenAgain = oneEvent(el, 'aui-after-hide');
+      el.disabled = true;
+      await hiddenAgain;
+
+      expect(el.open).to.be.false;
+      expect(hits, 'updates scheduled from updated()').to.deep.equal([]);
+    });
+
     it('withdraws open when set while disabled, so it can be shown again later', async () => {
       const el = await fixture<AuiTooltip>(html`
         <aui-tooltip content="Tip" disabled><button>Target</button></aui-tooltip>

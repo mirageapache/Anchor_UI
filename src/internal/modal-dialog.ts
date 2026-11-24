@@ -216,20 +216,21 @@ export abstract class ModalDialogElement extends LitElement {
       this.hasHeaderSlot = slots.includes('header');
       this.hasFooterSlot = slots.includes('footer');
     }
-  }
 
-  override updated(changed: PropertyValues<this>): void {
-    super.updated(changed);
     if (!changed.has('open')) return;
     // 每次處理 open 的變化都取用並清除關閉原因：關閉要求在同一個 task 內被撤回（open 又設回 true）時，
     // 殘留的原因不可套用到之後以 `open = false` 觸發的關閉
     const reason = this.pendingReason;
     this.pendingReason = 'api';
-    if (this.open && !this.isShown) {
-      this.startShow();
-    } else if (!this.open && this.isShown) {
-      this.startHide(reason);
-    }
+    // 關閉在渲染前處理：退場樣式（isLeaving）與 open 的變化在同一次渲染套用。
+    // 若在 updated() 才改 isLeaving，Lit 會再排一次更新（開發模式的 change-in-update 警告）
+    if (!this.open && this.isShown) this.startHide(reason);
+  }
+
+  /** 開啟須等 dialog 已渲染（首次渲染即開啟時），因此在 updated() 處理 */
+  override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    if (changed.has('open') && this.open && !this.isShown) this.startShow();
   }
 
   private startShow(): void {

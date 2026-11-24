@@ -7,6 +7,7 @@ import type { ModalHideDetail } from './modal.types.js';
 import { followTopModal, getTopModalLayer } from '../../internal/top-layer.js';
 import { getDeepActiveElement } from '../../internal/focus-return.js';
 import { isScrollLocked } from '../../internal/scroll-lock.js';
+import { trackChangeInUpdate } from '../../test-utils/lit.js';
 
 const dialogOf = (el: AuiModal) => el.shadowRoot!.querySelector('dialog')!;
 const panelOf = (el: AuiModal) => el.shadowRoot!.querySelector<HTMLElement>('[part="panel"]')!;
@@ -225,6 +226,15 @@ describe('AuiModal (<aui-modal>)', () => {
   });
 
   describe('closing', () => {
+    it('opens and closes without scheduling another update from updated()', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Lifecycle"></aui-modal>`);
+      const hits = trackChangeInUpdate(el);
+      await openModal(el);
+      expect(await closeWith(el, () => el.hide())).to.equal('api');
+      expect(dialogOf(el).open).to.be.false;
+      expect(hits, 'updates scheduled from updated()').to.deep.equal([]);
+    });
+
     it('forgets the reason of a close request that was reverted in the same task', async () => {
       const el = await fixture<AuiModal>(html`<aui-modal heading="Reverted"></aui-modal>`);
       await openModal(el);

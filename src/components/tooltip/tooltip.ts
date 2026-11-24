@@ -1,4 +1,4 @@
-import { LitElement, html, nothing } from 'lit';
+import { LitElement, html, nothing, type PropertyValues } from 'lit';
 import { property, query, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import {
@@ -197,11 +197,30 @@ export class AuiTooltip extends LitElement {
     this.setupTarget();
   }
 
-  override updated(changedProperties: Map<string, unknown>): void {
-    if (changedProperties.has('disabled') && this.disabled && this.open) {
-      this.hide();
+  /**
+   * 收合在渲染前處理：退場樣式（移除 --visible）與 open 的變化在同一次渲染套用。
+   * 若在 updated() 才改 isVisible，Lit 會再排一次更新（開發模式的 change-in-update 警告）。
+   * 開啟須等 popover 已渲染，仍在 updated() 處理
+   */
+  override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+    // 停用中設定 open 或開啟中被停用：撤回 open。否則會停在「open 為 true 卻沒有顯示」，
+    // 之後解除停用也不會顯示，show() 與 hover / focus 又因 open 已為 true 而不動作
+    if (
+      this.open &&
+      this.disabled &&
+      (changedProperties.has('open') || changedProperties.has('disabled'))
+    ) {
+      this.open = false;
     }
+    // 以 isShowing（而非 isVisible）判斷：isVisible 要等到 rAF 才變 true，
+    // 若在那之前就關閉，用 isVisible 判斷會略過 internalHide 而讓氣泡卡在顯示狀態
+    if (changedProperties.has('open') && !this.open && this.isShowing) {
+      void this.internalHide();
+    }
+  }
 
+  override updated(changedProperties: PropertyValues<this>): void {
     // trigger 於執行期變更時須重新綁定監聽（初次渲染已由 firstUpdated 綁定）
     const triggerChanged =
       changedProperties.has('trigger') && changedProperties.get('trigger') !== undefined;
@@ -215,12 +234,9 @@ export class AuiTooltip extends LitElement {
     }
 
     if (changedProperties.has('open')) {
-      // 以 isShowing（而非 isVisible）判斷：isVisible 要等到 rAF 才變 true，
-      // 若在那之前就關閉，用 isVisible 判斷會略過 internalHide 而讓氣泡卡在顯示狀態
+      // 收合已在 willUpdate() 處理
       if (this.open && !this.isShowing) {
-        this.internalShow();
-      } else if (!this.open && this.isShowing) {
-        this.internalHide();
+        void this.internalShow();
       }
     } else if (
       this.open &&
@@ -409,8 +425,7 @@ export class AuiTooltip extends LitElement {
 
   private async internalShow(): Promise<void> {
     if (!this.popupElement) return;
-    // 停用中不開啟，並撤回 open：否則會停在「open 為 true 卻沒有顯示」，
-    // 之後解除停用也不會顯示，show() 與 hover / focus 又因 open 已為 true 而不動作
+    // 停用中不開啟（通常已在 willUpdate() 撤回，這裡防止其他呼叫路徑）
     if (this.disabled) {
       this.open = false;
       return;
