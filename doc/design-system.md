@@ -1202,6 +1202,10 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
 }
 ```
 
+排版變體（`variant`）：`doc`（上方的預設樣式）；`faq` 內距縮為 `--space-ms` / `--space-md`、圓角 `--radius-md`；
+`plain` 用於側欄等已有外框的容器（可收合選單），不畫外框、背景與內容上方的虛線分隔線；
+內距 `--space-xs` 放在標題列上（點擊範圍至少 24px 高），焦點框畫在內側（`outline-offset: -2px`），標題字重為 `--weight-semibold`。
+
 ---
 
 ### 5.5 懸浮氣泡提示 (Tooltip)

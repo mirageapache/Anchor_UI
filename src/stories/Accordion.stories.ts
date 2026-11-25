@@ -25,7 +25,7 @@ const meta: Meta<AccordionStoryArgs> = {
 以原生 \`<details>\` / \`<summary>\` 封裝的內容收折區塊，用於工具下方的操作說明、限制規範或常見問題。
 展開時外框平滑高亮、標題箭頭旋轉；鍵盤操作（Enter / Space）沿用原生行為。
 
-- \`variant="doc"\`（預設）：使用指南的大區塊排版；\`variant="faq"\`：較緊湊，適合多個項目連續堆疊。
+- \`variant="doc"\`（預設）：使用指南的大區塊排版；\`variant="faq"\`：較緊湊，適合多個項目連續堆疊；\`variant="plain"\`：沒有外框、背景與分隔線，適合側欄的可收合選單。
 - 設定相同 \`name\` 的手風琴互斥（一次只展開一個）；未設定時各自獨立開闔。
 - 展開狀態改變時觸發 \`aui-toggle\`（\`detail.open\`）；事件會冒泡，巢狀使用時請比對 \`event.target\`。
 `,
@@ -42,7 +42,7 @@ const meta: Meta<AccordionStoryArgs> = {
     name: { control: 'text', description: '互斥群組名稱：同名的手風琴一次只展開一個' },
     variant: {
       control: 'inline-radio',
-      options: ['doc', 'faq'],
+      options: ['doc', 'faq', 'plain'],
       description: '預設排版',
       table: { defaultValue: { summary: 'doc' } },
     },
@@ -136,6 +136,29 @@ export const FaqGroup: Story = {
       await waitFor(() => expect(inShadow<HTMLDetailsElement>(first, 'details').open).toBe(true));
     });
   },
+};
+
+/** 無外框排版：放在側欄等已有外框的容器中，作為可收合的選單分組 */
+export const PlainSidebarMenu: Story = {
+  render: () => html`
+    <nav
+      aria-label="側欄選單"
+      style="width: 240px; padding: 8px 16px; border: 1px solid var(--color-border); border-radius: var(--radius-lg);"
+    >
+      <aui-accordion heading="報表" variant="plain" open>
+        <ul>
+          <li><a href="#daily">日報表</a></li>
+          <li><a href="#monthly">月報表</a></li>
+        </ul>
+      </aui-accordion>
+      <aui-accordion heading="設定" variant="plain">
+        <ul>
+          <li><a href="#account">帳號</a></li>
+          <li><a href="#permission">權限</a></li>
+        </ul>
+      </aui-accordion>
+    </nav>
+  `,
 };
 
 export const SlottedHeading: Story = {

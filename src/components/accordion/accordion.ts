@@ -5,7 +5,7 @@ import { accordionStyles } from './accordion.styles.js';
 import type { AccordionToggleDetail, AccordionVariant } from './accordion.types.js';
 
 /** 有效的排版；其他值（例如 HTML 屬性寫錯）視為 doc */
-const ACCORDION_VARIANTS = new Set<AccordionVariant>(['doc', 'faq']);
+const ACCORDION_VARIANTS = new Set<AccordionVariant>(['doc', 'faq', 'plain']);
 
 /**
  * Anchor UI — Accordion 元件 (`<aui-accordion>`)
@@ -20,6 +20,8 @@ const ACCORDION_VARIANTS = new Set<AccordionVariant>(['doc', 'faq']);
  * （原生 `<details name>` 的分組不跨 Shadow DOM，因此由元件自行處理。）
  *
  * 內容中的段落與清單（`<p>`、`<ul>`、`<ol>`）會套用預設的間距與縮排。
+ *
+ * `variant="plain"` 沒有外框、背景與分隔線，內距緊湊，適合放在側欄等已有外框的容器中作為可收合選單。
  *
  * `aui-toggle` 會冒泡並穿出 Shadow DOM，巢狀手風琴的事件也會傳到外層；
  * 只處理自身的事件時請比對 `event.target === event.currentTarget`。
@@ -52,7 +54,7 @@ export class AuiAccordion extends LitElement {
   @property({ type: String, reflect: true })
   name = '';
 
-  /** 預設排版：`doc`（使用指南）或 `faq`（常見問題） */
+  /** 預設排版：`doc`（使用指南）、`faq`（常見問題）或 `plain`（無外框，適合側欄選單） */
   @property({ type: String, reflect: true })
   variant: AccordionVariant = 'doc';
 

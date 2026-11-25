@@ -70,6 +70,29 @@ describe('AuiAccordion (<aui-accordion>)', () => {
       expect(details(el).classList.contains('accordion--doc')).to.be.true;
       expect(getComputedStyle(details(el)).paddingLeft).to.not.equal(faqPadding);
     });
+
+    it('renders the plain layout without border, background or divider', async () => {
+      const el = await fixture<AuiAccordion>(
+        html`<aui-accordion heading="Menu" variant="plain" open><p>Item</p></aui-accordion>`,
+      );
+      const base = details(el);
+      expect(base.classList.contains('accordion--plain')).to.be.true;
+      const style = getComputedStyle(base);
+      expect(style.borderTopStyle).to.equal('none');
+      expect(style.borderLeftStyle).to.equal('none');
+      expect(style.backgroundColor).to.equal('rgba(0, 0, 0, 0)');
+      expect(style.paddingLeft).to.equal('0px');
+      // 展開時不畫內容上方的虛線分隔線
+      const body = el.shadowRoot!.querySelector<HTMLElement>('[part="body"]')!;
+      expect(getComputedStyle(body).borderTopStyle).to.equal('none');
+      expect(getComputedStyle(body).paddingTop).to.equal('0px');
+      // 內距在標題列上：點擊範圍至少 24px 高（WCAG 2.5.8），焦點框畫在內側不會被外層容器裁切
+      const summary = el.shadowRoot!.querySelector<HTMLElement>('summary')!;
+      expect(summary.getBoundingClientRect().height).to.be.at.least(24);
+      summary.focus();
+      expect(summary.matches(':focus-visible')).to.be.true;
+      expect(getComputedStyle(summary).outlineOffset).to.equal('-2px');
+    });
   });
 
   describe('toggling', () => {

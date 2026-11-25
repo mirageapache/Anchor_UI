@@ -39,4 +39,22 @@ describeVisual('AuiAccordion visual regression', [
       </div>
     `,
   },
+  {
+    // 側欄的可收合選單：外框由外層容器提供
+    name: 'accordion-plain',
+    render: () => html`
+      <div
+        class="visual-frame"
+        style="${column} width: 240px; padding: 8px 12px; border: 1px solid var(--color-border);"
+      >
+        <aui-accordion heading="報表" variant="plain" open>
+          <ul>
+            <li>日報表</li>
+            <li>月報表</li>
+          </ul>
+        </aui-accordion>
+        <aui-accordion heading="設定" variant="plain"></aui-accordion>
+      </div>
+    `,
+  },
 ]);
