@@ -1055,6 +1055,9 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
 }
 ```
 
+圖示版面（`icon` slot，KPI 卡片）：放入圖示時卡片改為橫向 flex，圖示與內容間距 `--space-ms`，圖示靠上對齊、顏色為 `--color-brand-text`，
+大小由放入的元素決定；名稱、簡介與標籤移到右側的內容欄（`::part(body)`），標籤仍貼齊底部。
+
 ---
 
 ### 5.2 拖放檔案上傳區 (FileUpload Dropzone)

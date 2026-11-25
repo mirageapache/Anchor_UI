@@ -29,6 +29,8 @@ const meta: Meta<CardStoryArgs> = {
 設定 \`href\` 時整張卡片是一個連結，具備 Hover 微浮凸與外框高亮；\`hot\` 以琥珀色外框與文字徽標標示推薦項目。
 
 多張卡片請放進 \`.card-grid\` 容器（由 \`@anchor-ui/core/styles.css\` 提供），會依**容器寬度**自動調整欄數，不需 Media Query。
+
+放入 \`icon\` slot 時改為左右排版（左側圖示、右側內容），適合 KPI 卡片；純裝飾的圖示請加上 \`aria-hidden="true"\`。
 `,
       },
     },
@@ -211,6 +213,49 @@ export const HotAndStatic: Story = {
         hot
         hot-label="熱門"
       ></aui-card>
+    </div>
+  `,
+};
+
+const trendIcon = html`
+  <svg
+    slot="icon"
+    aria-hidden="true"
+    width="32"
+    height="32"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+  >
+    <path d="M3 17l6-6 4 4 8-8" />
+  </svg>
+`;
+
+/**
+ * KPI 卡片：icon slot 放圖示，heading slot 放數值，簡介放指標名稱。
+ * 作為連結時，連結名稱只取 heading：請讓 heading 也包含指標名稱（如最後一張卡片），單獨的數字無法說明連結目的
+ */
+export const KpiCards: Story = {
+  render: () => html`
+    <div class="card-grid" style="max-width: 720px;">
+      <aui-card description="本月營收">
+        ${trendIcon}
+        <span slot="heading" style="font-size: 1.5rem;">NT$ 1.2M</span>
+      </aui-card>
+      <aui-card description="本週活躍使用者">
+        ${trendIcon}
+        <span slot="heading" style="font-size: 1.5rem;">8,420</span>
+        <aui-tag slot="tags" variant="success">+12%</aui-tag>
+      </aui-card>
+      <aui-card description="平均回應時間">
+        ${trendIcon}
+        <span slot="heading" style="font-size: 1.5rem;">320 ms</span>
+        <aui-tag slot="tags" variant="danger">+8%</aui-tag>
+      </aui-card>
+      <aui-card heading="錯誤率報表" description="查看各服務的錯誤率趨勢" href="#errors">
+        ${trendIcon}
+      </aui-card>
     </div>
   `,
 };

@@ -66,6 +66,26 @@ export const cardStyles = css`
     outline-offset: 2px;
   }
 
+  /* ─── 圖示：左側圖示、右側內容 ─── */
+  .card--icon {
+    flex-direction: row;
+    gap: var(--space-ms, 12px);
+  }
+
+  .card__icon {
+    display: flex;
+    flex: 0 0 auto;
+    align-self: flex-start;
+    color: var(--color-brand-text, #0f4c81);
+  }
+
+  .card__body {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+  }
+
   /* ─── 標題列 ─── */
   .card__header {
     display: flex;

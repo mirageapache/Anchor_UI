@@ -250,6 +250,82 @@ describe('AuiCard (<aui-card>)', () => {
     });
   });
 
+  describe('icon slot', () => {
+    it('keeps the single-column structure without an icon', async () => {
+      const el = await fixture<AuiCard>(html`<aui-card heading="A" description="d"></aui-card>`);
+      expect(part(el, 'icon')).to.be.null;
+      expect(part(el, 'body')).to.be.null;
+      expect(base(el).classList.contains('card--icon')).to.be.false;
+      expect(getComputedStyle(base(el)).flexDirection).to.equal('column');
+    });
+
+    it('lays out the icon to the left of the heading, description and tags', async () => {
+      const el = await fixture<AuiCard>(html`
+        <aui-card description="本月營收">
+          <svg slot="icon" aria-hidden="true" width="32" height="32"></svg>
+          <span slot="heading">NT$ 1.2M</span>
+        </aui-card>
+      `);
+      expect(getComputedStyle(base(el)).flexDirection).to.equal('row');
+      const icon = part(el, 'icon');
+      const body = part(el, 'body');
+      expect(icon.querySelector('slot')!.assignedElements()[0].localName).to.equal('svg');
+      expect(body.contains(part(el, 'header'))).to.be.true;
+      expect(body.contains(part(el, 'description'))).to.be.true;
+      expect(body.contains(part(el, 'tags'))).to.be.true;
+
+      const iconBox = icon.getBoundingClientRect();
+      const bodyBox = body.getBoundingClientRect();
+      expect(iconBox.right).to.be.at.most(bodyBox.left);
+      expect(iconBox.width).to.equal(32);
+    });
+
+    it('switches layout when an icon is added or removed later', async () => {
+      const el = await fixture<AuiCard>(
+        html`<aui-card><span slot="heading">Name</span>Description</aui-card>`,
+      );
+      const assigned = (slotName: string) => {
+        const slot = el.shadowRoot!.querySelector<HTMLSlotElement>(
+          slotName ? `slot[name="${slotName}"]` : 'slot:not([name])',
+        )!;
+        return slot
+          .assignedNodes()
+          .map((node) => node.textContent?.trim())
+          .filter(Boolean);
+      };
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('slot', 'icon');
+      el.append(svg);
+      await settle(el);
+      expect(part(el, 'icon')).to.not.be.null;
+      expect(getComputedStyle(base(el)).flexDirection).to.equal('row');
+      // 版面切換會重建標題與簡介的 slot：放入的內容仍須指派到新的 slot
+      expect(assigned('heading')).to.deep.equal(['Name']);
+      expect(assigned('')).to.deep.equal(['Description']);
+
+      svg.remove();
+      await settle(el);
+      expect(part(el, 'icon')).to.be.null;
+      expect(getComputedStyle(base(el)).flexDirection).to.equal('column');
+      expect(assigned('heading')).to.deep.equal(['Name']);
+      expect(assigned('')).to.deep.equal(['Description']);
+    });
+
+    it('keeps the link named by the heading and described by the description', async () => {
+      const el = await fixture<AuiCard>(html`
+        <aui-card heading="Revenue" description="This month" href="/kpi">
+          <svg slot="icon" aria-hidden="true" width="24" height="24"></svg>
+        </aui-card>
+      `);
+      const link = part(el, 'base');
+      expect(link.localName).to.equal('a');
+      expect(link.getAttribute('aria-labelledby')).to.equal('heading');
+      expect(link.getAttribute('aria-describedby')).to.equal('description');
+      // 標題、簡介等 id 仍在同一個 shadow root 中，可被參照
+      expect(el.shadowRoot!.getElementById('heading')!.textContent!.trim()).to.equal('Revenue');
+    });
+  });
+
   describe('description line clamp', () => {
     const longText = 'A very long description that keeps going. '.repeat(20);
 

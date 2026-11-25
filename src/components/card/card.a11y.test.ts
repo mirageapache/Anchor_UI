@@ -35,6 +35,13 @@ const cards = () => html`
     </li>
     <li><aui-card heading="Static card" description="No link" hot></aui-card></li>
     <li><aui-card heading="Heading only" href="/only"></aui-card></li>
+    <li>
+      <aui-card heading="NT$ 1.2M" description="本月營收" href="/revenue">
+        <svg slot="icon" aria-hidden="true" width="24" height="24" viewBox="0 0 24 24">
+          <path d="M4 18h16" stroke="currentColor" />
+        </svg>
+      </aui-card>
+    </li>
   </ul>
 `;
 
@@ -122,6 +129,18 @@ describe('AuiCard Accessibility (<aui-card>)', () => {
       expect(node.role).to.equal('link');
       expect(node.name).to.equal('JSON Formatter');
       expect(node.description).to.equal('Format JSON json');
+    });
+
+    it('keeps the name and description of an icon card free of the decorative icon', async () => {
+      const el = await fixture<AuiCard>(
+        html`<aui-card heading="NT$ 1.2M" description="本月營收" href="/revenue">
+          <svg slot="icon" aria-hidden="true" width="24" height="24"></svg>
+        </aui-card>`,
+      );
+      const node = await getAxNode(base(el));
+      expect(node.role).to.equal('link');
+      expect(node.name).to.equal('NT$ 1.2M');
+      expect(node.description).to.equal('本月營收');
     });
 
     it('falls back to the content for the name when a link card has no heading', async () => {
