@@ -79,6 +79,10 @@
       "types": "./dist/components/output/index.d.ts",
       "import": "./dist/components/output/index.js"
     },
+    "./popover": {
+      "types": "./dist/components/popover/index.d.ts",
+      "import": "./dist/components/popover/index.js"
+    },
     "./segmented": {
       "types": "./dist/components/segmented/index.d.ts",
       "import": "./dist/components/segmented/index.js"
@@ -143,6 +147,8 @@
     "./dist/components/navbar/navbar.js",
     "./dist/components/output/index.js",
     "./dist/components/output/output.js",
+    "./dist/components/popover/index.js",
+    "./dist/components/popover/popover.js",
     "./dist/components/segmented/index.js",
     "./dist/components/segmented/segmented.js",
     "./dist/components/tag/index.js",

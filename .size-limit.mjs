@@ -10,9 +10,9 @@ import { listComponents } from './scripts/components.mjs';
 
 /** 各入口的體積基準（bytes，gzip；TASK-202 建立於 2026-10-09） */
 const BASELINES = {
-  index: 56004, // Phase 4 Drawer、Navbar、Footer、Code View（Footer 後為 53238；Navbar 後為 51400；Drawer 後為 47682；Phase 3 的 6 款元件與 Toast 位置設定後為 45950；Phase 2 結束時 35507，Phase 1 為 20838）
-  button: 3189,
-  'icon-button': 16704, // 含相依的 Tooltip 與 @floating-ui/dom
+  index: 59752, // Phase 5 Popover（之前為 56004：Phase 4 Drawer、Navbar、Footer、Code View；Footer 後為 53238；Navbar 後為 51400；Drawer 後為 47682；Phase 3 的 6 款元件與 Toast 位置設定後為 45950；Phase 2 結束時 35507，Phase 1 為 20838）
+  button: 3634, // 作為 Popover 等彈出式元件的觸發元素（內部按鈕的 aria-expanded 等，實測 3462 → 3634；原基準 3189）
+  'icon-button': 16933, // 含相依的 Tooltip 與 @floating-ui/dom；作為彈出式元件的觸發元素（原 16704）
   tag: 3390,
   tooltip: 10807, // 含 @floating-ui/dom（約 6 KB）
   input: 3622, // Enter 隱式送出表單（+414；原 3208）
@@ -32,6 +32,7 @@ const BASELINES = {
   navbar: 6096, // TASK-403（含相依的 Kbd）
   footer: 3575, // TASK-404
   'code-view': 3934, // TASK-401
+  popover: 9951, // TASK-505（含 @floating-ui/dom）
 };
 
 const TOLERANCE = 0.1;

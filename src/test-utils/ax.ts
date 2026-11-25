@@ -8,6 +8,11 @@ export interface AxNode {
   ignored: boolean;
   /** live region 的播報方式（`polite` / `assertive`），非 live region 為空字串 */
   live: string;
+  /**
+   * 其餘 ARIA 狀態與屬性（如 `expanded`、`hasPopup`、`modal`），值為瀏覽器計算後的結果；
+   * 關聯屬性（如 `controls`）為實際解析到的節點數量
+   */
+  properties: Record<string, unknown>;
 }
 
 /**

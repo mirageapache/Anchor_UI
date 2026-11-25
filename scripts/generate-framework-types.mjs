@@ -18,6 +18,12 @@ const outDir = join(root, 'dist/frameworks');
 /** 事件型別中可直接使用的全域型別（其餘名稱都從全量入口匯入） */
 const GLOBAL_TYPES = new Set(['CustomEvent', 'Event']);
 
+/**
+ * 元件分派的原生事件；其餘事件一律以 aui- 開頭。manifest 會把 new CustomEvent(變數) 的變數名稱
+ * 誤當成事件名稱，以此擋下這類錯誤（請在 dispatchEvent 處以字串常值寫出事件名稱）
+ */
+const NATIVE_EVENTS = new Set(['input', 'change']);
+
 function fail(message) {
   console.error(`✗ ${message}`);
   process.exit(1);
@@ -62,6 +68,11 @@ const elements = manifest.modules
     );
     const attributeFields = fields.filter((member) => member.attribute);
     const events = (declaration.events ?? []).map((event) => {
+      if (!event.name.startsWith('aui-') && !NATIVE_EVENTS.has(event.name)) {
+        fail(
+          `<${declaration.tagName}> 的事件名稱「${event.name}」不是 aui- 開頭：manifest 可能把 new CustomEvent(變數) 的變數名稱當成事件名稱，請改以字串常值寫出；若確實是元件分派的原生事件，請加入 NATIVE_EVENTS`,
+        );
+      }
       if (!event.type?.text) {
         fail(
           `<${declaration.tagName}> 的事件 ${event.name} 沒有型別：請在 @fires 加上 {CustomEvent<…>}`,

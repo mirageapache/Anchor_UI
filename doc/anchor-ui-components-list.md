@@ -146,7 +146,7 @@ _來源為 `1.0.0-beta` 的整合測試回饋；排程與驗收條件見 [`ancho
 21. **Popover（彈出面板）**
     - **自訂標籤**：`<aui-popover>`
     - **說明**：點擊觸發、承載可互動內容（清單、連結、按鈕）的非強制回應浮層，例如導覽列的通知清單。Tooltip 只用於說明文字，不放互動內容。
-    - **狀態與能力**：沿用 Tooltip 的 top layer 與動態定位；觸發元素帶 `aria-expanded`，開啟後焦點移入面板，ESC 或點擊外部關閉並還原焦點。
+    - **狀態與能力**：沿用 Tooltip 的 top layer 與動態定位；觸發元素帶 `aria-expanded`，開啟後焦點移入面板，ESC 或點擊外部關閉並還原焦點。（已完成，TASK-505）
 
 22. **Dropdown Menu（下拉選單）**
     - **自訂標籤**：`<aui-menu>`
@@ -190,6 +190,6 @@ _來源為 `1.0.0-beta` 的整合測試回饋；排程與驗收條件見 [`ancho
 |  18  | **Drawer**                  | `<aui-drawer>`                |   Navigation    | 可收合抽屜側邊欄，支援側滑展開/收合、遮罩與背景捲動鎖定。                                          |
 |  19  | **Navbar**                  | `<aui-navbar>`                |   Navigation    | 64px 獨立頂部導覽列，整合 Logo、搜尋按鈕、導覽選單與主題切換。                                     |
 |  20  | **Footer**                  | `<aui-footer>`                |   Navigation    | 獨立通用頁尾，整合版權宣告、版本資訊、外部連結與次要選單。                                         |
-|  21  | **Popover**（規劃中）       | `<aui-popover>`               |     Overlay     | 點擊觸發、承載互動內容的彈出面板，焦點移入與還原。                                                 |
+|  21  | **Popover**                 | `<aui-popover>`               |     Overlay     | 點擊觸發、承載互動內容的彈出面板，焦點移入與還原。                                                 |
 |  22  | **Dropdown Menu**（規劃中） | `<aui-menu>`                  |     Overlay     | 基於 Popover 的操作選單，WAI-ARIA Menu Button 鍵盤操作。                                           |
 |  23  | **Breadcrumb**（規劃中）    | `<aui-breadcrumb>`            |   Navigation    | 麵包屑導覽，navigation landmark 與 `aria-current`。                                                |

@@ -38,6 +38,7 @@
   - [5.9 可收合抽屜側邊欄 (Drawer)](#59-可收合抽屜側邊欄-drawer)
   - [5.10 頂部導覽列 (Navbar)](#510-頂部導覽列-navbar)
   - [5.11 通用頁尾 (Footer)](#511-通用頁尾-footer)
+  - [5.12 彈出面板 (Popover)](#512-彈出面板-popover)
 - [六、前端共用元件專案建置與發佈指南](#六前端共用元件專案建置與發佈指南)
 
 ---
@@ -1786,6 +1787,32 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
   }
 }
 ```
+
+### 5.12 彈出面板 (Popover)
+
+點擊觸發、承載可互動內容的非強制回應浮層（導覽列的通知清單、使用者資訊面板）。面板以 Popover API 進入 Top Layer，
+位置由 `@floating-ui/dom` 計算（預設 `bottom-start`，空間不足時翻轉與平移，與視窗邊緣保留 8px）；
+進出場與 Tooltip 相同為淡入加 `scale(0.95 → 1)`，縮放原點朝向觸發元素。
+
+```scss
+.popover__panel {
+  min-width: 10rem;
+  max-width: min(22.5rem, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  padding: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  background-color: var(--color-base); // 與 Modal 面板相同
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-popover);
+  transition:
+    opacity var(--transition-base),
+    transform var(--transition-base);
+}
+```
+
+焦點落在面板本身時（內容沒有可聚焦的元素）不畫焦點框：面板不在 Tab 順序中，也不可操作（同 Modal 面板）。
 
 ---
 

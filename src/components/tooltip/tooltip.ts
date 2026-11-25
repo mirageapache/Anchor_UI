@@ -11,6 +11,7 @@ import {
   type Placement,
 } from '@floating-ui/dom';
 import { tooltipStyles } from './tooltip.styles.js';
+import { TRANSFORM_ORIGINS } from '../../internal/floating.js';
 import { transitionTimeMs } from '../../internal/transition.js';
 import type { TooltipPlacement, TooltipTrigger } from './tooltip.types.js';
 
@@ -538,24 +539,7 @@ export class AuiTooltip extends LitElement {
     this.popupElement.setAttribute('data-placement', placement);
 
     // 根據方位設定 transform-origin，使微縮放動畫朝向目標元素自然展開
-    const transformOrigins: Record<string, string> = {
-      top: 'bottom center',
-      'top-start': 'bottom left',
-      'top-end': 'bottom right',
-      bottom: 'top center',
-      'bottom-start': 'top left',
-      'bottom-end': 'top right',
-      left: 'right center',
-      'left-start': 'right top',
-      'left-end': 'right bottom',
-      right: 'left center',
-      'right-start': 'left top',
-      'right-end': 'left bottom',
-    };
-    this.popupElement.style.setProperty(
-      '--tooltip-transform-origin',
-      transformOrigins[placement] || 'center',
-    );
+    this.popupElement.style.setProperty('--tooltip-transform-origin', TRANSFORM_ORIGINS[placement]);
 
     // 校正箭頭位置
     if (this.arrow && this.arrowElement && middlewareData.arrow) {
