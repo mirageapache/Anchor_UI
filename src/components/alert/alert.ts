@@ -73,12 +73,12 @@ type Decision =
  * @csspart confirm-button - 確定鈕（`<aui-button>`）
  * @csspart cancel-button - 取消鈕（`<aui-button>`）
  *
- * @fires aui-show - 開始開啟前觸發（可被 preventDefault 取消；來自內部 `<aui-modal>`）
- * @fires aui-after-show - 完全開啟後觸發（來自內部 `<aui-modal>`）
- * @fires aui-hide - 開始關閉前觸發（可被 preventDefault 取消；來自內部 `<aui-modal>`）
- * @fires aui-after-hide - 完全關閉後觸發（來自內部 `<aui-modal>`）
- * @fires aui-confirm - 以確定關閉後觸發，`detail.value` 為 prompt 的輸入值
- * @fires aui-cancel - 以取消關閉後觸發，`detail.reason` 為取消原因
+ * @fires {CustomEvent<null>} aui-show - 開始開啟前觸發（可被 preventDefault 取消；來自內部 `<aui-modal>`）
+ * @fires {CustomEvent<null>} aui-after-show - 完全開啟後觸發（來自內部 `<aui-modal>`）
+ * @fires {CustomEvent<ModalHideDetail>} aui-hide - 開始關閉前觸發（可被 preventDefault 取消；來自內部 `<aui-modal>`）
+ * @fires {CustomEvent<ModalHideDetail>} aui-after-hide - 完全關閉後觸發（來自內部 `<aui-modal>`）
+ * @fires {CustomEvent<AlertConfirmDetail>} aui-confirm - 以確定關閉後觸發，`detail.value` 為 prompt 的輸入值
+ * @fires {CustomEvent<AlertCancelDetail>} aui-cancel - 以取消關閉後觸發，`detail.reason` 為取消原因
  */
 export class AuiAlert extends LitElement {
   static override styles = alertStyles;

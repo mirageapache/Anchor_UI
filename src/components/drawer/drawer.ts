@@ -36,10 +36,10 @@ import type { DrawerPlacement } from './drawer.types.js';
  *
  * @cssprop [--aui-drawer-width=280px] - 面板寬度（不超過視窗寬度的 85%）
  *
- * @fires aui-show - 開始開啟前觸發（可被 preventDefault 取消）
- * @fires aui-after-show - 完全開啟且進場動畫結束後觸發
- * @fires aui-hide - 開始關閉前觸發（可被 preventDefault 取消），`detail.reason` 為關閉原因
- * @fires aui-after-hide - 完全關閉且退場動畫結束後觸發，`detail.reason` 為關閉原因
+ * @fires {CustomEvent<null>} aui-show - 開始開啟前觸發（可被 preventDefault 取消）
+ * @fires {CustomEvent<null>} aui-after-show - 完全開啟且進場動畫結束後觸發
+ * @fires {CustomEvent<DrawerHideDetail>} aui-hide - 開始關閉前觸發（可被 preventDefault 取消），`detail.reason` 為關閉原因
+ * @fires {CustomEvent<DrawerHideDetail>} aui-after-hide - 完全關閉且退場動畫結束後觸發，`detail.reason` 為關閉原因
  */
 export class AuiDrawer extends ModalDialogElement {
   static override styles = [dialogBaseStyles('drawer'), drawerStyles];

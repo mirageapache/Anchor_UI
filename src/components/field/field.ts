@@ -39,8 +39,8 @@ const isInput = (control: FieldControl | null): control is AuiInput =>
  * @csspart clear-button - 內建清除鈕（`<aui-icon-button>`）
  * @csspart description - 次要描述文字
  *
- * @fires aui-copy - 複製鈕成功複製控制項內容時觸發（來自內建 `<aui-icon-button>`）
- * @fires aui-copy-error - 複製失敗或控制項為空時觸發（來自內建 `<aui-icon-button>`）
+ * @fires {CustomEvent<CopyDetail>} aui-copy - 複製鈕成功複製控制項內容時觸發（來自內建 `<aui-icon-button>`）
+ * @fires {CustomEvent<CopyErrorDetail>} aui-copy-error - 複製失敗或控制項為空時觸發（來自內建 `<aui-icon-button>`）
  */
 export class AuiField extends LitElement {
   static override styles = fieldStyles;

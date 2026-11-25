@@ -41,7 +41,7 @@ const FAVORITE_BTN_SIZES = new Set<FavoriteBtnSize>(['sm', 'md', 'lg']);
  * @csspart icon - 星號圖示（SVG）
  * @csspart tooltip - 內建的 `<aui-tooltip>`（`no-tooltip` 時不存在）
  *
- * @fires aui-change - 使用者切換收藏狀態後觸發（由程式設定 `favorite` 不會觸發），`detail.favorite` 為新狀態；支援 bubbles 與 composed
+ * @fires {CustomEvent<FavoriteChangeDetail>} aui-change - 使用者切換收藏狀態後觸發（由程式設定 `favorite` 不會觸發），`detail.favorite` 為新狀態；支援 bubbles 與 composed
  */
 export class AuiFavoriteBtn extends LitElement {
   static override styles = favoriteBtnStyles;

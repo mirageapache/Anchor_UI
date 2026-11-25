@@ -34,8 +34,8 @@ const INPUT_TYPES: ReadonlySet<string> = new Set<InputType>([
  *
  * @csspart control - 內部原生 `<input>` 或 `<textarea>` 元素
  *
- * @fires input - 每次輸入時分派（原生事件穿出 Shadow DOM），觸發時 `value` 已更新
- * @fires change - 內容提交時（失焦或 Enter）於 host 重新分派，觸發時 `value` 已更新
+ * @fires {Event} input - 每次輸入時分派（原生事件穿出 Shadow DOM），觸發時 `value` 已更新
+ * @fires {Event} change - 內容提交時（失焦或 Enter）於 host 重新分派，觸發時 `value` 已更新
  */
 export class AuiInput extends LitElement {
   static override styles = inputStyles;

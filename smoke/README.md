@@ -25,7 +25,7 @@ pnpm smoke --keep     # 保留暫存的專案目錄以便檢查
 
 1. 以 tarball 安裝後的套件：版號正確、沒有安裝時會執行的生命週期腳本、不含測試與 stories、
    `exports` 指向的檔案都存在、`dist/` 引用的外部套件都列在 `dependencies`。
-2. 型別檢查（`skipLibCheck: false`）：測試時會產生 `src/all-entry-types.ts`，引用全量入口與每個元件入口的型別宣告。
+2. 型別檢查（`skipLibCheck: false`）：測試時會產生 `src/all-entry-types.ts`，引用全量入口與每個元件入口的型別宣告；`vue3/` 另以 `src/TemplateTypes.vue` 檢查發布的範本型別（`@anchor-ui/core/vue`）。
 3. 正式建置成功（Vue SFC 編譯／Angular AOT），且產物確實包含應用程式本身。
 4. Tree-shaking：只引用 button、input、field、card、toast，打包結果不得包含其他元件。
 

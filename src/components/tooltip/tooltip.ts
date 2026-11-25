@@ -38,10 +38,10 @@ const DESCRIPTION_SLOT = 'aui-tooltip-description';
  * @csspart content - 提示文字/內容容器
  * @csspart arrow - 箭頭指標元素
  *
- * @fires aui-show - 氣泡開始展開前觸發（可被 preventDefault 取消）
- * @fires aui-after-show - 氣泡完全展開且進場動畫結束後觸發
- * @fires aui-hide - 氣泡開始收合前觸發（可被 preventDefault 取消）
- * @fires aui-after-hide - 氣泡完全隱藏且退場動畫結束後觸發
+ * @fires {CustomEvent<null>} aui-show - 氣泡開始展開前觸發（可被 preventDefault 取消）
+ * @fires {CustomEvent<null>} aui-after-show - 氣泡完全展開且進場動畫結束後觸發
+ * @fires {CustomEvent<null>} aui-hide - 氣泡開始收合前觸發（可被 preventDefault 取消）
+ * @fires {CustomEvent<null>} aui-after-hide - 氣泡完全隱藏且退場動畫結束後觸發
  */
 export class AuiTooltip extends LitElement {
   static override styles = tooltipStyles;

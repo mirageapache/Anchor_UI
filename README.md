@@ -182,6 +182,21 @@ createApp(App).mount('#app');
 - 單字的屬性（`:disabled`、`:open`）與陣列 / 物件屬性（`:options`、`:columns`）元素上都有同名 property，直接綁定即可。
 - 靜態寫在範本中的布林屬性（`<aui-button full-width>`）不受影響。
 
+**範本型別檢查（vue-tsc）**：在宣告檔（如 `src/env.d.ts`）的開頭加入下列參考，`vue-tsc` 就會檢查 `aui-*` 的屬性值與事件處理器的 `detail` 型別，編輯器也會提供自動完成：
+
+```ts
+// src/env.d.ts
+/// <reference types="vite/client" />
+/// <reference types="@anchor-ui/core/vue" />
+```
+
+- 屬性型別取自元件，例如 `variant` 為 `ButtonVariant`、`:options` 為 `SegmentedOption[]`；寫錯值時 `vue-tsc` 會報錯。
+- 事件處理器的參數為 `CustomEvent<Detail>`，例如 `@aui-file-drop` 為 `CustomEvent<FileDropDetail>`；行內函式的 `event.detail` 會自動推斷型別，不需再手動標註。
+- `/// <reference>` 必須寫在檔案最上方（任何陳述式之前），否則會被當成一般註解。
+- 靜態 attribute 以字串撰寫也會檢查：`heading-level="2"`、`lines="3"`、`close-on-escape="false"` 可通過，`heading-level="9"` 會報錯。
+- 範本只有 `vue-tsc` 會檢查（`tsc` 不檢查 `.vue` 檔）。`@anchor-ui/core/vue` 只有型別宣告，不可在程式中 import。
+- `tsconfig.json` 的 `moduleResolution` 需為 `bundler`、`node16` 或 `nodenext`（才會讀取套件的 `exports`；Vite 專案預設為 `bundler`）。`vue` 是元件庫的選用 peerDependency，型別宣告會從專案安裝的 `vue` 取得型別。
+
 **Angular**：在使用 `aui-` 標籤的元件（或 NgModule）加上 `CUSTOM_ELEMENTS_SCHEMA`，樣式加進 `angular.json`，元件在 `main.ts` 註冊：
 
 ```ts

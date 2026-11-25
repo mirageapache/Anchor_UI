@@ -36,7 +36,7 @@ import type { HeaderFavoriteChangeDetail, HeaderHeadingLevel } from './header.ty
  * @csspart actions - 右側操作容器
  * @csspart description - 簡述文字
  *
- * @fires aui-favorite-change - 使用者切換收藏鈕後觸發，`detail.favorite` 為新狀態；支援 bubbles 與 composed。可在事件中把 `favorite` 設回原值以取消變更
+ * @fires {CustomEvent<HeaderFavoriteChangeDetail>} aui-favorite-change - 使用者切換收藏鈕後觸發，`detail.favorite` 為新狀態；支援 bubbles 與 composed。可在事件中把 `favorite` 設回原值以取消變更
  */
 export class AuiHeader extends LitElement {
   static override styles = headerStyles;

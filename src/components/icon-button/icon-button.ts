@@ -6,6 +6,7 @@ import { interceptInactiveClick } from '../../internal/inactive-click.js';
 import { spinnerIcon, spinnerStyles } from '../../internal/spinner.js';
 import type {
   CopyDetail,
+  CopyErrorDetail,
   DownloadDetail,
   DownloadErrorDetail,
   IconButtonAction,
@@ -180,11 +181,11 @@ function parseDownloadUrl(value: string): URL | null {
  * @csspart success-icon - 成功回饋狀態圖示層
  * @csspart loading-icon - 載入中狀態圖示層
  *
- * @fires aui-copy - 複製文字至剪貼簿成功時觸發
- * @fires aui-copy-error - 剪貼簿存取失敗或沒有可複製內容（copy-value 為空）時觸發
- * @fires aui-download - 觸發下載行為時分派（可被 preventDefault 取消以自行接手下載）
- * @fires aui-download-error - download-url 使用不允許的協定（如 javascript:）而拒絕下載時觸發
- * @fires aui-status-change - 元件狀態發生改變時觸發
+ * @fires {CustomEvent<CopyDetail>} aui-copy - 複製文字至剪貼簿成功時觸發
+ * @fires {CustomEvent<CopyErrorDetail>} aui-copy-error - 剪貼簿存取失敗或沒有可複製內容（copy-value 為空）時觸發
+ * @fires {CustomEvent<DownloadDetail>} aui-download - 觸發下載行為時分派（可被 preventDefault 取消以自行接手下載）
+ * @fires {CustomEvent<DownloadErrorDetail>} aui-download-error - download-url 使用不允許的協定（如 javascript:）而拒絕下載時觸發
+ * @fires {CustomEvent<StatusChangeDetail>} aui-status-change - 元件狀態發生改變時觸發
  */
 export class AuiIconButton extends LitElement {
   static override styles = [spinnerStyles, iconButtonStyles];
@@ -460,7 +461,7 @@ export class AuiIconButton extends LitElement {
       if (!this.isConnected) return false;
       this.triggerFeedback('error');
       this.dispatchEvent(
-        new CustomEvent('aui-copy-error', {
+        new CustomEvent<CopyErrorDetail>('aui-copy-error', {
           detail: { error: err },
           bubbles: true,
           composed: true,

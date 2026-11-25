@@ -103,28 +103,28 @@ pnpm verify:package
 
 **建置與產物檢查**
 
-| 指令                  | 說明                                                                                                                 |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| `pnpm build`          | 編譯至 `dist/`：全量入口 `index.js`、各元件入口 `components/<name>/index.js`、型別定義、`styles.css`、`tokens.css`   |
-| `pnpm verify:package` | 驗證建置產物的 `exports`／`sideEffects`、型別宣告、Tree-shaking 與發布內容（需先 build）                             |
-| `pnpm verify:ssr`     | 在 Node 載入每個入口並呼叫 `setTheme`／`ToastService`／`AlertService`，確認伺服器端渲染（SSR）時的行為（需先 build） |
-| `pnpm size`           | 以 size-limit 檢查各元件入口的 gzip 體積是否超出預算（需先 build，設定見 `.size-limit.mjs`）                         |
-| `pnpm sync:package`   | 依 `src/components` 重新產生 `package.json` 中元件的 `exports` 與 `sideEffects`（新增或移除元件後執行）              |
-| `pnpm check:versions` | 檢查 Playwright 映像與套件版本（含 `smoke/` 專案）、pnpm 版本（`packageManager`）是否一致                            |
-| `pnpm audit:runtime`  | 檢查發布套件的 runtime 相依是否有 High / Critical 漏洞                                                               |
+| 指令                  | 說明                                                                                                                                                                                                     |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm build`          | 編譯至 `dist/`：全量入口 `index.js`、各元件入口 `components/<name>/index.js`、型別定義、`styles.css`、`tokens.css`，以及由 `custom-elements.json` 產生的框架範本型別 `frameworks/vue.d.ts`、`react.d.ts` |
+| `pnpm verify:package` | 驗證建置產物的 `exports`／`sideEffects`、型別宣告、Tree-shaking 與發布內容（需先 build）                                                                                                                 |
+| `pnpm verify:ssr`     | 在 Node 載入每個入口並呼叫 `setTheme`／`ToastService`／`AlertService`，確認伺服器端渲染（SSR）時的行為（需先 build）                                                                                     |
+| `pnpm size`           | 以 size-limit 檢查各元件入口的 gzip 體積是否超出預算（需先 build，設定見 `.size-limit.mjs`）                                                                                                             |
+| `pnpm sync:package`   | 依 `src/components` 重新產生 `package.json` 中元件的 `exports` 與 `sideEffects`（新增或移除元件後執行）                                                                                                  |
+| `pnpm check:versions` | 檢查 Playwright 映像與套件版本（含 `smoke/` 專案）、pnpm 版本（`packageManager`）是否一致                                                                                                                |
+| `pnpm audit:runtime`  | 檢查發布套件的 runtime 相依是否有 High / Critical 漏洞                                                                                                                                                   |
 
 **測試**
 
-| 指令                                              | 說明                                                                                                      |
-| ------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `pnpm test`                                       | 元件與共用模組的單元、無障礙測試（`src/components`、`src/internal`；不含視覺回歸）                        |
-| `pnpm test:coverage`                              | 同上並產生覆蓋率報告（門檻：statements／functions／lines 85%、branches 75%）                              |
-| `pnpm test:a11y`                                  | 只執行 `*.a11y.test.ts` 的 axe-core 無障礙檢測（需先 build）                                              |
-| `pnpm test:visual:docker`                         | 在 Playwright 官方 Docker 映像中執行視覺回歸測試（淺色／深色主題截圖比對）                                |
-| `pnpm test:visual:docker:update`                  | 同上，但更新基準圖（`screenshots/Chromium/baseline/`），並列出變更、產生 before／after／diff 供提交前檢視 |
-| `pnpm test:vue` / `pnpm test:angular`             | Vue 3 / Angular 範例專案的整合測試（需先 build）                                                          |
-| `pnpm typecheck:examples` / `pnpm build:examples` | 範例專案的型別檢查與正式建置（Vue SFC 編譯、Angular AOT；需先 build），建置後檢查產物確實包含所有元件     |
-| `pnpm test:storybook`                             | 以 Vitest（@storybook/addon-vitest）在 Chromium 中執行所有 story 與 play function 互動情境                |
+| 指令                                              | 說明                                                                                                                                   |
+| ------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm test`                                       | 元件與共用模組的單元、無障礙測試（`src/components`、`src/internal`；不含視覺回歸）                                                     |
+| `pnpm test:coverage`                              | 同上並產生覆蓋率報告（門檻：statements／functions／lines 85%、branches 75%）                                                           |
+| `pnpm test:a11y`                                  | 只執行 `*.a11y.test.ts` 的 axe-core 無障礙檢測（需先 build）                                                                           |
+| `pnpm test:visual:docker`                         | 在 Playwright 官方 Docker 映像中執行視覺回歸測試（淺色／深色主題截圖比對）                                                             |
+| `pnpm test:visual:docker:update`                  | 同上，但更新基準圖（`screenshots/Chromium/baseline/`），並列出變更、產生 before／after／diff 供提交前檢視                              |
+| `pnpm test:vue` / `pnpm test:angular`             | Vue 3 / Angular 範例專案的整合測試（需先 build）                                                                                       |
+| `pnpm typecheck:examples` / `pnpm build:examples` | 範例專案的型別檢查（Vue 以 `vue-tsc` 檢查範本型別）與正式建置（Vue SFC 編譯、Angular AOT；需先 build），建置後檢查產物確實包含所有元件 |
+| `pnpm test:storybook`                             | 以 Vitest（@storybook/addon-vitest）在 Chromium 中執行所有 story 與 play function 互動情境                                             |
 
 **發布**
 

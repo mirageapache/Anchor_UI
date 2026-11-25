@@ -79,6 +79,14 @@ function checkExports() {
   if (JSON.stringify(actual) !== JSON.stringify(expectedEntries.exports)) {
     failures.push('exports 的元件入口與元件清單不一致（請執行 pnpm sync:package）');
   }
+  // 其他入口（全量入口、框架型別宣告 ./vue、./react、CSS 與 SCSS）指向的檔案也必須存在
+  for (const [key, value] of Object.entries(pkg.exports ?? {})) {
+    if (isComponentExport(value)) continue;
+    const targets = typeof value === 'string' ? [value] : Object.values(value ?? {});
+    for (const target of targets.filter((path) => !existsSync(join(root, path)))) {
+      failures.push(`exports["${key}"] 指向的檔案不存在：${target}`);
+    }
+  }
   return failures;
 }
 

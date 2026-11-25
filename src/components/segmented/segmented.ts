@@ -52,8 +52,8 @@ const normalizeOption = (item: SegmentedOption): SegmentedOption =>
  * @csspart option-checked - 選中的選項
  * @csspart option-disabled - 停用的選項
  *
- * @fires input - 使用者改變選取時分派，觸發時 `value` 已更新
- * @fires change - 使用者改變選取時於 `input` 之後分派，觸發時 `value` 已更新
+ * @fires {Event} input - 使用者改變選取時分派，觸發時 `value` 已更新
+ * @fires {Event} change - 使用者改變選取時於 `input` 之後分派，觸發時 `value` 已更新
  */
 export class AuiSegmented extends LitElement {
   static override styles = segmentedStyles;

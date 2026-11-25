@@ -35,7 +35,7 @@ const ACCORDION_VARIANTS = new Set<AccordionVariant>(['doc', 'faq']);
  * @csspart icon - 展開指示箭頭
  * @csspart body - 內容容器
  *
- * @fires aui-toggle - 展開狀態改變後觸發（使用者操作或程式設定皆會觸發），`detail.open` 為新狀態；支援 bubbles 與 composed
+ * @fires {CustomEvent<AccordionToggleDetail>} aui-toggle - 展開狀態改變後觸發（使用者操作或程式設定皆會觸發），`detail.open` 為新狀態；支援 bubbles 與 composed
  */
 export class AuiAccordion extends LitElement {
   static override styles = accordionStyles;
