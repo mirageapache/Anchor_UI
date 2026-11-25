@@ -23,9 +23,10 @@ export type PopoverPlacement =
  * - `escape`：按下 ESC
  * - `outside`：點擊面板與觸發元素以外的地方
  * - `focus-out`：焦點移到面板與觸發元素以外（例如以 Tab 離開）
+ * - `select`：選取了選單項目（`<aui-menu>`）
  * - `api`：以程式關閉（`hide()` 或將 `open` 設為 false），或開啟中被移出頁面
  */
-export type PopoverCloseReason = 'trigger' | 'escape' | 'outside' | 'focus-out' | 'api';
+export type PopoverCloseReason = 'trigger' | 'escape' | 'outside' | 'focus-out' | 'select' | 'api';
 
 /** `aui-hide` 與 `aui-after-hide` 事件資料 */
 export interface PopoverHideDetail {

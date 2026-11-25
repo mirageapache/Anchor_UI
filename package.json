@@ -67,6 +67,10 @@
       "types": "./dist/components/kbd/index.d.ts",
       "import": "./dist/components/kbd/index.js"
     },
+    "./menu": {
+      "types": "./dist/components/menu/index.d.ts",
+      "import": "./dist/components/menu/index.js"
+    },
     "./modal": {
       "types": "./dist/components/modal/index.d.ts",
       "import": "./dist/components/modal/index.js"
@@ -141,6 +145,8 @@
     "./dist/components/input/input.js",
     "./dist/components/kbd/index.js",
     "./dist/components/kbd/kbd.js",
+    "./dist/components/menu/index.js",
+    "./dist/components/menu/menu.js",
     "./dist/components/modal/index.js",
     "./dist/components/modal/modal.js",
     "./dist/components/navbar/index.js",

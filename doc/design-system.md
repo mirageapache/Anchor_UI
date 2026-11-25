@@ -39,6 +39,7 @@
   - [5.10 頂部導覽列 (Navbar)](#510-頂部導覽列-navbar)
   - [5.11 通用頁尾 (Footer)](#511-通用頁尾-footer)
   - [5.12 彈出面板 (Popover)](#512-彈出面板-popover)
+  - [5.13 下拉選單 (Dropdown Menu)](#513-下拉選單-dropdown-menu)
 - [六、前端共用元件專案建置與發佈指南](#六前端共用元件專案建置與發佈指南)
 
 ---
@@ -1813,6 +1814,44 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
 ```
 
 焦點落在面板本身時（內容沒有可聚焦的元素）不畫焦點框：面板不在 Tab 順序中，也不可操作（同 Modal 面板）。
+
+### 5.13 下拉選單 (Dropdown Menu)
+
+沿用 Popover 的面板（內距縮為 `--space-xs`），面板的直接子元素統一為選單項目的外觀：
+
+```scss
+.menu-item {
+  display: flex;
+  width: 100%;
+  padding: var(--space-xs) var(--space-sm);
+  color: inherit; // 連結項目也沿用面板文字色
+  text-align: start;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+
+  &:hover,
+  &:focus {
+    background-color: var(--color-surface);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: -2px; // 畫在項目內側，不與相鄰項目重疊
+  }
+
+  &[aria-disabled='true'] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+hr {
+  margin: var(--space-xs) 0;
+  border-top: 1px solid var(--color-border);
+}
+```
 
 ---
 

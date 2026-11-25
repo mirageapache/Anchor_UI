@@ -36,7 +36,7 @@ Anchor UI 是一套以 **Web Component（[Lit](https://lit.dev/)）** 實作的�
 | ---- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | 基礎 | 按鈕、圖示按鈕、標籤、鍵帽                                   | `aui-button`、`aui-icon-button`、`aui-tag`、`aui-kbd`                                          | `button`、`icon-button`、`tag`、`kbd`                                  |
 | 表單 | 輸入框、欄位、分段控制器、輸出框                             | `aui-input`、`aui-field`、`aui-segmented`、`aui-output`                                        | `input`、`field`、`segmented`、`output`                                |
-| 浮層 | 提示氣泡、彈出面板、通知、彈窗、確認對話框                   | `aui-tooltip`、`aui-popover`、`aui-toast`、`aui-modal`、`aui-alert`                            | `tooltip`、`popover`、`toast`、`modal`、`alert`                        |
+| 浮層 | 提示氣泡、彈出面板、下拉選單、通知、彈窗、確認對話框         | `aui-tooltip`、`aui-popover`、`aui-menu`、`aui-toast`、`aui-modal`、`aui-alert`                | `tooltip`、`popover`、`menu`、`toast`、`modal`、`alert`                |
 | 複合 | 卡片、摺疊面板、檔案拖放區、收藏鈕、工具頁標頭、程式碼檢視區 | `aui-card`、`aui-accordion`、`aui-dropzone`、`aui-favorite-btn`、`aui-header`、`aui-code-view` | `card`、`accordion`、`dropzone`、`favorite-btn`、`header`、`code-view` |
 | 導覽 | 側邊抽屜、頂部導覽列、頁尾                                   | `aui-drawer`、`aui-navbar`、`aui-footer`                                                       | `drawer`、`navbar`、`footer`                                           |
 

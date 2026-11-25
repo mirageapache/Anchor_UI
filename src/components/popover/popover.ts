@@ -1,4 +1,4 @@
-import { LitElement, html, type PropertyValues } from 'lit';
+import { LitElement, html, type CSSResultGroup, type PropertyValues } from 'lit';
 import { property, query, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
@@ -47,7 +47,7 @@ const NATIVE_FOCUSABLE =
  * @fires {CustomEvent<PopoverHideDetail>} aui-after-hide - 完全關閉且退場動畫結束後觸發，`detail.reason` 為關閉原因
  */
 export class AuiPopover extends LitElement {
-  static override styles = popoverStyles;
+  static override styles: CSSResultGroup = popoverStyles;
 
   /** 是否開啟 */
   @property({ type: Boolean, reflect: true })

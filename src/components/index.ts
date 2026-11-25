@@ -20,3 +20,4 @@ export * from './footer/index.js';
 export * from './header/index.js';
 export * from './kbd/index.js';
 export * from './popover/index.js';
+export * from './menu/index.js';
