@@ -1,9 +1,9 @@
-// TASK-307: 跨框架冒煙測試。以 npm pack 產出的 tarball 安裝到小型的 Vue 3 / Angular 專案並做正式建置，
+// TASK-307: 跨框架冒煙測試。以 npm pack 產出的 tarball 安裝到小型的 Vue 3 / Angular / React 專案並做正式建置，
 // 驗證「實際發布的產物」而不是 workspace 內的原始碼：exports、sideEffects（Tree-shaking）、型別宣告與發布內容。
 // TASK-501: angular-ssr 另外啟動建置出的 SSR 伺服器，檢查伺服器輸出與瀏覽器端的 hydration（見 scripts/smoke-ssr.mjs）。
 //
 //   node scripts/smoke-test.mjs                         所有框架都測（自動打包，需先 pnpm build）
-//   node scripts/smoke-test.mjs vue3                    只測 Vue 3（可為 vue3 / angular / angular-ssr，可列出多個）
+//   node scripts/smoke-test.mjs vue3                    只測 Vue 3（可為 vue3 / angular / react / angular-ssr，可列出多個）
 //   node scripts/smoke-test.mjs angular --tarball <檔案>  使用指定的 tarball（CI 使用 build job 產出的檔案）
 //   node scripts/smoke-test.mjs --keep                  保留暫存的專案目錄以便檢查
 //
@@ -28,7 +28,7 @@ import { checkServerRendering } from './smoke-ssr.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 
-/** 按需載入的測試專案（smoke/vue3、smoke/angular 的 src）引用的元件入口；field 會帶入 icon-button → tooltip */
+/** 按需載入的測試專案（smoke/vue3、smoke/angular、smoke/react 的 src）引用的元件入口；field 會帶入 icon-button → tooltip */
 const IMPORTED_ENTRIES = ['button', 'input', 'field', 'card', 'toast'];
 const ON_DEMAND_TAGS = [...IMPORTED_ENTRIES, 'icon-button', 'tooltip'].map((name) => `aui-${name}`);
 const ALL_TAGS = listComponents(root).map((name) => `aui-${name}`);
@@ -42,6 +42,8 @@ const ALL_TAGS = listComponents(root).map((name) => `aui-${name}`);
 const FRAMEWORKS = {
   vue3: { expectedTags: ON_DEMAND_TAGS, typeCoverage: true },
   angular: { expectedTags: ON_DEMAND_TAGS, typeCoverage: true },
+  // TASK-508：React 19（tsc 檢查 JSX 型別 @anchor-ui/core/react）
+  react: { expectedTags: ON_DEMAND_TAGS, typeCoverage: true },
   // 在元件檔載入全量入口（業務專案最常見的寫法），伺服器的 bundle 也會載入全部元件
   'angular-ssr': { expectedTags: ALL_TAGS, typeCoverage: false, ssr: true },
 };
@@ -61,7 +63,7 @@ try {
   });
 } catch (error) {
   fail(
-    `${error.message}\n  用法：node scripts/smoke-test.mjs [vue3|angular|angular-ssr …] [--tarball <檔案>] [--keep]`,
+    `${error.message}\n  用法：node scripts/smoke-test.mjs [vue3|angular|react|angular-ssr …] [--tarball <檔案>] [--keep]`,
   );
 }
 const { keep, tarball: tarballArg } = options.values;

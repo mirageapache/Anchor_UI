@@ -137,7 +137,7 @@ jobs:
   smoke:
     name: Framework Smoke Test (${{ matrix.framework }})
     timeout-minutes: 10
-    # TASK-307: 以 build job 產出的 tarball 安裝到獨立的 Vue 3 / Angular 專案（smoke/，不在 pnpm workspace 內）
+    # TASK-307 / TASK-508: 以 build job 產出的 tarball 安裝到獨立的 Vue 3 / Angular / React 專案（smoke/，不在 pnpm workspace 內）
     # 並做型別檢查與正式建置，驗證實際發布產物的 exports、sideEffects（Tree-shaking）與型別宣告。
     # 與 test job 的範例專案建置不同：那裡透過 workspace 連結原始套件，這裡只透過 tarball 取得。
     # 不需要 pnpm 與 workspace 的相依：測試專案以 npm ci 安裝各自鎖定的相依。
@@ -146,7 +146,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        framework: [vue3, angular]
+        framework: [vue3, angular, react]
     steps:
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -399,6 +399,10 @@ jobs:
 
       - name: Run Angular integration tests
         run: pnpm test:angular
+
+      # TASK-508：React 19 的屬性（含陣列）、aui- 事件與受控表單綁定，以及按需入口的註冊範圍
+      - name: Run React integration tests
+        run: pnpm test:react
 
       # TASK-214：範例專案的型別檢查與正式建置（Vue SFC 編譯、Angular AOT 模板編譯），
       # 以建置後的 dist/ 驗證消費端的生產建置可通過；建置後由 scripts/verify-example-builds.mjs

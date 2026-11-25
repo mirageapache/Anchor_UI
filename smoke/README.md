@@ -1,9 +1,10 @@
-# 跨框架冒煙測試專案 (TASK-307 / TASK-501)
+# 跨框架冒煙測試專案 (TASK-307 / TASK-501 / TASK-508)
 
 這裡的小型專案用來驗證「實際發布的產物」能被外部專案安裝並通過正式建置：
 
 - `vue3/`：Vue 3 + Vite（`vue-tsc` 型別檢查含 SFC 範本，`vite build`）
 - `angular/`：Angular + Vite（AnalogJS 外掛，AOT 編譯）
+- `react/`：React 19 + Vite（`tsc` 型別檢查含 JSX 的 `@anchor-ui/core/react` 型別）
 - `angular-ssr/`：Angular CLI + `@angular/ssr`（伺服器端渲染與 hydration，見下方「Angular SSR」）
 
 它們**刻意不在 pnpm workspace 內**，也不在 `package.json` 中宣告 `@anchor-ui/core`：
@@ -25,7 +26,7 @@ pnpm smoke --keep     # 保留暫存的專案目錄以便檢查
 
 1. 以 tarball 安裝後的套件：版號正確、沒有安裝時會執行的生命週期腳本、不含測試與 stories、
    `exports` 指向的檔案都存在、`dist/` 引用的外部套件都列在 `dependencies`。
-2. 型別檢查（`skipLibCheck: false`）：測試時會產生 `src/all-entry-types.ts`，引用全量入口與每個元件入口的型別宣告；`vue3/` 另以 `src/TemplateTypes.vue` 檢查發布的範本型別（`@anchor-ui/core/vue`）。
+2. 型別檢查（`skipLibCheck: false`）：測試時會產生 `src/all-entry-types.ts`，引用全量入口與每個元件入口的型別宣告；`vue3/` 另以 `src/TemplateTypes.vue`、`react/` 以 `src/TemplateTypes.tsx` 檢查發布的範本型別（`@anchor-ui/core/vue`、`@anchor-ui/core/react`）。
 3. 正式建置成功（Vue SFC 編譯／Angular AOT），且產物確實包含應用程式本身。
 4. Tree-shaking：只引用 button、input、field、card、toast，打包結果不得包含其他元件。
 

@@ -136,7 +136,7 @@ import '@anchor-ui/core';
 - 型別可從全量入口或個別入口取得，例如 `import type { ButtonVariant } from '@anchor-ui/core/button'`。
 - 全域服務從各自的入口取得：`import { ToastService } from '@anchor-ui/core/toast'`、`import { AlertService } from '@anchor-ui/core/alert'`。
 
-### 6. 框架設定（Vue 3 / Angular）
+### 6. 框架設定（Vue 3 / Angular / React）
 
 **Vue 3（Vite）**：告訴 Vue 編譯器 `aui-` 開頭的標籤是自訂元素，否則會出現「Failed to resolve component」警告：
 
@@ -221,7 +221,30 @@ export class AppComponent {}
 import '@anchor-ui/core/button';
 ```
 
-完整可執行的設定可參考 [`examples/vue3`](examples/vue3) 與 [`examples/angular`](examples/angular)；Angular SSR 見[伺服器端渲染](#10-伺服器端渲染angular-ssr)。
+**React 19**：React 19 起原生支援自訂元素，不需額外設定，載入元件後即可在 JSX 中使用：
+
+```tsx
+// src/main.tsx
+import '@anchor-ui/core/styles.css';
+import '@anchor-ui/core/button';
+import '@anchor-ui/core/segmented';
+import '@anchor-ui/core/dropzone';
+```
+
+```tsx
+<aui-button variant="primary" fullWidth onClick={save}>儲存</aui-button>
+<aui-segmented options={modes} value={mode} onInput={(event) => setMode(event.currentTarget.value)} />
+<aui-dropzone onaui-file-drop={(event) => upload(event.detail.files)} />
+```
+
+- 屬性直接寫成 JSX 屬性，React 19 會設定元素的 property，陣列與物件（`options`、`columns`）也可以；數值與布林寫成 `lines={3}`、`disabled`，名稱使用 camelCase（`fullWidth`、`headingLevel`，型別檢查以 property 名稱為準）。
+- **先載入元件再渲染**：React 只在元素已有同名 property（元件已註冊）時設定 property，否則改寫成 attribute——camelCase 的名稱會變成元件不認得的小寫 attribute（`fullwidth`），陣列會變成 `"[object Object]"`。請在 `createRoot().render()` 之前 import 用到的元件入口；以動態 import 延後載入時，等載入完成再渲染使用它的元件。
+- `aui-` 自訂事件以 `on` 加上事件名稱監聽：`onaui-file-drop`、`onaui-select`；原生事件沿用 React 的 `onClick`、`onInput`。
+- 表單元件以 `value` 加 `onInput` 受控，處理器中以 `event.currentTarget.value` 取得目前的值。
+- **JSX 型別**：在宣告檔（如 `src/env.d.ts`）開頭加入 `/// <reference types="@anchor-ui/core/react" />`，`tsc` 會檢查屬性值與事件處理器的 `detail` 型別（需要 `@types/react` 19，`moduleResolution` 為 `bundler`、`node16` 或 `nodenext`）。注意 TypeScript 不檢查含連字號的 JSX 屬性名稱：拼錯的事件（`onaui-fle-drop`）或 kebab-case 的屬性不會報錯，屬性請用 camelCase。
+- **React 18 以前**：所有屬性都寫成 attribute，陣列與物件會被轉成字串（如 `"[object Object]"`），`disabled={false}` 會寫成 `disabled="false"` 而被視為 true；JSX 也無法監聽 `aui-` 事件。請升級至 React 19；無法升級時，以 [`@lit/react`](https://www.npmjs.com/package/@lit/react) 的 `createComponent` 包裝元件（屬性設為 property、事件對應為 React 的 props），或以 `ref` 取得元素後自行設定 property 並 `addEventListener`。
+
+完整可執行的設定可參考 [`examples/vue3`](examples/vue3)、[`examples/angular`](examples/angular) 與 [`examples/react`](examples/react)；Angular SSR 見[伺服器端渲染](#10-伺服器端渲染angular-ssr)。
 
 ### 7. 綁定表單元件
 
