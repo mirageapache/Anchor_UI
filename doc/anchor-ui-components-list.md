@@ -156,7 +156,7 @@ _來源為 `1.0.0-beta` 的整合測試回饋；排程與驗收條件見 [`ancho
 23. **Breadcrumb（麵包屑導覽）**
     - **自訂標籤**：`<aui-breadcrumb>`
     - **說明**：頁首的階層導覽，可放進 `<aui-header>`。
-    - **狀態與能力**：navigation landmark、目前頁面帶 `aria-current="page"`、分隔符號不進入無障礙樹，連結只接受安全的協定。
+    - **狀態與能力**：navigation landmark、目前頁面帶 `aria-current="page"`、分隔符號不進入無障礙樹，連結只接受安全的協定。（已完成，TASK-507：以 `items` 傳入各層；`<aui-header>` 新增 `breadcrumb` slot）
 
 既有元件的擴充：
 
@@ -192,4 +192,4 @@ _來源為 `1.0.0-beta` 的整合測試回饋；排程與驗收條件見 [`ancho
 |  20  | **Footer**               | `<aui-footer>`                |   Navigation    | 獨立通用頁尾，整合版權宣告、版本資訊、外部連結與次要選單。                                         |
 |  21  | **Popover**              | `<aui-popover>`               |     Overlay     | 點擊觸發、承載互動內容的彈出面板，焦點移入與還原。                                                 |
 |  22  | **Dropdown Menu**        | `<aui-menu>`                  |     Overlay     | 基於 Popover 的操作選單，WAI-ARIA Menu Button 鍵盤操作。                                           |
-|  23  | **Breadcrumb**（規劃中） | `<aui-breadcrumb>`            |   Navigation    | 麵包屑導覽，navigation landmark 與 `aria-current`。                                                |
+|  23  | **Breadcrumb**           | `<aui-breadcrumb>`            |   Navigation    | 麵包屑導覽，navigation landmark 與 `aria-current`。                                                |

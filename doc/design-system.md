@@ -40,6 +40,7 @@
   - [5.11 通用頁尾 (Footer)](#511-通用頁尾-footer)
   - [5.12 彈出面板 (Popover)](#512-彈出面板-popover)
   - [5.13 下拉選單 (Dropdown Menu)](#513-下拉選單-dropdown-menu)
+  - [5.14 麵包屑導覽 (Breadcrumb)](#514-麵包屑導覽-breadcrumb)
 - [六、前端共用元件專案建置與發佈指南](#六前端共用元件專案建置與發佈指南)
 
 ---
@@ -1852,6 +1853,39 @@ hr {
   border-top: 1px solid var(--color-border);
 }
 ```
+
+### 5.14 麵包屑導覽 (Breadcrumb)
+
+以行內文字排列（`<ol>` / `<li>` 皆為 inline），空間不足時像句子一樣換行；分隔符號前後的空格是換行點，
+各層以 `word-break: keep-all` 避免中文名稱在字與字之間斷開，過長的英文字串仍以 `overflow-wrap: anywhere` 斷行。
+
+```scss
+.breadcrumb {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+
+  a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-brand-text);
+      text-decoration: underline;
+    }
+  }
+
+  [aria-current='page'] {
+    font-weight: var(--weight-medium);
+    color: var(--color-text-primary);
+  }
+
+  .separator {
+    color: var(--color-text-muted);
+  }
+}
+```
+
+放在 `<aui-header>` 時位於分類標籤與標題之上（`breadcrumb` slot）。
 
 ---
 

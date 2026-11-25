@@ -19,6 +19,10 @@
       "types": "./dist/components/alert/index.d.ts",
       "import": "./dist/components/alert/index.js"
     },
+    "./breadcrumb": {
+      "types": "./dist/components/breadcrumb/index.d.ts",
+      "import": "./dist/components/breadcrumb/index.js"
+    },
     "./button": {
       "types": "./dist/components/button/index.d.ts",
       "import": "./dist/components/button/index.js"
@@ -121,6 +125,8 @@
     "./dist/components/accordion/accordion.js",
     "./dist/components/alert/index.js",
     "./dist/components/alert/alert.js",
+    "./dist/components/breadcrumb/index.js",
+    "./dist/components/breadcrumb/breadcrumb.js",
     "./dist/components/button/index.js",
     "./dist/components/button/button.js",
     "./dist/components/card/index.js",
