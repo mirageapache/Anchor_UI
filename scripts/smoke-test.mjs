@@ -1,8 +1,9 @@
 // TASK-307: 跨框架冒煙測試。以 npm pack 產出的 tarball 安裝到小型的 Vue 3 / Angular 專案並做正式建置，
 // 驗證「實際發布的產物」而不是 workspace 內的原始碼：exports、sideEffects（Tree-shaking）、型別宣告與發布內容。
+// TASK-501: angular-ssr 另外啟動建置出的 SSR 伺服器，檢查伺服器輸出與瀏覽器端的 hydration（見 scripts/smoke-ssr.mjs）。
 //
-//   node scripts/smoke-test.mjs                         兩個框架都測（自動打包，需先 pnpm build）
-//   node scripts/smoke-test.mjs vue3                    只測 Vue 3（可為 vue3 / angular，可列出多個）
+//   node scripts/smoke-test.mjs                         所有框架都測（自動打包，需先 pnpm build）
+//   node scripts/smoke-test.mjs vue3                    只測 Vue 3（可為 vue3 / angular / angular-ssr，可列出多個）
 //   node scripts/smoke-test.mjs angular --tarball <檔案>  使用指定的 tarball（CI 使用 build job 產出的檔案）
 //   node scripts/smoke-test.mjs --keep                  保留暫存的專案目錄以便檢查
 //
@@ -23,13 +24,27 @@ import { parseArgs } from 'node:util';
 import { listComponents } from './components.mjs';
 import { npm } from './npm.mjs';
 import { INSTALL_LIFECYCLE_SCRIPTS, pack } from './pack.mjs';
+import { checkServerRendering } from './smoke-ssr.mjs';
 
 const root = resolve(import.meta.dirname, '..');
-const FRAMEWORKS = ['vue3', 'angular'];
 
-/** 測試專案（smoke/<framework>/src）引用的元件入口；field 會帶入 icon-button → tooltip */
+/** 按需載入的測試專案（smoke/vue3、smoke/angular 的 src）引用的元件入口；field 會帶入 icon-button → tooltip */
 const IMPORTED_ENTRIES = ['button', 'input', 'field', 'card', 'toast'];
-const EXPECTED_TAGS = [...IMPORTED_ENTRIES, 'icon-button', 'tooltip'].map((name) => `aui-${name}`);
+const ON_DEMAND_TAGS = [...IMPORTED_ENTRIES, 'icon-button', 'tooltip'].map((name) => `aui-${name}`);
+const ALL_TAGS = listComponents(root).map((name) => `aui-${name}`);
+
+/**
+ * 各測試專案的設定。
+ * - expectedTags：打包結果必須恰好註冊的元件（按需載入的專案藉此驗證 Tree-shaking）
+ * - typeCoverage：產生引用每個入口型別宣告的檔案（需搭配 skipLibCheck: false）
+ * - ssr：建置後啟動 SSR 伺服器並以瀏覽器檢查 hydration
+ */
+const FRAMEWORKS = {
+  vue3: { expectedTags: ON_DEMAND_TAGS, typeCoverage: true },
+  angular: { expectedTags: ON_DEMAND_TAGS, typeCoverage: true },
+  // 在元件檔載入全量入口（業務專案最常見的寫法），伺服器的 bundle 也會載入全部元件
+  'angular-ssr': { expectedTags: ALL_TAGS, typeCoverage: false, ssr: true },
+};
 /** 測試專案範本中的文字：出現在打包結果中代表應用程式本身確實被編譯進產物 */
 const APP_MARKER = 'Installed from the tarball';
 
@@ -46,13 +61,14 @@ try {
   });
 } catch (error) {
   fail(
-    `${error.message}\n  用法：node scripts/smoke-test.mjs [vue3|angular …] [--tarball <檔案>] [--keep]`,
+    `${error.message}\n  用法：node scripts/smoke-test.mjs [vue3|angular|angular-ssr …] [--tarball <檔案>] [--keep]`,
   );
 }
 const { keep, tarball: tarballArg } = options.values;
-const unknown = options.positionals.filter((name) => !FRAMEWORKS.includes(name));
-if (unknown.length) fail(`未知的框架：${unknown.join(', ')}（可用：${FRAMEWORKS.join(', ')}）`);
-const frameworks = options.positionals.length ? [...new Set(options.positionals)] : FRAMEWORKS;
+const frameworkNames = Object.keys(FRAMEWORKS);
+const unknown = options.positionals.filter((name) => !frameworkNames.includes(name));
+if (unknown.length) fail(`未知的框架：${unknown.join(', ')}（可用：${frameworkNames.join(', ')}）`);
+const frameworks = options.positionals.length ? [...new Set(options.positionals)] : frameworkNames;
 
 /** 列出目錄下所有檔案（遞迴，回傳絕對路徑） */
 function listFiles(dir) {
@@ -147,22 +163,25 @@ function checkInstalledPackage(project) {
 }
 
 /**
- * 檢查建置結果：測試專案只引用部分元件，沒有引用的元件不得出現在打包結果中
- * （驗證 exports 的個別入口與 sideEffects 讓 Tree-shaking 生效）。
+ * 檢查建置結果：打包結果恰好註冊 expectedTags 中的元件。按需載入的測試專案只引用部分元件，
+ * 沒有引用的元件不得出現在打包結果中（驗證 exports 的個別入口與 sideEffects 讓 Tree-shaking 生效）。
+ * @param {string} project
+ * @param {string[]} expectedTags
  */
-function checkBuildOutput(project) {
+function checkBuildOutput(project, expectedTags) {
   const failures = [];
   const dist = join(project, 'dist');
   if (!existsSync(dist)) return ['建置後找不到 dist/'];
 
   const files = listFiles(dist);
-  const read = (extension) =>
+  const read = (pattern) =>
     files
-      .filter((file) => file.endsWith(extension))
+      .filter((file) => pattern.test(file))
       .map((file) => readFileSync(file, 'utf-8'))
       .join('\n');
-  const code = read('.js');
-  const styles = read('.css');
+  // .mjs：Angular SSR 的伺服器 bundle（同樣須註冊預期的元件，確認伺服器端也載入了元件庫）
+  const code = read(/\.m?js$/);
+  const styles = read(/\.css$/);
 
   // 建置指令成功不代表產物有內容（例如 Angular 的 tsconfig 設了 noEmit 時每個模組都是空的）
   if (!code.includes(APP_MARKER)) {
@@ -176,8 +195,8 @@ function checkBuildOutput(project) {
       (match) => match[1],
     ),
   );
-  const missing = EXPECTED_TAGS.filter((tag) => !registered.has(tag));
-  const unexpected = [...registered].filter((tag) => !EXPECTED_TAGS.includes(tag));
+  const missing = expectedTags.filter((tag) => !registered.has(tag));
+  const unexpected = [...registered].filter((tag) => !expectedTags.includes(tag));
 
   if (missing.length) {
     failures.push(`打包結果沒有註冊：${missing.join(', ')}（個別入口沒有註冊元件？）`);
@@ -191,7 +210,8 @@ function checkBuildOutput(project) {
   return failures;
 }
 
-function run(framework, tarball) {
+async function run(framework, tarball) {
+  const config = FRAMEWORKS[framework];
   const fixture = join(root, 'smoke', framework);
   // 複製到系統暫存目錄：路徑較短（Windows 有 260 字元限制），也不會在 repo 內留下 node_modules
   const project = mkdtempSync(join(tmpdir(), `aui-smoke-${framework}-`));
@@ -202,7 +222,7 @@ function run(framework, tarball) {
       recursive: true,
       filter: (source) => !/[\\/](node_modules|dist)$/.test(source),
     });
-    writeTypeCoverage(project);
+    if (config.typeCoverage) writeTypeCoverage(project);
 
     // --ignore-scripts：不執行任何相依的安裝腳本（建置工具的原生程式由平台專屬的可選相依提供）
     npm(['ci', '--no-audit', '--no-fund', '--ignore-scripts'], { cwd: project });
@@ -213,9 +233,12 @@ function run(framework, tarball) {
 
     failures.push(...checkInstalledPackage(project));
     try {
-      // 型別檢查 + 正式建置（Vue SFC 編譯 / Angular AOT）
+      // 型別檢查 + 正式建置（Vue SFC 編譯 / Angular AOT；angular-ssr 另外產生伺服器的 bundle）
       npm(['run', 'build'], { cwd: project });
-      failures.push(...checkBuildOutput(project));
+      failures.push(...checkBuildOutput(project, config.expectedTags));
+      if (config.ssr) {
+        failures.push(...(await checkServerRendering(project, { appMarker: APP_MARKER })));
+      }
     } catch (error) {
       failures.push(error.message);
     }
@@ -223,7 +246,7 @@ function run(framework, tarball) {
     failures.push(error.message);
   } finally {
     if (keep) console.log(`  （保留暫存專案：${project}）`);
-    else rmSync(project, { recursive: true, force: true });
+    else rmSync(project, { recursive: true, force: true, maxRetries: 5 });
   }
 
   const seconds = ((Date.now() - started) / 1000).toFixed(1);
@@ -232,7 +255,8 @@ function run(framework, tarball) {
     for (const failure of failures) console.error(`  - ${failure}`);
     return false;
   }
-  console.log(`✓ ${framework}：以 tarball 安裝、型別檢查與正式建置皆通過（${seconds}s）`);
+  const ssr = config.ssr ? '、伺服器端渲染與 hydration ' : '';
+  console.log(`✓ ${framework}：以 tarball 安裝、型別檢查與正式建置${ssr}皆通過（${seconds}s）`);
   return true;
 }
 
@@ -245,5 +269,6 @@ try {
 if (!existsSync(tarball)) fail(`找不到 tarball：${tarball}`);
 console.log(`使用 tarball：${tarball}`);
 
-const results = frameworks.map((framework) => run(framework, tarball));
+const results = [];
+for (const framework of frameworks) results.push(await run(framework, tarball));
 process.exit(results.every(Boolean) ? 0 : 1);

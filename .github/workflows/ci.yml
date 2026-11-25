@@ -114,11 +114,15 @@ jobs:
       - name: Verify package (tree-shaking, exports, sideEffects)
         run: pnpm verify:package
 
+      # TASK-501: 在 Node（沒有瀏覽器 DOM）載入每個入口並呼叫命令式 API，確認伺服器端渲染時 import 元件庫不會出錯
+      - name: Verify the package loads in Node for SSR
+        run: pnpm verify:ssr
+
       # TASK-202: 各元件入口的體積不得超過預算（基準 +10%，見 .size-limit.mjs），超出即 CI 失敗
       - name: Check bundle size budgets (size-limit)
         run: pnpm size
 
-      # TASK-307: 產出與發布時相同的 tarball（不含安裝時會執行的生命週期腳本），交給 smoke job 安裝驗證
+      # TASK-307: 產出與發布時相同的 tarball（不含安裝時會執行的生命週期腳本），交給 smoke / smoke-ssr job 安裝驗證
       - name: Pack the release tarball
         run: node scripts/pack.mjs
 
@@ -166,6 +170,41 @@ jobs:
         run: node scripts/smoke-test.mjs "$FRAMEWORK" --tarball "$(ls release/*.tgz)"
         env:
           FRAMEWORK: ${{ matrix.framework }}
+
+  smoke-ssr:
+    name: Framework Smoke Test (angular-ssr)
+    timeout-minutes: 10
+    # TASK-501: 以 build job 產出的 tarball 安裝到 Angular SSR 專案（smoke/angular-ssr）並正式建置，
+    # 啟動 SSR 伺服器檢查輸出的 HTML，再以 Chromium 檢查 hydration、property / 事件 / 表單綁定。
+    # 需要瀏覽器，因此與 Storybook 相同在 Playwright 官方映像中執行；Playwright 由測試專案自己的相依提供
+    # （版本須與映像一致，見 scripts/check-tool-versions.mjs），不需要 pnpm 與 workspace 的相依。
+    # job 名稱須列入 main Ruleset 的必要檢查。
+    needs: build
+    runs-on: ubuntu-latest
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+      options: --ipc=host
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: '.nvmrc'
+          cache: 'npm'
+          cache-dependency-path: smoke/angular-ssr/package-lock.json
+
+      - name: Download the release tarball
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: package-tarball
+          path: release
+
+      - name: Install the tarball, build, render on the server and check hydration
+        run: node scripts/smoke-test.mjs angular-ssr --tarball "$(ls release/*.tgz)"
 
   size-report:
     name: Size Report (PR comment)
@@ -388,7 +427,7 @@ jobs:
     name: CI Time Budget
     # TASK-214：整體 PR CI 須在 8 分鐘內完成。所有 job 結束後把各 job 的耗時寫入 job summary，
     # 超出預算時發出警告（不讓 CI 失敗，避免 runner 偶爾變慢就擋住合併）。
-    needs: [lint-and-typecheck, build, smoke, size-report, storybook, visual, test]
+    needs: [lint-and-typecheck, build, smoke, smoke-ssr, size-report, storybook, visual, test]
     if: ${{ !cancelled() }}
     timeout-minutes: 5
     runs-on: ubuntu-latest

@@ -157,6 +157,7 @@
     "build": "tsc --noEmit && vite build && pnpm build:tokens",
     "build:tokens": "sass src/tokens/index.scss dist/tokens.css --style=compressed --no-source-map",
     "verify:package": "node scripts/verify-package.mjs",
+    "verify:ssr": "node scripts/verify-ssr-import.mjs",
     "sync:package": "node scripts/sync-package-entries.mjs",
     "size": "size-limit",
     "release:verify": "node scripts/verify-release.mjs",

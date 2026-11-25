@@ -206,7 +206,7 @@ export class AppComponent {}
 import '@anchor-ui/core/button';
 ```
 
-完整可執行的設定可參考 [`examples/vue3`](examples/vue3) 與 [`examples/angular`](examples/angular)。
+完整可執行的設定可參考 [`examples/vue3`](examples/vue3) 與 [`examples/angular`](examples/angular)；Angular SSR 見[伺服器端渲染](#10-伺服器端渲染angular-ssr)。
 
 ### 7. 綁定表單元件
 
@@ -249,6 +249,43 @@ modal.addEventListener('aui-hide', (event) => {
   console.log((event as CustomEvent<{ reason: string }>).detail.reason);
 });
 ```
+
+### 10. 伺服器端渲染（Angular SSR）
+
+伺服器端只輸出元件的標籤、attribute 與標籤內的文字，瀏覽器載入元件庫後才升級為完整的元件（建立 Shadow DOM、套用樣式）；Angular 的 hydration 會沿用伺服器輸出的 DOM。元件內部（Shadow DOM）不在伺服器端渲染，因此 JS 載入前的畫面與搜尋引擎只看得到標籤內的文字。
+
+- **載入元件庫**：在元件檔或 `main.ts` import 都可以，伺服器端 import 不會出錯（Lit 在 Node 會提供最小的 `HTMLElement` / `customElements` 實作）。
+- **屬性綁定**：範本中的靜態 attribute（`variant="primary"`）會出現在伺服器輸出的 HTML；`[options]`、`[headingLevel]` 這類 property 綁定只在瀏覽器端套用。
+- **命令式 API**：`setTheme()`、`ToastService`、`AlertService` 只在瀏覽器端呼叫：放在事件處理中，或頁面載入時放在 `afterNextRender`（只在瀏覽器端執行）。`constructor`、`ngOnInit` 會在伺服器與瀏覽器各執行一次，誤在伺服器端呼叫時：`setTheme()` 與 `ToastService` 不做任何事（由瀏覽器端那一次顯示）；`AlertService` 需要使用者回應，回傳的 Promise 會以「只能在瀏覽器端使用」的錯誤 reject。
+
+```ts
+import { afterNextRender, Component } from '@angular/core';
+import { setTheme, ToastService } from '@anchor-ui/core';
+
+@Component({/* … */})
+export class AppComponent {
+  constructor() {
+    afterNextRender(() => {
+      setTheme(localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
+      ToastService.info('歡迎回來');
+    });
+  }
+}
+```
+
+- **主題**：`setTheme()` 不會影響伺服器輸出的 `<html>`，深色主題的使用者會先看到淺色頁面，hydration 後才切換。要避免時，在伺服器端渲染時就設定 `<html>` 的 `data-theme`（例如依 cookie 透過 Angular 的 `DOCUMENT` 設定）。
+- **升級前的版面**：元件 JS 載入前，標籤內的文字會以未套用樣式的狀態顯示。可以先隱藏尚未升級的元件，但請逐一列出標籤：單獨的 `:not(:defined)` 也會選到 `<app-root>` 等 Angular 元件（它們不是自訂元素），整個頁面都會被隱藏。
+
+```css
+aui-button:not(:defined),
+aui-card:not(:defined) {
+  visibility: hidden;
+}
+```
+
+- **伺服器的 Host 檢查**：Angular 19.2 起，SSR 伺服器只接受 `angular.json` 的 `security.allowedHosts` 中列出的 Host，其他 Host 的請求會改為客戶端渲染（伺服器 log 出現 `Header "host" … is not allowed`），與元件庫無關。
+
+完整可執行的設定可參考 [`smoke/angular-ssr`](smoke/angular-ssr)（CI 中以 tarball 安裝並檢查伺服器輸出與 hydration）。
 
 ---
 

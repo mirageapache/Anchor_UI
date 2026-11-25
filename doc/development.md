@@ -35,7 +35,7 @@ Anchor_UI/
 │   ├── anchor-ui-upgrade-guide.md # 升級遷移手冊（給使用端）
 │   └── development.md           # 本文件
 ├── examples/                    # Vue 3 / Angular 整合範例與測試
-├── smoke/                       # 以 tarball 安裝的跨框架冒煙測試專案
+├── smoke/                       # 以 tarball 安裝的跨框架冒煙測試專案（含 Angular SSR）
 ├── src/
 │   ├── tokens/                  # Design Tokens (色彩、文字、間距、圓角、動態)
 │   ├── base/                    # 全域基底 (Reset、Focus 環、Utilities)
@@ -103,14 +103,15 @@ pnpm verify:package
 
 **建置與產物檢查**
 
-| 指令                  | 說明                                                                                                               |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `pnpm build`          | 編譯至 `dist/`：全量入口 `index.js`、各元件入口 `components/<name>/index.js`、型別定義、`styles.css`、`tokens.css` |
-| `pnpm verify:package` | 驗證建置產物的 `exports`／`sideEffects`、型別宣告、Tree-shaking 與發布內容（需先 build）                           |
-| `pnpm size`           | 以 size-limit 檢查各元件入口的 gzip 體積是否超出預算（需先 build，設定見 `.size-limit.mjs`）                       |
-| `pnpm sync:package`   | 依 `src/components` 重新產生 `package.json` 中元件的 `exports` 與 `sideEffects`（新增或移除元件後執行）            |
-| `pnpm check:versions` | 檢查 Playwright 映像與套件版本、pnpm 版本（`packageManager`）是否一致                                              |
-| `pnpm audit:runtime`  | 檢查發布套件的 runtime 相依是否有 High / Critical 漏洞                                                             |
+| 指令                  | 說明                                                                                                                 |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `pnpm build`          | 編譯至 `dist/`：全量入口 `index.js`、各元件入口 `components/<name>/index.js`、型別定義、`styles.css`、`tokens.css`   |
+| `pnpm verify:package` | 驗證建置產物的 `exports`／`sideEffects`、型別宣告、Tree-shaking 與發布內容（需先 build）                             |
+| `pnpm verify:ssr`     | 在 Node 載入每個入口並呼叫 `setTheme`／`ToastService`／`AlertService`，確認伺服器端渲染（SSR）時的行為（需先 build） |
+| `pnpm size`           | 以 size-limit 檢查各元件入口的 gzip 體積是否超出預算（需先 build，設定見 `.size-limit.mjs`）                         |
+| `pnpm sync:package`   | 依 `src/components` 重新產生 `package.json` 中元件的 `exports` 與 `sideEffects`（新增或移除元件後執行）              |
+| `pnpm check:versions` | 檢查 Playwright 映像與套件版本（含 `smoke/` 專案）、pnpm 版本（`packageManager`）是否一致                            |
+| `pnpm audit:runtime`  | 檢查發布套件的 runtime 相依是否有 High / Critical 漏洞                                                               |
 
 **測試**
 
@@ -127,12 +128,12 @@ pnpm verify:package
 
 **發布**
 
-| 指令                  | 說明                                                                                                                               |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `pnpm release:verify` | 檢查版號是否為合法 SemVer；`--tag v<版號>` 檢查與 tag 一致，`--all-tags` 檢查所有既有 tag                                          |
-| `pnpm release:pack`   | 發布預演：建置 → 套件驗證 → 體積 → 版號檢查 → 產出 tarball 至 `release/`（不含安裝時會執行的生命週期腳本）                         |
-| `pnpm smoke`          | 跨框架冒煙測試：以 tarball 安裝到 `smoke/` 的 Vue 3 / Angular 專案並做型別檢查與正式建置（需先 build；可指定 `vue3` 或 `angular`） |
-| `pnpm test:scripts`   | 部署腳本的測試（`scripts/*.test.mjs`：gh-pages 發布與 PR 預覽留言，對本機暫存 repo 與假 API 驗證）                                 |
+| 指令                  | 說明                                                                                                                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm release:verify` | 檢查版號是否為合法 SemVer；`--tag v<版號>` 檢查與 tag 一致，`--all-tags` 檢查所有既有 tag                                                                                                                     |
+| `pnpm release:pack`   | 發布預演：建置 → 套件驗證 → 體積 → 版號檢查 → 產出 tarball 至 `release/`（不含安裝時會執行的生命週期腳本）                                                                                                    |
+| `pnpm smoke`          | 跨框架冒煙測試：以 tarball 安裝到 `smoke/` 的 Vue 3 / Angular / Angular SSR 專案並做型別檢查與正式建置，`angular-ssr` 另外檢查伺服器輸出與 hydration（需先 build；可指定 `vue3`、`angular` 或 `angular-ssr`） |
+| `pnpm test:scripts`   | 部署腳本的測試（`scripts/*.test.mjs`：gh-pages 發布與 PR 預覽留言，對本機暫存 repo 與假 API 驗證）                                                                                                            |
 
 **開發與程式碼品質**
 
