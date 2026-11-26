@@ -15,7 +15,7 @@ const BASELINES = {
   'icon-button': 16933, // 含相依的 Tooltip 與 @floating-ui/dom；作為彈出式元件的觸發元素（原 16704）
   tag: 3390,
   tooltip: 10807, // 含 @floating-ui/dom（約 6 KB）
-  input: 3622, // Enter 隱式送出表單（+414；原 3208）
+  input: 4087, // 驗證被擋下後的錯誤狀態、密碼不保存狀態（先前累積到 +10% 上限邊緣；原 3622）
   field: 18058, // 含相依的 Icon Button、Tooltip 與 @floating-ui/dom
   output: 2501,
   segmented: 4097, // 強制色彩樣式與修飾鍵判斷（先前累積到 +10% 上限邊緣；原 3722）
@@ -31,7 +31,7 @@ const BASELINES = {
   drawer: 5376, // TASK-402（與 Modal 共用 internal/modal-dialog 的範本與樣式；原 5150）
   navbar: 6096, // TASK-403（含相依的 Kbd）
   footer: 3575, // TASK-404
-  'code-view': 3934, // TASK-401
+  'code-view': 4541, // 複製時以原始文字為準（含摺疊中的行）、fold-label（原 3934）
   popover: 9951, // TASK-505（含 @floating-ui/dom）
   menu: 11532, // TASK-506（含相依的 Popover 與 @floating-ui/dom）
   breadcrumb: 1669, // TASK-507
