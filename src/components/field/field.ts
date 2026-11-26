@@ -14,6 +14,27 @@ type FieldControl = AuiInput | AuiOutput | AuiSegmented;
 
 const CONTROL_TAGS = new Set(['aui-input', 'aui-output', 'aui-segmented']);
 
+/** 自訂元素是否已定義（不使用 :defined：happy-dom 等環境不支援這個選擇器） */
+const isUpgraded = (element: Element): boolean =>
+  customElements.get(element.localName) !== undefined;
+
+/**
+ * 是否被外層的 `<fieldset disabled>` 停用（第一個 `<legend>` 內的控制項不受影響，與原生規則相同）。
+ * 不使用 `:disabled`：不支援表單關聯自訂元素的環境中它不會符合
+ */
+function inDisabledFieldset(control: Element): boolean {
+  for (
+    let fieldset = control.closest('fieldset');
+    fieldset;
+    fieldset = fieldset.parentElement?.closest('fieldset') ?? null
+  ) {
+    if (!fieldset.disabled) continue;
+    const legend = fieldset.querySelector(':scope > legend');
+    if (!legend?.contains(control)) return true;
+  }
+  return false;
+}
+
 const isInput = (control: FieldControl | null): control is AuiInput =>
   control?.localName === 'aui-input';
 
@@ -128,7 +149,7 @@ export class AuiField extends LitElement {
       this.controlObserver.observe(fieldset, options);
     }
     // 控制項比欄位晚定義（元件分開載入）：升級前讀不到 disabled / readOnly，升級後再同步一次
-    if (!control.matches(':defined')) {
+    if (!isUpgraded(control)) {
       void customElements.whenDefined(control.localName).then(() => {
         if (this.control === control) this.syncClearDisabled();
       });
@@ -137,12 +158,11 @@ export class AuiField extends LitElement {
 
   private syncClearDisabled(): void {
     const control = this.control;
-    // :disabled 涵蓋自身的 disabled 與外層的 <fieldset disabled>（表單關聯自訂元素）
     this.clearDisabled =
       !isInput(control) ||
-      !control.matches(':defined') ||
+      !isUpgraded(control) ||
       control.disabled ||
-      control.matches(':disabled') ||
+      inDisabledFieldset(control) ||
       control.readOnly;
   }
 
