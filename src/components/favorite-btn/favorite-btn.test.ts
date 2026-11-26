@@ -94,6 +94,21 @@ describe('AuiFavoriteBtn (<aui-favorite-btn>)', () => {
       expect(button(el).classList.contains('is-favorite')).to.be.true;
     });
 
+    it('toggles on a click dispatched on the host (el.click())', async () => {
+      const el = await fixture<AuiFavoriteBtn>(html`<aui-favorite-btn></aui-favorite-btn>`);
+      let changes = 0;
+      el.addEventListener('aui-change', () => changes++);
+      el.click();
+      expect(el.favorite).to.be.true;
+      button(el).click();
+      expect(el.favorite, 'a click on the inner button toggles once').to.be.false;
+      expect(changes).to.equal(2);
+
+      el.disabled = true;
+      el.click();
+      expect(el.favorite).to.be.false;
+    });
+
     it('toggles back off on the next click', async () => {
       const el = await fixture<AuiFavoriteBtn>(
         html`<aui-favorite-btn favorite></aui-favorite-btn>`,
