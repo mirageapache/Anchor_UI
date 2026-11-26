@@ -1,4 +1,5 @@
 import { LitElement } from 'lit';
+import { POPUP_TRIGGER, PopupTrigger, PopupTriggerState } from '../../internal/popup-trigger.js';
 import { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
 /**
  * Anchor UI — Button 元件 (`<aui-button>`)
@@ -7,7 +8,8 @@ import { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
  * 點擊微縮放動態、載入中 Spinner 以及與宿主表單（form）的原生提交互動。
  * `type="submit"` / `"reset"` 的表單動作與原生按鈕相同，是點擊的預設行為：在 `click` 監聽器中
  * `preventDefault()` 可取消（因此在事件分派完畢後才執行）；所屬的 `<fieldset disabled>` 也會停用按鈕。
- * host 上的 `aria-describedby`（例如被 `<aui-tooltip>` 包住時的提示描述）會轉交給內部的 `<button>`。
+ * host 上的 `aria-describedby`（例如被 `<aui-tooltip>` 包住時的提示描述）會轉交給內部的 `<button>`；
+ * 作為 `<aui-popover>` 的觸發元素時，展開狀態（`aria-expanded` 等）也會寫在內部的 `<button>` 上。
  *
  * @element aui-button
  *
@@ -21,7 +23,7 @@ import { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
  * @csspart label - 主內容包裝容器
  * @csspart suffix - 後綴內容包裝容器
  */
-export declare class AuiButton extends LitElement {
+export declare class AuiButton extends LitElement implements PopupTrigger {
     static styles: import('lit').CSSResult[];
     static shadowRootOptions: ShadowRootInit;
     /**
@@ -63,6 +65,10 @@ export declare class AuiButton extends LitElement {
     private hostDescribedBy;
     /** 由所屬 `<fieldset disabled>` 或自身 disabled 屬性決定的表單停用狀態 */
     private formDisabled;
+    /** 作為彈出式元件（如 `<aui-popover>`）的觸發元素時的展開狀態，寫在內部的 `<button>` 上 */
+    private popupTrigger;
+    /** @internal 由彈出式元件呼叫（見 src/internal/popup-trigger.ts） */
+    [POPUP_TRIGGER](state: PopupTriggerState | null): void;
     constructor();
     /**
      * 所屬的表單（包含以 `form` 屬性指定的外部表單）

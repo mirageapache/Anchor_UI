@@ -17,6 +17,11 @@ interface DialogRenderOptions {
     role?: 'alertdialog';
 }
 /**
+ * 立即關閉（不可取消、不播放動畫）的方法名稱。以 `Symbol.for` 登記，頁面上有多份程式庫時
+ * 外層對話框仍能關閉另一份程式庫的內層對話框
+ */
+declare const FORCE_CLOSE: unique symbol;
+/**
  * 模態對話框的共用基底（`<aui-modal>`、`<aui-drawer>`）。
  *
  * 處理原生 `<dialog>.showModal()` 的開關生命週期：可取消的 `aui-show` / `aui-hide`、
@@ -110,8 +115,20 @@ export declare abstract class ModalDialogElement extends LitElement {
      * 並補發關閉事件（無法取消），讓依關閉結果運作的元件（如 Alert）得到結果
      */
     disconnectedCallback(): void;
+    /**
+     * 立即關閉：不播放動畫、不返還焦點，補發不可取消的關閉事件。
+     * 用於被移出頁面，以及外層對話框關閉時（內層的 dialog 會隨外層一起不再渲染，見 closeNestedDialogs）
+     */
+    private [FORCE_CLOSE];
+    /**
+     * 關閉位於本對話框子樹內、仍開啟的對話框（含其他元件 Shadow DOM 內的，如 Alert 內部的 Modal）。
+     * 外層的 dialog 關閉後為 `display: none`，內層的 dialog 隨之不再渲染，卻仍是 Top Layer 中的 modal：
+     * 畫面上什麼都沒有，頁面卻保持 inert 且無法捲動。因此外層關閉時一併結束內層（由上而下）
+     */
+    private closeNestedDialogs;
     private requestClose;
     willUpdate(changed: PropertyValues<this>): void;
+    /** 開啟須等 dialog 已渲染（首次渲染即開啟時），因此在 updated() 處理 */
     updated(changed: PropertyValues<this>): void;
     private startShow;
     private startHide;
@@ -143,7 +160,11 @@ export declare abstract class ModalDialogElement extends LitElement {
     protected renderDialog({ prefix, panelClass, role }: DialogRenderOptions): import('lit').TemplateResult<1>;
     /** 頁首關閉鈕（`no-close-button` 時不渲染） */
     private renderCloseButton;
-    /** `description` 的螢幕閱讀器專用文字（id 為 `description`，由 dialog 的 aria-describedby 參照） */
+    /**
+     * `description` 的文字（id 為 `description`，由 dialog 的 aria-describedby 參照）。
+     * `hidden`：只作為描述的來源，不出現在瀏覽模式的閱讀順序中（Alert 的訊息已顯示在畫面上，否則會被讀兩次）；
+     * 被 aria-describedby 參照的隱藏元素仍會計入描述
+     */
     private renderDescription;
 }
 export {};

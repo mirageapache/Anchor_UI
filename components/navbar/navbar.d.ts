@@ -38,9 +38,9 @@ import { NavbarPosition } from './navbar.types.js';
  * @csspart search-button - 搜尋鈕
  * @csspart theme-toggle - 主題切換開關
  *
- * @fires aui-menu-click - 點擊漢堡選單鈕時觸發（可被 preventDefault 取消開啟 `menu-drawer`）
- * @fires aui-search - 點擊搜尋鈕或按下快捷鍵時觸發，`detail.source` 為 `click` 或 `shortcut`
- * @fires aui-theme-change - 點擊主題開關時觸發（可被 preventDefault 取消切換），`detail.theme` 為即將切換到的主題
+ * @fires {CustomEvent<null>} aui-menu-click - 點擊漢堡選單鈕時觸發（可被 preventDefault 取消開啟 `menu-drawer`）
+ * @fires {CustomEvent<NavbarSearchDetail>} aui-search - 點擊搜尋鈕或按下快捷鍵時觸發，`detail.source` 為 `click` 或 `shortcut`
+ * @fires {CustomEvent<NavbarThemeChangeDetail>} aui-theme-change - 點擊主題開關時觸發（可被 preventDefault 取消切換），`detail.theme` 為即將切換到的主題
  */
 export declare class AuiNavbar extends LitElement {
     static styles: import('lit').CSSResult;

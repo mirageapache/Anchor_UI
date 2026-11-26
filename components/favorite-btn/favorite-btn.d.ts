@@ -22,7 +22,7 @@ import { TooltipPlacement } from '../tooltip/tooltip.types.js';
  * @csspart icon - 星號圖示（SVG）
  * @csspart tooltip - 內建的 `<aui-tooltip>`（`no-tooltip` 時不存在）
  *
- * @fires aui-change - 使用者切換收藏狀態後觸發（由程式設定 `favorite` 不會觸發），`detail.favorite` 為新狀態；支援 bubbles 與 composed
+ * @fires {CustomEvent<FavoriteChangeDetail>} aui-change - 使用者切換收藏狀態後觸發（由程式設定 `favorite` 不會觸發），`detail.favorite` 為新狀態；支援 bubbles 與 composed
  */
 export declare class AuiFavoriteBtn extends LitElement {
     static styles: import('lit').CSSResult;
@@ -42,9 +42,11 @@ export declare class AuiFavoriteBtn extends LitElement {
     tooltipPlacement: TooltipPlacement;
     /** 不顯示提示 */
     noTooltip: boolean;
+    private button?;
     private icon?;
     /** 目前播放中的彈跳動態（只取消自己建立的動畫，不影響使用端透過 ::part(icon) 加上的動畫） */
     private bounceAnimation?;
+    constructor();
     private handleClick;
     /**
      * 播放彈跳動態。使用 Web Animations API 而不是切換 class：

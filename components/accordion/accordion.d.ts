@@ -14,6 +14,8 @@ import { AccordionVariant } from './accordion.types.js';
  *
  * 內容中的段落與清單（`<p>`、`<ul>`、`<ol>`）會套用預設的間距與縮排。
  *
+ * `variant="plain"` 沒有外框、背景與分隔線，內距緊湊，適合放在側欄等已有外框的容器中作為可收合選單。
+ *
  * `aui-toggle` 會冒泡並穿出 Shadow DOM，巢狀手風琴的事件也會傳到外層；
  * 只處理自身的事件時請比對 `event.target === event.currentTarget`。
  *
@@ -28,7 +30,7 @@ import { AccordionVariant } from './accordion.types.js';
  * @csspart icon - 展開指示箭頭
  * @csspart body - 內容容器
  *
- * @fires aui-toggle - 展開狀態改變後觸發（使用者操作或程式設定皆會觸發），`detail.open` 為新狀態；支援 bubbles 與 composed
+ * @fires {CustomEvent<AccordionToggleDetail>} aui-toggle - 展開狀態改變後觸發（使用者操作或程式設定皆會觸發），`detail.open` 為新狀態；支援 bubbles 與 composed
  */
 export declare class AuiAccordion extends LitElement {
     static styles: import('lit').CSSResult;
@@ -38,7 +40,7 @@ export declare class AuiAccordion extends LitElement {
     open: boolean;
     /** 互斥群組名稱：同一個根節點內同名的手風琴一次只展開一個 */
     name: string;
-    /** 預設排版：`doc`（使用指南）或 `faq`（常見問題） */
+    /** 預設排版：`doc`（使用指南）、`faq`（常見問題）或 `plain`（無外框，適合側欄選單） */
     variant: AccordionVariant;
     private details?;
     /** 最近一次以 aui-toggle 通知的狀態，用來避免在狀態沒有實際改變時送出事件 */

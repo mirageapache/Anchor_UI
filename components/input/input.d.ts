@@ -16,8 +16,8 @@ import { InputType } from './input.types.js';
  *
  * @csspart control - 內部原生 `<input>` 或 `<textarea>` 元素
  *
- * @fires input - 每次輸入時分派（原生事件穿出 Shadow DOM），觸發時 `value` 已更新
- * @fires change - 內容提交時（失焦或 Enter）於 host 重新分派，觸發時 `value` 已更新
+ * @fires {Event} input - 每次輸入時分派（原生事件穿出 Shadow DOM），觸發時 `value` 已更新
+ * @fires {Event} change - 內容提交時（失焦或 Enter）於 host 重新分派，觸發時 `value` 已更新
  */
 export declare class AuiInput extends LitElement {
     static styles: import('lit').CSSResult;
@@ -26,6 +26,7 @@ export declare class AuiInput extends LitElement {
     static formAssociated: boolean;
     /** 表單參與（ElementInternals 或隱藏 input 退回方案） */
     private readonly formControl;
+    constructor();
     /** 不支援 ElementInternals 的環境（happy-dom、舊版瀏覽器）為 null */
     private get internals();
     private currentValue;
@@ -38,6 +39,8 @@ export declare class AuiInput extends LitElement {
     private control?;
     /** 由所屬 `<fieldset disabled>` 或自身 disabled 屬性決定的表單停用狀態 */
     private formDisabled;
+    /** 曾被驗證擋下且尚未通過（見 handleInvalid） */
+    private userInvalid;
     /**
      * 目前的值。以程式設定後，`value` 屬性的變更不再覆寫（與原生 input 相同）
      */
@@ -149,14 +152,26 @@ export declare class AuiInput extends LitElement {
     private get isDisabled();
     /** 更新目前值並同步表單值（同步執行，事件監聽者讀取 FormData 時即為最新值） */
     private applyValue;
+    /**
+     * 提交表單值。密碼與 `autocomplete="off"` 的欄位不交給瀏覽器保存狀態
+     * （與原生 input 相同：返回上一頁或還原分頁時不填回）
+     */
+    private syncFormValue;
     /** 以內部原生控制項為唯一驗證來源，鏡像至 ElementInternals */
     private syncValidity;
+    /**
+     * 驗證未通過（表單送出被擋下、checkValidity() / reportValidity()）：以錯誤狀態呈現，直到通過驗證或表單重設。
+     * 內部的控制項沒有表單擁有者，送出失敗時不會符合 `:user-invalid`，使用者沒碰過的必填欄位就沒有任何錯誤標示
+     */
+    private handleInvalid;
     private handleInput;
     /** 原生 change 不具 composed、不會穿出 Shadow DOM，須於 host 重新分派 */
     private handleChange;
     /**
      * 單行輸入按 Enter：送出所屬表單（隱式送出）。內部的 <input> 位於 Shadow DOM、沒有表單擁有者，
-     * 瀏覽器不會代為處理。輸入法選字中的 Enter 與帶修飾鍵的 Enter 不算
+     * 瀏覽器不會代為處理。輸入法選字中的 Enter 與帶修飾鍵的 Enter 不算：
+     * Safari 以 Enter 選字時會先結束組字再分派 keydown（`isComposing` 為 false），
+     * 只能從 `keyCode === 229`（輸入法處理中）辨識
      */
     private handleKeydown;
     willUpdate(changed: PropertyValues<this>): void;

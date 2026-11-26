@@ -30,10 +30,10 @@ import { ModalRole, ModalSize } from './modal.types.js';
  * @csspart body - 內容區（超出高度時可捲動）
  * @csspart footer - 頁尾
  *
- * @fires aui-show - 開始開啟前觸發（可被 preventDefault 取消）
- * @fires aui-after-show - 完全開啟且進場動畫結束後觸發
- * @fires aui-hide - 開始關閉前觸發（可被 preventDefault 取消），`detail.reason` 為關閉原因
- * @fires aui-after-hide - 完全關閉且退場動畫結束後觸發，`detail.reason` 為關閉原因
+ * @fires {CustomEvent<null>} aui-show - 開始開啟前觸發（可被 preventDefault 取消）
+ * @fires {CustomEvent<null>} aui-after-show - 完全開啟且進場動畫結束後觸發
+ * @fires {CustomEvent<ModalHideDetail>} aui-hide - 開始關閉前觸發（可被 preventDefault 取消），`detail.reason` 為關閉原因
+ * @fires {CustomEvent<ModalHideDetail>} aui-after-hide - 完全關閉且退場動畫結束後觸發，`detail.reason` 為關閉原因
  */
 export declare class AuiModal extends ModalDialogElement {
     static styles: import('lit').CSSResult[];

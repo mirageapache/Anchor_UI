@@ -1,4 +1,5 @@
 import { LitElement, TemplateResult } from 'lit';
+import { POPUP_TRIGGER, PopupTrigger, PopupTriggerState } from '../../internal/popup-trigger.js';
 import { IconButtonAction, IconButtonColor, IconButtonPreset, IconButtonShape, IconButtonSize, IconButtonStatus, IconButtonVariant } from './icon-button.types.js';
 import { TooltipPlacement } from '../tooltip/tooltip.types.js';
 /**
@@ -6,7 +7,7 @@ import { TooltipPlacement } from '../tooltip/tooltip.types.js';
  *
  * 專為複製 (Copy)、下載 (Download)、關閉、重新整理等動作打造之 32×32px 方形微型操作鈕。
  * 具備 Active 成功回饋狀態（背景與圖示變換為 Success 翠綠色）、平滑淡入淡出切換、
- * 深度結合 `<aui-tooltip>` 與螢幕閱讀器無障礙標籤播報。
+ * 深度結合 `<aui-tooltip>` 與螢幕閱讀器無障礙標籤播報；作為 `<aui-popover>` 的觸發元素時，展開狀態（`aria-expanded` 等）寫在內部的 `<button>` 上。
  *
  * @element aui-icon-button
  *
@@ -22,13 +23,13 @@ import { TooltipPlacement } from '../tooltip/tooltip.types.js';
  * @csspart success-icon - 成功回饋狀態圖示層
  * @csspart loading-icon - 載入中狀態圖示層
  *
- * @fires aui-copy - 複製文字至剪貼簿成功時觸發
- * @fires aui-copy-error - 剪貼簿存取失敗或沒有可複製內容（copy-value 為空）時觸發
- * @fires aui-download - 觸發下載行為時分派（可被 preventDefault 取消以自行接手下載）
- * @fires aui-download-error - download-url 使用不允許的協定（如 javascript:）而拒絕下載時觸發
- * @fires aui-status-change - 元件狀態發生改變時觸發
+ * @fires {CustomEvent<CopyDetail>} aui-copy - 複製文字至剪貼簿成功時觸發
+ * @fires {CustomEvent<CopyErrorDetail>} aui-copy-error - 剪貼簿存取失敗或沒有可複製內容（copy-value 為空）時觸發
+ * @fires {CustomEvent<DownloadDetail>} aui-download - 觸發下載行為時分派（可被 preventDefault 取消以自行接手下載）
+ * @fires {CustomEvent<DownloadErrorDetail>} aui-download-error - download-url 使用不允許的協定（如 javascript:）而拒絕下載時觸發
+ * @fires {CustomEvent<StatusChangeDetail>} aui-status-change - 元件狀態發生改變時觸發
  */
-export declare class AuiIconButton extends LitElement {
+export declare class AuiIconButton extends LitElement implements PopupTrigger {
     static styles: import('lit').CSSResult[];
     static shadowRootOptions: ShadowRootInit;
     private feedbackTimer;
@@ -114,6 +115,10 @@ export declare class AuiIconButton extends LitElement {
      * 螢幕閱讀器即時播報文字
      */
     private announcement;
+    /** 作為彈出式元件（如 `<aui-popover>`）的觸發元素時的展開狀態，寫在內部的 `<button>` 上 */
+    private popupTrigger;
+    /** @internal 由彈出式元件呼叫（見 src/internal/popup-trigger.ts） */
+    [POPUP_TRIGGER](state: PopupTriggerState | null): void;
     /** 複製進行中（等待剪貼簿）：期間不重複複製 */
     private copying;
     constructor();

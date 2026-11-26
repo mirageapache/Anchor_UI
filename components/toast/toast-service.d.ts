@@ -10,6 +10,8 @@ type VariantOptions = Omit<ToastOptions, 'variant' | 'message'>;
  * ToastService.error('連線逾時', { title: '上傳失敗', duration: 0 });
  * ToastService.configure({ placement: 'top-center' }); // 位置：六選一，預設 bottom-right
  * ```
+ *
+ * 伺服器端渲染時不顯示通知，`show()` 等方法回傳不作用的控制器（`closed` 立即 resolve）。
  */
 export declare const ToastService: {
     /** 顯示通知；`id` 與現有通知相同時改為更新該通知 */

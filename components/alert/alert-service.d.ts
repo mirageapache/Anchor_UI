@@ -7,6 +7,8 @@ import { AlertOptions, ConfirmOptions, PromptOptions } from './alert.types.js';
  * if (await AlertService.confirm({ title: '確定刪除？', destructive: true })) { ... }
  * const name = await AlertService.prompt({ title: '重新命名', defaultValue: 'draft' });
  * ```
+ *
+ * 只能在瀏覽器端使用：伺服器端渲染時回傳的 Promise 會以錯誤 reject（沒有人能回應對話框）。
  */
 export declare const AlertService: {
     /**

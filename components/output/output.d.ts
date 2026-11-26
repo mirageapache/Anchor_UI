@@ -28,6 +28,11 @@ export declare class AuiOutput extends LitElement {
      */
     status: OutputStatus;
     /**
+     * 狀態的文字（僅供螢幕閱讀器，念在結果之前，讓狀態不只依賴圖示與顏色）。
+     * 未設定時依 `status` 使用預設的「成功：」「警告：」「錯誤：」；設定後原樣使用，請自行包含標點（如 `Error:`）
+     */
+    statusLabel: string;
+    /**
      * 沒有結果時顯示的提示文字
      */
     placeholder: string;

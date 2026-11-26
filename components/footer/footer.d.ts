@@ -58,7 +58,10 @@ export declare class AuiFooter extends LitElement {
     /** 「© 年份 名稱」：年份為瀏覽器的當下年份；起始年份早於今年時顯示為範圍 */
     private copyrightText;
     private renderLink;
-    /** 框架可能綁定 null 等非陣列值，一律視為沒有欄位 */
+    /**
+     * 框架可能綁定 null 等非陣列值，一律視為沒有欄位；資料來自使用端（API 回應等），不信任型別：
+     * 不是物件的欄位與連結略過，links 不是陣列時視為沒有連結，避免單一筆壞資料讓整個頁尾無法渲染
+     */
     private get columnList();
     private renderColumns;
     render(): import('lit').TemplateResult<1>;

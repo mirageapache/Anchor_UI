@@ -18,7 +18,9 @@ export interface SetThemeOptions {
  */
 export declare function setTheme(theme: Theme, options?: SetThemeOptions): void;
 /**
- * 取得目前頁面所處之主題狀態
+ * 取得目前頁面所處之主題狀態。
+ * 只看 `<html>` 的 `data-theme`：在頁面的某個區塊上另外設定 `data-theme="dark"` 雖然會套用深色的 token，
+ * 但不是受支援的用法，`getTheme()` / `setTheme()` 與跟隨主題的元件（如 Navbar 的主題切換）都不會反映它
  */
 export declare function getTheme(): Theme;
 /**

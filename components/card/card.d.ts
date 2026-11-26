@@ -12,13 +12,19 @@ import { CardHeadingLevel, CardTarget } from './card.types.js';
  *
  * 整張卡片為連結時，請勿在其中放入按鈕、連結等互動元素（互動元素不可巢狀），並請提供卡片名稱作為連結的名稱。
  *
+ * 放入 `icon` slot 時改為左右排版：左側為圖示，右側為名稱、簡介與標籤（例如 KPI 卡片的圖示加數值）。
+ * 圖示的大小與外觀由放入的元素決定；純裝飾的圖示請加上 `aria-hidden="true"`。
+ *
  * @element aui-card
  *
  * @slot - 簡介描述（未提供時使用 `description` 屬性）
  * @slot heading - 卡片名稱（未提供時使用 `heading` 屬性）
  * @slot tags - 卡片底部的標籤群（如 `<aui-tag>`）
+ * @slot icon - 左側的圖示（放入時改為左右排版）
  *
  * @csspart base - 卡片外層容器（有 `href` 時為 `<a>`，否則為 `<div>`）
+ * @csspart icon - 圖示容器（只在放入 `icon` slot 時出現）
+ * @csspart body - 圖示右側的內容容器（只在放入 `icon` slot 時出現）
  * @csspart header - 名稱與 HOT 徽標所在的標題列
  * @csspart heading - 卡片名稱（`<h1>` ~ `<h6>`）
  * @csspart hot-badge - HOT 徽標

@@ -27,8 +27,8 @@ import { LitElement, PropertyValues } from 'lit';
  * @csspart hint - 輔助提示文字
  * @csspart error - 錯誤訊息（live region）
  *
- * @fires aui-file-drop - 取得通過檢查的檔案時觸發；`detail.files` 為 File 陣列，`detail.source` 為 `drop` 或 `picker`
- * @fires aui-file-reject - 有檔案因格式、數量或為資料夾而被拒絕時觸發；`detail.rejections` 列出檔案與原因
+ * @fires {CustomEvent<FileDropDetail>} aui-file-drop - 取得通過檢查的檔案時觸發；`detail.files` 為 File 陣列，`detail.source` 為 `drop` 或 `picker`
+ * @fires {CustomEvent<FileRejectDetail>} aui-file-reject - 有檔案因格式、數量或為資料夾而被拒絕時觸發；`detail.rejections` 列出檔案與原因
  */
 export declare class AuiDropzone extends LitElement {
     static styles: import('lit').CSSResult;

@@ -20,7 +20,7 @@ import { TagSize, TagVariant } from './tag.types.js';
  * @csspart suffix - 後綴內容包裝容器
  * @csspart remove-button - 移除按鈕（當 removable 為 true 時）
  *
- * @fires aui-remove - 當點擊移除按鈕時觸發，支援 bubbles 與 composed
+ * @fires {CustomEvent<TagRemoveDetail>} aui-remove - 當點擊移除按鈕時觸發，支援 bubbles 與 composed；元件不會移除自己，由監聽者處理
  */
 export declare class AuiTag extends LitElement {
     static styles: import('lit').CSSResult;

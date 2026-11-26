@@ -6,6 +6,7 @@ import { LitElement, PropertyValues } from 'lit';
  *
  * - **行號**：左側行號列為 sticky，水平捲動時不位移；行號與摺疊鈕不會被選取或複製。
  * - **摺疊**：依縮排自動判斷可摺疊的區塊（下一個非空白行縮排更深的行即可摺疊，與 VS Code 預設相同）。
+ *   複製選取的內容時以原始文字為準：選取範圍跨過已摺疊的區塊時，摺疊中的行也會一併複製。
  *   摺疊鈕為一組：Tab 只會停在其中一個，以 ↑ / ↓ 在摺疊鈕之間移動、Home / End 到第一個 / 最後一個，
  *   Enter 或空白鍵切換。`code` 變更時摺疊狀態會重設。
  * - **大量內容**：所有展開中的行都在 DOM 中（瀏覽器的頁內搜尋與跨行選取皆可用；摺疊中的行不在 DOM 中，
@@ -30,9 +31,16 @@ export declare class AuiCodeView extends LitElement {
     code: string;
     /** 檢視區的無障礙名稱 */
     label: string;
+    /**
+     * 摺疊鈕的無障礙名稱樣板：`{start}` 與 `{end}` 會換成區塊的起訖行號（從 1 起算）
+     */
+    foldLabel: string;
     /** 已摺疊區塊的起始行（0 起算） */
     private collapsed;
-    /** 摺疊鈕中位於 Tab 順序上的那一個（起始行，0 起算；roving tabindex） */
+    /**
+     * 摺疊鈕中位於 Tab 順序上的那一個（起始行，0 起算；roving tabindex）。
+     * 不是 reactive state：以方向鍵移動時直接改兩個按鈕的 tabindex，不必重新渲染所有行（萬行內容時按住方向鍵會卡頓）
+     */
     private activeFold;
     private lines;
     private foldRanges;
@@ -53,6 +61,15 @@ export declare class AuiCodeView extends LitElement {
     private handleClick;
     /** 摺疊鈕之間的鍵盤移動（roving tabindex） */
     private handleKeydown;
+    /**
+     * 複製：以原始文字寫入剪貼簿。畫面上的選取範圍不含已摺疊的行（不在 DOM 中），
+     * 空白行在序列化選取範圍時也可能被瀏覽器合併；選取範圍超出本元件時交給瀏覽器處理
+     */
+    private handleCopy;
+    /** 選取範圍的端點在該行文字中的欄位：該行開頭到端點之間的文字長度（Lit 的註解標記不計入） */
+    private columnOf;
+    /** 位於本元件 Shadow DOM 內的選取範圍；沒有、或端點在元件之外時為 null */
+    private selectedRange;
     private renderLine;
     render(): import('lit').TemplateResult<1>;
 }

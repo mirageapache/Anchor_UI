@@ -21,8 +21,8 @@ import { LitElement, PropertyValues } from 'lit';
  * @csspart clear-button - 內建清除鈕（`<aui-icon-button>`）
  * @csspart description - 次要描述文字
  *
- * @fires aui-copy - 複製鈕成功複製控制項內容時觸發（來自內建 `<aui-icon-button>`）
- * @fires aui-copy-error - 複製失敗或控制項為空時觸發（來自內建 `<aui-icon-button>`）
+ * @fires {CustomEvent<CopyDetail>} aui-copy - 複製鈕成功複製控制項內容時觸發（來自內建 `<aui-icon-button>`）
+ * @fires {CustomEvent<CopyErrorDetail>} aui-copy-error - 複製失敗或控制項為空時觸發（來自內建 `<aui-icon-button>`）
  */
 export declare class AuiField extends LitElement {
     static styles: import('lit').CSSResult;
@@ -43,6 +43,18 @@ export declare class AuiField extends LitElement {
      * 輸入框停用、唯讀，或控制項不是 `<aui-input>` 時停用
      */
     clearable: boolean;
+    /**
+     * 複製鈕的名稱；會接上欄位的標題（如「複製 輸出」）
+     */
+    copyLabel: string;
+    /**
+     * 複製成功後短暫顯示的提示文字
+     */
+    copiedLabel: string;
+    /**
+     * 清除鈕的名稱與提示文字；名稱會接上欄位的標題（如「清除 關鍵字」）
+     */
+    clearLabel: string;
     /** 目前關聯的控制項 */
     private control;
     /** 清除鈕是否停用 */

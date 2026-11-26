@@ -23,7 +23,7 @@ import { ToastVariant } from './toast.types.js';
  * @csspart message - 訊息
  * @csspart close-button - 關閉鈕
  *
- * @fires aui-close - 點擊關閉鈕時觸發（ToastService 建立的通知會隨之關閉）
+ * @fires {CustomEvent<null>} aui-close - 點擊關閉鈕時觸發（ToastService 建立的通知會隨之關閉）
  */
 export declare class AuiToast extends LitElement {
     static styles: import('lit').CSSResult[];

@@ -8,6 +8,8 @@ import { AlertIcon, AlertMode } from './alert.types.js';
  * 命令式呼叫請使用 `AlertService.alert()` / `confirm()` / `prompt()`。
  *
  * - **鍵盤**：Enter 確認、ESC 取消；焦點在按鈕上時 Enter 啟動該按鈕（輸入法組字中的 Enter 不算）。
+ *   預設 slot 內的互動內容（連結、表單控制項…）保有自己的 Enter 行為；`destructive` 時 Enter 只在
+ *   prompt 的輸入框內確認，其餘須按下確定鈕。
  * - **初始焦點**：prompt 為輸入框；`destructive` 為取消鈕（避免誤按 Enter 執行破壞性操作）；其餘為確定鈕。
  * - **無障礙**：以 `alertdialog` 呈現，標題（含圖示狀態）為名稱、訊息為描述；圖示遵循減少動畫設定。
  * - **自動關閉**：設定 `timer`（毫秒）後時間到即以取消關閉（原因 `timer`）。依 WCAG 2.2.1，
@@ -26,17 +28,18 @@ import { AlertIcon, AlertMode } from './alert.types.js';
  * @csspart confirm-button - 確定鈕（`<aui-button>`）
  * @csspart cancel-button - 取消鈕（`<aui-button>`）
  *
- * @fires aui-show - 開始開啟前觸發（可被 preventDefault 取消；來自內部 `<aui-modal>`）
- * @fires aui-after-show - 完全開啟後觸發（來自內部 `<aui-modal>`）
- * @fires aui-hide - 開始關閉前觸發（可被 preventDefault 取消；來自內部 `<aui-modal>`）
- * @fires aui-after-hide - 完全關閉後觸發（來自內部 `<aui-modal>`）
- * @fires aui-confirm - 以確定關閉後觸發，`detail.value` 為 prompt 的輸入值
- * @fires aui-cancel - 以取消關閉後觸發，`detail.reason` 為取消原因
+ * @fires {CustomEvent<null>} aui-show - 開始開啟前觸發（可被 preventDefault 取消；來自內部 `<aui-modal>`）
+ * @fires {CustomEvent<null>} aui-after-show - 完全開啟後觸發（來自內部 `<aui-modal>`）
+ * @fires {CustomEvent<ModalHideDetail>} aui-hide - 開始關閉前觸發（可被 preventDefault 取消；來自內部 `<aui-modal>`）
+ * @fires {CustomEvent<ModalHideDetail>} aui-after-hide - 完全關閉後觸發（來自內部 `<aui-modal>`）
+ * @fires {CustomEvent<AlertConfirmDetail>} aui-confirm - 以確定關閉後觸發，`detail.value` 為 prompt 的輸入值
+ * @fires {CustomEvent<AlertCancelDetail>} aui-cancel - 以取消關閉後觸發，`detail.reason` 為取消原因
  */
 export declare class AuiAlert extends LitElement {
     static styles: import('lit').CSSResult;
     private modal;
     private input?;
+    private contentSlot?;
     /**
      * 是否開啟
      */
@@ -91,6 +94,8 @@ export declare class AuiAlert extends LitElement {
     timer: number;
     /** 本次開啟的結果；由按鈕、Enter、自動關閉或 Modal 的關閉原因決定 */
     private decision;
+    /** 內部 Modal 正在關閉（aui-hide 已分派、aui-after-hide 尚未）時的關閉原因；否則為 null */
+    private closingReason;
     /** 自動關閉計時（可暫停：滑鼠停在對話框上時） */
     private readonly autoClose;
     constructor();
@@ -128,8 +133,12 @@ export declare class AuiAlert extends LitElement {
     updated(changed: PropertyValues<this>): void;
     /** 把 open 同步到內部 Modal；Modal 取消開啟或關閉時同步回 Alert */
     private syncModal;
+    /** 記下進行中的關閉原因（aui-hide 被取消時 Modal 保持開啟，下一次關閉會覆寫） */
+    private handleModalHide;
     /** Modal 完全關閉後（不論原因）決定結果並分派 aui-confirm / aui-cancel */
     private handleModalAfterHide;
+    /** 結束一次關閉：以按鈕 / Enter / 計時的結果為準，否則依 Modal 的關閉原因視為取消 */
+    private reportResult;
     private closeByTimer;
     /** 事件是否發生在對話框面板內（而非遮罩） */
     private isInPanel;
@@ -139,8 +148,12 @@ export declare class AuiAlert extends LitElement {
     private handlePointerDown;
     /**
      * 任何鍵盤操作都代表使用者正在處理對話框，不再自動關閉。
-     * Enter 確認：焦點在按鈕或多行輸入框上、或正在以輸入法組字時，交由原生行為處理。
+     * Enter 確認：焦點在按鈕上、或正在以輸入法組字時，交由原生行為處理。
      *
+     * - 來自預設 slot 的內容（連結、select、checkbox、textarea…）或已被處理（defaultPrevented）的 Enter
+     *   不屬於對話框：不攔截、不確認。
+     * - `destructive` 時只有 prompt 輸入框內的 Enter 會確認：焦點可能因點擊訊息而落在面板上，
+     *   此時的 Enter 不可執行破壞性操作。
      * - 長按 Enter 的重複按鍵一律忽略（含按鈕的原生啟動）：以 Enter 開啟對話框時若按住不放，
      *   重複的 keydown 會在使用者看到內容前就確認或取消。
      * - Safari 以 Enter 選字時會先結束組字再分派 keydown（`isComposing` 為 false），
