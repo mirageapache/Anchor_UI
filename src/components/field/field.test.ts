@@ -241,6 +241,22 @@ describe('AuiField (<aui-field>)', () => {
       expect(document.activeElement).to.equal(input);
     });
 
+    it('is disabled while an enclosing fieldset disables the input', async () => {
+      const fieldset = await fixture<HTMLFieldSetElement>(html`
+        <fieldset disabled>
+          <aui-field clearable><aui-input value="locked"></aui-input></aui-field>
+        </fieldset>
+      `);
+      const field = fieldset.querySelector<AuiField>('aui-field')!;
+      await settle(field);
+      const button = () => part<AuiIconButton>(field, 'clear-button')!;
+      expect(button().disabled).to.be.true;
+
+      fieldset.disabled = false;
+      await settle(field);
+      expect(button().disabled).to.be.false;
+    });
+
     it('is disabled while the input is disabled or readonly', async () => {
       const field = await fixture<AuiField>(html`
         <aui-field clearable><aui-input value="locked" readonly></aui-input></aui-field>

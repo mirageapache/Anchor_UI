@@ -99,15 +99,33 @@ export class AuiField extends LitElement {
   }
 
   private observeControl(control: FieldControl): void {
-    this.controlObserver.observe(control, {
-      attributes: true,
-      attributeFilter: ['disabled', 'readonly'],
-    });
+    const options = { attributes: true, attributeFilter: ['disabled', 'readonly'] };
+    this.controlObserver.observe(control, options);
+    // 外層的 <fieldset disabled> 也會停用輸入框，但輸入框本身的屬性不會變：一併觀察各層 fieldset
+    for (
+      let fieldset = control.closest('fieldset');
+      fieldset;
+      fieldset = fieldset.parentElement?.closest('fieldset') ?? null
+    ) {
+      this.controlObserver.observe(fieldset, options);
+    }
+    // 控制項比欄位晚定義（元件分開載入）：升級前讀不到 disabled / readOnly，升級後再同步一次
+    if (!control.matches(':defined')) {
+      void customElements.whenDefined(control.localName).then(() => {
+        if (this.control === control) this.syncClearDisabled();
+      });
+    }
   }
 
   private syncClearDisabled(): void {
     const control = this.control;
-    this.clearDisabled = !isInput(control) || control.disabled || control.readOnly;
+    // :disabled 涵蓋自身的 disabled 與外層的 <fieldset disabled>（表單關聯自訂元素）
+    this.clearDisabled =
+      !isInput(control) ||
+      !control.matches(':defined') ||
+      control.disabled ||
+      control.matches(':disabled') ||
+      control.readOnly;
   }
 
   /** 從預設 slot 的元素中找出控制項並建立關聯 */
