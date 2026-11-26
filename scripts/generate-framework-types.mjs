@@ -9,7 +9,7 @@
 //
 // 由 pnpm build 執行（在 vite build 之後，輸出到 dist/）。
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
 const manifestPath = join(root, 'custom-elements.json');
@@ -48,11 +48,20 @@ function listFiles(dir) {
 const stringFalseAttributes = new Set(
   listFiles(join(root, 'src'))
     .filter((file) => file.endsWith('.ts') && !/\.(test|stories)\.ts$/.test(file))
-    .flatMap((file) => [
-      ...readFileSync(file, 'utf-8').matchAll(
-        /attribute:\s*'([\w-]+)',\s*converter:\s*defaultTrue\b/g,
-      ),
-    ])
+    .flatMap((file) => {
+      const code = readFileSync(file, 'utf-8');
+      const matches = [...code.matchAll(/attribute:\s*'([\w-]+)',\s*converter:\s*defaultTrue\b/g)];
+      // 這個樣式只認得「attribute 緊接 converter」的寫法：中間多一個選項（如 reflect）就不會被找到，
+      // 該屬性在產生的型別中會默默少了 "true" / "false" 的字串形式。數量對不上時直接失敗
+      const uses = [...code.matchAll(/\bconverter:\s*defaultTrue\b/g)].length;
+      if (uses !== matches.length) {
+        fail(
+          `${file}：有 ${uses} 處 converter: defaultTrue，但只辨識出 ${matches.length} 個 attribute。` +
+            "請寫成 { attribute: '…', converter: defaultTrue }（兩個選項相鄰、依此順序）",
+        );
+      }
+      return matches;
+    })
     .map(([, attribute]) => attribute),
 );
 
@@ -97,22 +106,38 @@ const elements = manifest.modules
 
 if (!elements.length) fail('custom-elements.json 中沒有任何元件');
 
-/** dist/ 的型別宣告中以 export 宣告的名稱（全量入口以 export * 轉出所有元件模組） */
+/**
+ * 全量入口（dist/index.d.ts）實際匯出的名稱：從入口沿著 `export * from` 走訪。
+ * 只看「dist/ 裡有沒有宣告」是不夠的：宣告在 x.types.ts 卻沒有從元件的 index.ts 轉出的型別，
+ * 產生的宣告檔一樣匯入不到（使用端開著 skipLibCheck 時，事件型別會默默變成 any）
+ */
 function exportedNames() {
   const names = new Set();
-  const walk = (dir) => {
-    for (const item of readdirSync(dir, { withFileTypes: true })) {
-      const path = join(dir, item.name);
-      if (item.isDirectory()) walk(path);
-      else if (item.name.endsWith('.d.ts')) {
-        const code = readFileSync(path, 'utf-8');
-        const pattern =
-          /^export (?:declare )?(?:abstract )?(?:interface|type|class|const|function|enum) (\w+)/gm;
-        for (const [, name] of code.matchAll(pattern)) names.add(name);
+  const visited = new Set();
+  const visit = (file) => {
+    if (visited.has(file)) return;
+    visited.add(file);
+    if (!existsSync(file)) fail(`找不到型別宣告 ${file}（由全量入口轉出），請先執行 vite build`);
+    const code = readFileSync(file, 'utf-8');
+    const declaration =
+      /^export (?:declare )?(?:abstract )?(?:interface|type|class|const|function|enum) (\w+)/gm;
+    for (const [, name] of code.matchAll(declaration)) names.add(name);
+    // export { A, B as C }、export type { A }（有無 from 皆同：列出的就是對外的名稱）
+    for (const [, list] of code.matchAll(/^export (?:type )?\{([^}]*)\}/gm)) {
+      for (const item of list.split(',')) {
+        const name = item
+          .trim()
+          .replace(/^type\s+/, '')
+          .split(/\s+as\s+/)
+          .at(-1);
+        if (name) names.add(name);
       }
     }
+    for (const [, specifier] of code.matchAll(/^export \* from ['"](\.[^'"]+)['"]/gm)) {
+      visit(join(dirname(file), specifier.replace(/\.js$/, '.d.ts')));
+    }
   };
-  walk(join(root, 'dist'));
+  visit(join(root, 'dist', 'index.d.ts'));
   return names;
 }
 

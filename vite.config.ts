@@ -34,6 +34,8 @@ export default defineConfig({
         'src/stories/**',
         'src/test-utils/**',
         'src/internal/**/!(modal-dialog|popup-trigger).ts',
+        // 上一條的例外以檔名開頭比對，會連 modal-dialog.styles.ts 一起放行：樣式模組不是型別的一部分
+        'src/internal/**/*.styles.ts',
       ],
     }),
   ],

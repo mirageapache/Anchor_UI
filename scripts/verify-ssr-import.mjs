@@ -10,6 +10,7 @@
 //
 // 透過套件自身的 exports（@anchor-ui/core/<name>）載入 dist/，與使用端的解析方式相同。
 // 另外在 Node 呼叫 setTheme、ToastService、AlertService，確認伺服器端的行為（見 SERVER_API_CHECKS）。
+import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 import { listComponents } from './components.mjs';
 
@@ -26,22 +27,50 @@ const before = new Set(presentGlobals());
 
 const entries = listComponents(root).map((name) => ({
   specifier: `@anchor-ui/core/${name}`,
-  tags: [`aui-${name}`],
+  tag: `aui-${name}`,
 }));
-// 全量入口最後載入：先逐一載入個別入口，錯誤才會對應到實際出錯的入口
-entries.push({ specifier: '@anchor-ui/core', tags: entries.flatMap((entry) => entry.tags) });
 
-for (const { specifier, tags } of entries) {
-  try {
-    await import(specifier);
-  } catch (error) {
-    failures.push(`import '${specifier}' 失敗：${error?.stack ?? error}`);
+// 個別入口各自在全新的 Node 程序載入：同一個程序共用一份 customElements，先載入的入口
+// （如 alert 連帶註冊 button / input / modal）會讓之後的入口「已註冊」而檢查不到自己是否能獨立載入
+const ENTRY_CHECK = `
+const [specifier, tag] = process.argv.slice(1);
+const GLOBALS = ${JSON.stringify(BROWSER_GLOBALS)};
+const present = () => GLOBALS.filter((name) => typeof globalThis[name] !== 'undefined');
+const before = present();
+await import(specifier);
+console.log(JSON.stringify({
+  registered: Boolean(globalThis.customElements?.get(tag)),
+  added: present().filter((name) => !before.includes(name)),
+}));
+`;
+for (const { specifier, tag } of entries) {
+  const child = spawnSync(
+    process.execPath,
+    ['--input-type=module', '-e', ENTRY_CHECK, specifier, tag],
+    { cwd: root, encoding: 'utf-8' },
+  );
+  if (child.status !== 0) {
+    failures.push(`import '${specifier}' 失敗：${child.stderr.trim() || child.error}`);
     continue;
   }
-  const unregistered = tags.filter((tag) => !globalThis.customElements?.get(tag));
-  if (unregistered.length) {
-    failures.push(`import '${specifier}' 後沒有註冊：${unregistered.join(', ')}`);
+  const { registered, added } = JSON.parse(child.stdout.trim().split('\n').at(-1));
+  if (!registered) failures.push(`單獨 import '${specifier}' 後沒有註冊 ${tag}`);
+  if (added.length) {
+    failures.push(`import '${specifier}' 後出現瀏覽器全域變數：${added.join(', ')}`);
   }
+}
+
+// 全量入口在本程序載入（之後的伺服器端 API 檢查沿用）
+try {
+  await import('@anchor-ui/core');
+  const unregistered = entries
+    .map((entry) => entry.tag)
+    .filter((tag) => !globalThis.customElements?.get(tag));
+  if (unregistered.length) {
+    failures.push(`import '@anchor-ui/core' 後沒有註冊：${unregistered.join(', ')}`);
+  }
+} catch (error) {
+  failures.push(`import '@anchor-ui/core' 失敗：${error?.stack ?? error}`);
 }
 
 // 命令式 API 在伺服器端的行為：SSR 時同一段程式（如 Angular 的 ngOnInit）會在伺服器與瀏覽器各執行一次。
