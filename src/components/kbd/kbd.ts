@@ -61,8 +61,8 @@ export class AuiKbd extends LitElement {
    * 優先透過 ElementInternals 設定預設語意，不在使用端的標籤上增加屬性。
    */
   private applyLabel(): void {
-    // 只含空白的 label 視為未設定
-    const label = this.label.trim();
+    // 只含空白的 label 視為未設定；框架可能綁定 null / undefined
+    const label = (this.label ?? '').trim();
     if (this.internals) {
       this.internals.role = label ? 'img' : null;
       this.internals.ariaLabel = label || null;

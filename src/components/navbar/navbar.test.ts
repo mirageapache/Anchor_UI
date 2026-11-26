@@ -88,6 +88,17 @@ describe('AuiNavbar (<aui-navbar>)', () => {
       expect(part(el, 'brand-title')).to.be.null;
     });
 
+    it('renders a slotted logo when brand is bound to null or undefined', async () => {
+      for (const brand of [null, undefined]) {
+        const el = await fixture<AuiNavbar>(html`
+          <aui-navbar .brand=${brand as unknown as string}
+            ><svg slot="logo" width="20" height="20" aria-label="Logo"></svg
+          ></aui-navbar>
+        `);
+        expect(part(el, 'logo'), String(brand)).to.exist;
+      }
+    });
+
     it('renders no brand without a name or logo', async () => {
       const el = await fixture<AuiNavbar>(html`<aui-navbar></aui-navbar>`);
       expect(part(el, 'brand')).to.be.null;

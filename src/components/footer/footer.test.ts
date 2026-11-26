@@ -95,6 +95,24 @@ describe('AuiFooter (<aui-footer>)', () => {
       expect(social.left).to.be.above(links.right);
     });
 
+    it('skips malformed column data instead of failing to render', async () => {
+      const columns = [
+        null,
+        'not a column',
+        { heading: 'No links' },
+        { heading: 'Bad links', links: 'oops' },
+        { heading: 'Mixed', links: [null, { label: 'Docs', href: '/docs' }, 42] },
+      ];
+      const el = await fixture<AuiFooter>(
+        html`<aui-footer .columns=${columns as unknown as AuiFooter['columns']}></aui-footer>`,
+      );
+      const rendered = [...el.shadowRoot!.querySelectorAll('[part="column"]')];
+      expect(rendered.map((column) => column.querySelectorAll('li').length)).to.deep.equal([
+        0, 0, 1,
+      ]);
+      expect(rendered[2].querySelector('a')!.getAttribute('href')).to.equal('/docs');
+    });
+
     it('renders columns with headings and link lists, above the bottom row', async () => {
       const el = await fixture<AuiFooter>(html`
         <aui-footer

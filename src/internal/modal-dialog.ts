@@ -242,7 +242,8 @@ export abstract class ModalDialogElement extends LitElement {
 
     const event = new CustomEvent('aui-show', { bubbles: true, composed: true, cancelable: true });
     this.dispatchEvent(event);
-    if (event.defaultPrevented) {
+    // 監聽者也可能在 aui-show 中把元素移出頁面：同樣無法 showModal()（會拋出 InvalidStateError）
+    if (event.defaultPrevented || !this.isConnected) {
       this.open = false;
       return;
     }

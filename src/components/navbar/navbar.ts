@@ -305,7 +305,8 @@ export class AuiNavbar extends LitElement {
   private renderBrand() {
     const hasLogo = hasLightContent(this, 'logo');
     if (!this.brand && !hasLogo) return nothing;
-    const initial = [...this.brand.trim()][0]?.toUpperCase() ?? '';
+    // 框架可能綁定 null / undefined（只提供 logo slot 時）
+    const initial = [...(this.brand ?? '').trim()][0]?.toUpperCase() ?? '';
     const content = html`
       <span class="navbar__logo" part="logo">
         <slot name="logo"><span aria-hidden="true">${initial}</span></slot>

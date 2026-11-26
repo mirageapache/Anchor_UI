@@ -31,6 +31,6 @@ export type TagSize = 'sm' | 'md' | 'lg';
  * `aui-remove` 事件資料
  */
 export interface TagRemoveDetail {
-  /** 被移除的標籤（事件可取消，取消時不移除） */
+  /** 被點擊移除鈕的標籤。元件本身不會移除自己：由監聽者決定是否從畫面或資料中移除 */
   tag: AuiTag;
 }

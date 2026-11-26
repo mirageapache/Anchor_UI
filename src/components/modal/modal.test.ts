@@ -164,6 +164,16 @@ describe('AuiModal (<aui-modal>)', () => {
       expect(el.open).to.be.true; // 之後插入頁面時才開啟
     });
 
+    it('stays closed without throwing when an aui-show listener removes it from the page', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Removed"></aui-modal>`);
+      el.addEventListener('aui-show', () => el.remove());
+      // showModal() 在不在頁面上的 dialog 會拋出，show() 不可因此 reject
+      await el.show();
+      expect(el.open).to.be.false;
+      expect(isScrollLocked()).to.be.false;
+      expect(getTopModalLayer()).to.be.null;
+    });
+
     it('stays closed when aui-show is cancelled', async () => {
       const el = await fixture<AuiModal>(html`<aui-modal heading="Cancel show"></aui-modal>`);
       el.addEventListener('aui-show', (event) => event.preventDefault());

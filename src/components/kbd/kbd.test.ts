@@ -37,6 +37,15 @@ describe('AuiKbd (<aui-kbd>)', () => {
     expect(el.shadowRoot!.textContent).to.equal('');
   });
 
+  it('still renders the key when label is bound to null or undefined', async () => {
+    for (const label of [null, undefined]) {
+      const el = await fixture<AuiKbd>(
+        html`<aui-kbd .label=${label as unknown as string}>⌘</aui-kbd>`,
+      );
+      expect(el.shadowRoot!.querySelector('slot'), String(label)).to.exist;
+    }
+  });
+
   it('keeps showing the symbol when label is set and adds no attributes to the host', async () => {
     const el = await fixture<AuiKbd>(html`<aui-kbd label="Command">⌘</aui-kbd>`);
     const plain = await fixture<AuiKbd>(html`<aui-kbd>⌘</aui-kbd>`);
