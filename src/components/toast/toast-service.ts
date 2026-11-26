@@ -12,8 +12,10 @@ import { PausableTimer } from '../../internal/pausable-timer.js';
 import { sharedState } from '../../internal/shared-state.js';
 import {
   followTopModal,
+  getTopModalLayer,
   isPopoverOpen,
   MODAL_OVERLAY_SLOT,
+  onModalLayerChange,
   raisePopover,
 } from '../../internal/top-layer.js';
 import { transitionTimeMs } from '../../internal/transition.js';
@@ -247,12 +249,20 @@ class ToastManager {
       if (isPopoverOpen(viewport)) viewport.hidePopover();
     }
     // 移除位於指標下或含焦點的通知時不會觸發 pointerout / focusout，依實際狀態重新判斷
-    if (viewport) {
-      this.hovering = this.isPointerOverToast();
-      this.focused = viewport.matches(':focus-within');
-      this.syncPause();
-    }
+    this.refreshPause();
     this.flush();
+  }
+
+  /**
+   * 依實際狀態重新判斷指標與焦點是否仍在通知上。節點被移除或搬移時不會觸發 pointerout / focusout
+   * （移除通知、所在的 modal 被移出頁面而 Viewport 搬回原位置…），旗標若停在 true，所有通知都不會再自動關閉
+   */
+  private refreshPause(): void {
+    const viewport = this.viewport;
+    if (!viewport) return;
+    this.hovering = this.isPointerOverToast();
+    this.focused = viewport.matches(':focus-within');
+    this.syncPause();
   }
 
   /** 排隊中的通知超過上限時，關閉最舊的（closed 照常 resolve），保留較新的訊息 */
@@ -321,8 +331,14 @@ class ToastManager {
 
   private ensureViewport(): HTMLElement {
     if (this.viewport) {
-      // 頁面被整個重建（例如 SPA 換頁清空 body）時重新放回
-      if (!this.viewport.isConnected) document.body.appendChild(this.viewport);
+      // 頁面被整個重建（例如 SPA 換頁清空 body）時重新放回。有 modal 開啟時（例如 modal 的內容被整個換掉）
+      // 須放回最上層 modal 內：放在 <body> 雖然看得到，卻位於 modal 之外而無法操作、也不會被播報
+      if (!this.viewport.isConnected) {
+        const layer = getTopModalLayer();
+        if (layer) this.viewport.slot = MODAL_OVERLAY_SLOT;
+        (layer ?? document.body).appendChild(this.viewport);
+        this.refreshPause();
+      }
       return this.viewport;
     }
 
@@ -369,6 +385,8 @@ class ToastManager {
     document.body.appendChild(viewport);
     // Modal / Alert 開啟期間移入最上層 modal 的 overlay slot，保持可見、可操作且可被播報
     followTopModal(viewport, { slot: MODAL_OVERLAY_SLOT });
+    // 在 followTopModal 之後登記：Viewport 搬移完成後才重新判斷
+    onModalLayerChange(() => this.refreshPause());
     return viewport;
   }
 }
