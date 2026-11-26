@@ -177,6 +177,7 @@ export const tagStyles = css`
 
   /* ─── 可移除按鈕 (Remove Button) ─── */
   .tag__remove {
+    position: relative;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -198,6 +199,16 @@ export const tagStyles = css`
       opacity var(--transition-fast, 100ms ease),
       background-color var(--transition-fast, 100ms ease),
       transform var(--transition-fast, 100ms ease);
+  }
+
+  /*
+   * 點擊範圍擴大到 24px 以上（WCAG 2.5.8）：按鈕本身只有 14–18px，
+   * interactive 的標籤上它緊鄰另一個可點擊的目標，不適用間距的例外
+   */
+  .tag__remove::after {
+    content: '';
+    position: absolute;
+    inset: -5px;
   }
 
   .tag--md .tag__remove {
