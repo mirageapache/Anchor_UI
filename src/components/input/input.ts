@@ -267,13 +267,22 @@ export class AuiInput extends LitElement {
   private applyValue(next: string): void {
     const previous = this.currentValue;
     this.currentValue = String(next ?? '');
-    this.formControl.setValue(this.currentValue);
+    this.syncFormValue();
     // 驗證以內部控制項為準：先把值寫入控制項再同步，設定 value 後立刻 checkValidity() 才是最新結果
     // （否則要等下一次渲染）。首次渲染前還沒有控制項，由 updated() 同步
     const control = this.control;
     if (control && control.value !== this.currentValue) control.value = this.currentValue;
     this.syncValidity();
     this.requestUpdate('value', previous);
+  }
+
+  /**
+   * 提交表單值。密碼與 `autocomplete="off"` 的欄位不交給瀏覽器保存狀態
+   * （與原生 input 相同：返回上一頁或還原分頁時不填回）
+   */
+  private syncFormValue(): void {
+    const restorable = this.type !== 'password' && this.autocomplete !== 'off';
+    this.formControl.setValue(this.currentValue, restorable);
   }
 
   /** 以內部原生控制項為唯一驗證來源，鏡像至 ElementInternals */
@@ -302,10 +311,12 @@ export class AuiInput extends LitElement {
 
   /**
    * 單行輸入按 Enter：送出所屬表單（隱式送出）。內部的 <input> 位於 Shadow DOM、沒有表單擁有者，
-   * 瀏覽器不會代為處理。輸入法選字中的 Enter 與帶修飾鍵的 Enter 不算
+   * 瀏覽器不會代為處理。輸入法選字中的 Enter 與帶修飾鍵的 Enter 不算：
+   * Safari 以 Enter 選字時會先結束組字再分派 keydown（`isComposing` 為 false），
+   * 只能從 `keyCode === 229`（輸入法處理中）辨識
    */
   private handleKeydown = (event: KeyboardEvent) => {
-    if (event.key !== 'Enter' || event.isComposing) return;
+    if (event.key !== 'Enter' || event.isComposing || event.keyCode === 229) return;
     if (event.shiftKey || event.ctrlKey || event.altKey || event.metaKey) return;
     afterDispatch(event, () => {
       const form = this.form;
@@ -317,6 +328,9 @@ export class AuiInput extends LitElement {
     // 未被改動前，value 跟隨預設值（與原生 input 的 value 屬性相同）
     if (changed.has('defaultValue') && !this.dirty) {
       this.applyValue(this.defaultValue);
+    } else if (changed.has('type') || changed.has('autocomplete')) {
+      // 是否保存狀態取決於這兩個屬性：改變時以目前的值重新提交
+      this.syncFormValue();
     }
   }
 

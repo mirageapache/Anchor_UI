@@ -448,6 +448,43 @@ describe('AuiInput (<aui-input>)', () => {
       el.formStateRestoreCallback(null);
       expect(el.value).to.equal('restored');
     });
+
+    it('does not hand password or autocomplete="off" values to the browser as restorable state', async () => {
+      const original = ElementInternals.prototype.setFormValue;
+      const states = new Map<Element, unknown>();
+      ElementInternals.prototype.setFormValue = function (this: ElementInternals, value, state) {
+        // 省略 state 時瀏覽器以 value 作為狀態
+        states.set(this.form!.firstElementChild!, arguments.length < 2 ? value : state);
+        original.call(this, value, state);
+      };
+      try {
+        const stateAfterTyping = async (template: ReturnType<typeof html>) => {
+          const form = await fixture<HTMLFormElement>(html`<form>${template}</form>`);
+          const el = form.querySelector<AuiInput>('aui-input')!;
+          await typeInto(el, 'hunter2');
+          expect(new FormData(form).get('f'), 'still submitted').to.equal('hunter2');
+          return { el, state: () => states.get(el) };
+        };
+
+        const text = await stateAfterTyping(html`<aui-input name="f"></aui-input>`);
+        expect(text.state()).to.equal('hunter2');
+        const password = await stateAfterTyping(
+          html`<aui-input name="f" type="password"></aui-input>`,
+        );
+        expect(password.state()).to.be.null;
+        const off = await stateAfterTyping(
+          html`<aui-input name="f" autocomplete="off"></aui-input>`,
+        );
+        expect(off.state()).to.be.null;
+
+        // 之後才改成密碼欄位：已提交的狀態一併撤回
+        text.el.type = 'password';
+        await text.el.updateComplete;
+        expect(text.state()).to.be.null;
+      } finally {
+        ElementInternals.prototype.setFormValue = original;
+      }
+    });
   });
 
   describe('validity after programmatic changes', () => {
@@ -596,6 +633,16 @@ describe('AuiInput (<aui-input>)', () => {
       await aTimeout(0);
       expect(state.submits).to.equal(0);
     });
+
+    it('ignores the Enter that commits an IME candidate in Safari (keyCode 229)', async () => {
+      const { form, state } = await formWith(html`<aui-input name="q"></aui-input>`);
+      const input = form.querySelector<AuiInput>('aui-input')!;
+      controlOf(input).dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Enter', keyCode: 229, bubbles: true, composed: true }),
+      );
+      await aTimeout(0);
+      expect(state.submits).to.equal(0);
+    });
   });
 
   describe('fallback without ElementInternals (e.g. happy-dom)', () => {
@@ -620,7 +667,11 @@ describe('AuiInput (<aui-input>)', () => {
       expect(hidden.name).to.equal('code');
       expect(new FormData(form).get('code')).to.equal('A1');
 
+      // 事件監聽者（不等待渲染）讀到的也是最新值
+      const duringInput: (FormDataEntryValue | null)[] = [];
+      el.addEventListener('input', () => duringInput.push(new FormData(form).get('code')));
       await typeInto(el, 'B2');
+      expect(duringInput).to.deep.equal(['A1B', 'A1B2']);
       expect(new FormData(form).get('code')).to.equal('A1B2');
 
       el.disabled = true;

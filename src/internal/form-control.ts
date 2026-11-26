@@ -41,10 +41,15 @@ export class FormControlController implements ReactiveController {
   /**
    * 設定隨表單提交的值；null 代表不提交（如未選取任何選項的 radio 群組）。
    * 同步執行，事件監聽者讀取 FormData 時即為最新值。
+   *
+   * `restorable` 為 false 時不把值交給瀏覽器保存（state 為 null）：`setFormValue(value)` 省略 state 時，
+   * 值本身就是返回上一頁、還原分頁時經 `formStateRestoreCallback` 填回的狀態，密碼等欄位不可如此。
    */
-  setValue(value: string | null): void {
+  setValue(value: string | null, restorable = true): void {
     this.submitValue = value;
-    this.internals?.setFormValue(value);
+    this.internals?.setFormValue(value, restorable ? value : null);
+    // 退回方案：隱藏 input 已存在時立即寫入（增減仍由 hostUpdated 處理），事件監聽者才讀得到最新值
+    if (this.fallbackInput && value !== null) this.fallbackInput.value = value;
   }
 
   hostConnected(): void {
