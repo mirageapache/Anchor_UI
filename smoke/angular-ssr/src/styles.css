@@ -1,0 +1,15 @@
+@import '@anchor-ui/core/styles.css';
+
+/*
+ * 伺服器輸出的元件標籤在 JS 載入、元件註冊（升級）之前沒有樣式，只會顯示其中的文字。
+ * 先隱藏尚未升級的元件，避免閃現未套用樣式的內容。
+ * 請逐一列出元件標籤：單獨的 :not(:defined) 也會選到 <app-root> 等 Angular 元件（它們不是自訂元素），
+ * 整個應用程式都會被隱藏。
+ */
+aui-button:not(:defined),
+aui-card:not(:defined),
+aui-field:not(:defined),
+aui-input:not(:defined),
+aui-segmented:not(:defined) {
+  visibility: hidden;
+}

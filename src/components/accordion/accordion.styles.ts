@@ -1,5 +1,9 @@
 import { css } from 'lit';
 
+// plain 排版（CSS 註解會隨產物發布，說明寫在這裡）：嵌入側欄等已有外框的容器作為可收合選單，
+// 不畫外框、背景與分隔線。內距放在標題列上，點擊範圍至少 24px 高（WCAG 2.5.8）；
+// 外側沒有內距，焦點框改畫在內側（outline-offset: -2px），避免被側欄等捲動容器裁切；
+// 內容的左右內距與標題列相同，與標題文字對齊。
 export const accordionStyles = css`
   :host {
     display: block;
@@ -37,6 +41,22 @@ export const accordionStyles = css`
     border-radius: var(--radius-md, 8px);
   }
 
+  /* plain：無外框（側欄選單） */
+  .accordion--plain {
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+  }
+
+  .accordion--plain .accordion__summary {
+    padding: var(--space-xs, 4px);
+  }
+
+  .accordion--plain .accordion__summary:focus-visible {
+    outline-offset: -2px;
+  }
+
   /* ─── 標題列（原生 summary） ─── */
   .accordion__summary {
     display: flex;
@@ -57,7 +77,8 @@ export const accordionStyles = css`
     display: none;
   }
 
-  .accordion--faq .accordion__summary {
+  .accordion--faq .accordion__summary,
+  .accordion--plain .accordion__summary {
     font-weight: var(--weight-semibold, 600);
   }
 
@@ -106,6 +127,12 @@ export const accordionStyles = css`
 
   .accordion--faq .accordion__body {
     margin-top: var(--space-ms, 12px);
+  }
+
+  .accordion--plain .accordion__body {
+    margin-top: 0;
+    padding: 0 var(--space-xs, 4px) var(--space-xs, 4px);
+    border-top: none;
   }
 
   /* 內容（預設 slot）中的段落與清單：預設間距與縮排層次；不套用到 heading slot */

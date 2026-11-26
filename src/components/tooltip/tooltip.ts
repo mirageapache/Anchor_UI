@@ -1,4 +1,4 @@
-import { LitElement, html, nothing } from 'lit';
+import { LitElement, html, nothing, type PropertyValues } from 'lit';
 import { property, query, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import {
@@ -11,6 +11,7 @@ import {
   type Placement,
 } from '@floating-ui/dom';
 import { tooltipStyles } from './tooltip.styles.js';
+import { TRANSFORM_ORIGINS } from '../../internal/floating.js';
 import { transitionTimeMs } from '../../internal/transition.js';
 import type { TooltipPlacement, TooltipTrigger } from './tooltip.types.js';
 
@@ -38,10 +39,10 @@ const DESCRIPTION_SLOT = 'aui-tooltip-description';
  * @csspart content - 提示文字/內容容器
  * @csspart arrow - 箭頭指標元素
  *
- * @fires aui-show - 氣泡開始展開前觸發（可被 preventDefault 取消）
- * @fires aui-after-show - 氣泡完全展開且進場動畫結束後觸發
- * @fires aui-hide - 氣泡開始收合前觸發（可被 preventDefault 取消）
- * @fires aui-after-hide - 氣泡完全隱藏且退場動畫結束後觸發
+ * @fires {CustomEvent<null>} aui-show - 氣泡開始展開前觸發（可被 preventDefault 取消）
+ * @fires {CustomEvent<null>} aui-after-show - 氣泡完全展開且進場動畫結束後觸發
+ * @fires {CustomEvent<null>} aui-hide - 氣泡開始收合前觸發（可被 preventDefault 取消）
+ * @fires {CustomEvent<null>} aui-after-hide - 氣泡完全隱藏且退場動畫結束後觸發
  */
 export class AuiTooltip extends LitElement {
   static override styles = tooltipStyles;
@@ -53,6 +54,15 @@ export class AuiTooltip extends LitElement {
   private targetElement: HTMLElement | null = null;
   /** popover 是否已開啟（進場動畫的 rAF 前即為 true，與視覺狀態 isVisible 分開追蹤） */
   private isShowing = false;
+  /** 滑鼠在觸發目標或氣泡本體上 */
+  private hovering = false;
+  /** 觸發目標具有鍵盤焦點（:focus-visible） */
+  private focused = false;
+  /**
+   * 這次開啟來自 hover / focus（相對於 show()、open 屬性與 click）。
+   * 這類開啟取決於當下的指標與焦點，元素被移出頁面後不再成立，重新插入時不還原
+   */
+  private openedByInteraction = false;
 
   /** 退場動畫中（aui-hide 已分派、aui-after-hide 尚未分派） */
   private isHiding = false;
@@ -161,6 +171,9 @@ export class AuiTooltip extends LitElement {
   @state()
   private isVisible = false;
 
+  /** `for` 指定的目標尚未出現時，等待它加入的觀察器 */
+  private targetObserver: MutationObserver | null = null;
+
   override connectedCallback(): void {
     super.connectedCallback();
 
@@ -176,10 +189,15 @@ export class AuiTooltip extends LitElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    const wasShowing = this.isShowing;
+    this.hovering = false;
+    this.focused = false;
     document.removeEventListener('keydown', this.handleDocumentKeyDown);
     this.clearTimeouts();
     this.stopAutoUpdate();
     this.detachTargetListeners();
+    this.targetObserver?.disconnect();
+    this.targetObserver = null;
     this.clearAriaDescribedBy();
     // 離開 document 時瀏覽器會自動關閉 popover，同步內部狀態並作廢尚未執行的轉場回呼
     this.transitionId++;
@@ -190,6 +208,16 @@ export class AuiTooltip extends LitElement {
       this.isHiding = false;
       this.dispatchEvent(new CustomEvent('aui-after-hide', { bubbles: true, composed: true }));
     }
+    // 由 hover / focus 開啟的提示：離開頁面後指標與焦點都不在了，待執行的收合計時也已清除，
+    // 若保留 open，重新插入時會再開啟而沒有任何東西會關閉它。直接關閉並補上成對的事件（不可取消）
+    if (this.open && this.openedByInteraction) {
+      this.openedByInteraction = false;
+      this.open = false;
+      if (wasShowing) {
+        this.dispatchEvent(new CustomEvent('aui-hide', { bubbles: true, composed: true }));
+        this.dispatchEvent(new CustomEvent('aui-after-hide', { bubbles: true, composed: true }));
+      }
+    }
   }
 
   /** 初次渲染後綁定觸發目標；`open` 的初始值由同一輪的 updated() 處理 */
@@ -197,11 +225,34 @@ export class AuiTooltip extends LitElement {
     this.setupTarget();
   }
 
-  override updated(changedProperties: Map<string, unknown>): void {
-    if (changedProperties.has('disabled') && this.disabled && this.open) {
-      this.hide();
+  /**
+   * 收合在渲染前處理：退場樣式（移除 --visible）與 open 的變化在同一次渲染套用。
+   * 若在 updated() 才改 isVisible，Lit 會再排一次更新（開發模式的 change-in-update 警告）。
+   * 開啟須等 popover 已渲染，仍在 updated() 處理
+   */
+  override willUpdate(changedProperties: PropertyValues<this>): void {
+    super.willUpdate(changedProperties);
+    // 停用中設定 open 或開啟中被停用：撤回 open。否則會停在「open 為 true 卻沒有顯示」，
+    // 之後解除停用也不會顯示，show() 與 hover / focus 又因 open 已為 true 而不動作
+    if (
+      this.open &&
+      this.disabled &&
+      (changedProperties.has('open') || changedProperties.has('disabled'))
+    ) {
+      this.open = false;
     }
+    // 沒有內容（content 為空且沒有 content slot）時不開啟：否則會顯示一個空的氣泡
+    if (this.open && changedProperties.has('open') && !this.hasContent) {
+      this.open = false;
+    }
+    // 以 isShowing（而非 isVisible）判斷：isVisible 要等到 rAF 才變 true，
+    // 若在那之前就關閉，用 isVisible 判斷會略過 internalHide 而讓氣泡卡在顯示狀態
+    if (changedProperties.has('open') && !this.open && this.isShowing) {
+      void this.internalHide();
+    }
+  }
 
+  override updated(changedProperties: PropertyValues<this>): void {
     // trigger 於執行期變更時須重新綁定監聽（初次渲染已由 firstUpdated 綁定）
     const triggerChanged =
       changedProperties.has('trigger') && changedProperties.get('trigger') !== undefined;
@@ -215,12 +266,9 @@ export class AuiTooltip extends LitElement {
     }
 
     if (changedProperties.has('open')) {
-      // 以 isShowing（而非 isVisible）判斷：isVisible 要等到 rAF 才變 true，
-      // 若在那之前就關閉，用 isVisible 判斷會略過 internalHide 而讓氣泡卡在顯示狀態
+      // 收合已在 willUpdate() 處理
       if (this.open && !this.isShowing) {
-        this.internalShow();
-      } else if (!this.open && this.isShowing) {
-        this.internalHide();
+        void this.internalShow();
       }
     } else if (
       this.open &&
@@ -240,10 +288,24 @@ export class AuiTooltip extends LitElement {
     // 目標切換時，描述關聯須跟著從舊目標移到新目標
     this.removeAriaDescribedBy();
     this.detachTargetListeners();
+    this.targetObserver?.disconnect();
+    this.targetObserver = null;
 
     if (this.for) {
       const root = this.getRootNode() as Document | ShadowRoot;
       this.targetElement = root.getElementById(this.for) as HTMLElement;
+      // 目標還不存在（比提示晚渲染）：等它出現再綁定，否則這個提示永遠不會作用
+      if (!this.targetElement && this.isConnected) {
+        this.targetObserver = new MutationObserver(() => {
+          if (root.getElementById(this.for)) this.setupTarget();
+        });
+        this.targetObserver.observe(root, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['id'],
+        });
+      }
     } else {
       // 預設以 slot 內的第一個元素或 wrapper 本身作為目標
       const slot = this.shadowRoot?.querySelector('slot:not([name])') as HTMLSlotElement | null;
@@ -293,28 +355,33 @@ export class AuiTooltip extends LitElement {
 
   private handleTargetMouseEnter = (): void => {
     if (this.disabled || !this.hasTrigger('hover')) return;
+    this.hovering = true;
     this.clearTimeouts();
     if (this.delay > 0) {
-      this.showTimeoutId = window.setTimeout(() => this.show(), this.delay);
+      this.showTimeoutId = window.setTimeout(() => this.showByInteraction(), this.delay);
     } else {
-      this.show();
+      this.showByInteraction();
     }
   };
 
+  /** hover 與 focus 任一成立就維持顯示（APG）：滑鼠離開時若目標仍有鍵盤焦點，不收合 */
   private handleTargetMouseLeave = (): void => {
-    if (this.disabled || !this.hasTrigger('hover')) return;
+    this.hovering = false;
+    if (this.disabled || !this.hasTrigger('hover') || this.focused) return;
     this.scheduleHide();
   };
 
   private handlePopupMouseEnter = (): void => {
     // 支援 WCAG 1.4.13：當滑鼠移到氣泡本體時維持可視，不自動關閉
     if (this.hasTrigger('hover')) {
+      this.hovering = true;
       this.clearTimeouts();
     }
   };
 
   private handlePopupMouseLeave = (): void => {
-    if (this.hasTrigger('hover')) {
+    this.hovering = false;
+    if (this.hasTrigger('hover') && !this.focused) {
       this.scheduleHide();
     }
   };
@@ -331,14 +398,25 @@ export class AuiTooltip extends LitElement {
     }
   }
 
-  private handleTargetFocusIn = (): void => {
+  /**
+   * 只在鍵盤焦點（:focus-visible）時開啟：以滑鼠操作後由程式移回的焦點
+   * （選單、對話框關閉時把焦點還給觸發按鈕）或滑鼠點擊帶來的焦點不算，否則提示會無預警彈出並停留到失焦。
+   * 判斷對象是實際取得焦點的元素（目標為自訂元素時，是其 Shadow DOM 內的元素）
+   */
+  private handleTargetFocusIn = (event: FocusEvent): void => {
     if (this.disabled || !this.hasTrigger('focus')) return;
+    const origin = event.composedPath()[0];
+    if (!(origin instanceof Element) || !origin.matches(':focus-visible')) return;
+    this.focused = true;
     this.clearTimeouts();
-    this.show();
+    this.showByInteraction();
   };
 
   private handleTargetFocusOut = (): void => {
-    if (this.disabled || !this.hasTrigger('focus')) return;
+    const wasFocused = this.focused;
+    this.focused = false;
+    // 不是由鍵盤焦點開啟的（wasFocused 為 false）不因失焦而收合；滑鼠仍在目標或氣泡上時也維持顯示
+    if (this.disabled || !this.hasTrigger('focus') || !wasFocused || this.hovering) return;
     this.clearTimeouts();
     this.hide();
   };
@@ -385,6 +463,14 @@ export class AuiTooltip extends LitElement {
    */
   async show(): Promise<void> {
     if (this.open || this.disabled) return;
+    this.openedByInteraction = false;
+    this.open = true;
+  }
+
+  /** 由 hover / focus 開啟（見 openedByInteraction） */
+  private showByInteraction(): void {
+    if (this.open || this.disabled) return;
+    this.openedByInteraction = true;
     this.open = true;
   }
 
@@ -409,11 +495,16 @@ export class AuiTooltip extends LitElement {
 
   private async internalShow(): Promise<void> {
     if (!this.popupElement) return;
-    // 停用中不開啟，並撤回 open：否則會停在「open 為 true 卻沒有顯示」，
-    // 之後解除停用也不會顯示，show() 與 hover / focus 又因 open 已為 true 而不動作
+    // 停用中不開啟（通常已在 willUpdate() 撤回，這裡防止其他呼叫路徑）
     if (this.disabled) {
       this.open = false;
       return;
+    }
+
+    // 退場動畫中重新開啟：先完成被中斷的關閉，aui-hide 與 aui-after-hide 才會成對（與 Popover 相同）
+    if (this.isHiding) {
+      this.transitionId++;
+      this.finishHide();
     }
 
     const event = new CustomEvent('aui-show', {
@@ -424,6 +515,7 @@ export class AuiTooltip extends LitElement {
     this.dispatchEvent(event);
 
     if (event.defaultPrevented) {
+      this.openedByInteraction = false;
       this.open = false;
       return;
     }
@@ -473,25 +565,29 @@ export class AuiTooltip extends LitElement {
     this.isShowing = false;
     this.isHiding = true;
     this.isVisible = false;
+    this.openedByInteraction = false;
     document.removeEventListener('keydown', this.handleDocumentKeyDown);
     this.clearAriaDescribedBy();
 
     // 等待退場動畫結束後關閉 popover 並停止監聽（時長取自 CSS，避免與樣式隱性耦合）
     window.setTimeout(() => {
-      // 期間若已重新開啟，不可關閉新的 popover
-      if (transitionId === this.transitionId) {
-        if (typeof this.popupElement.hidePopover === 'function') {
-          try {
-            this.popupElement.hidePopover();
-          } catch {
-            // 忽略例外
-          }
-        }
-        this.stopAutoUpdate();
-        this.isHiding = false;
-        this.dispatchEvent(new CustomEvent('aui-after-hide', { bubbles: true, composed: true }));
-      }
+      // 期間若已重新開啟（或被移出頁面），該次關閉已另行完成
+      if (transitionId === this.transitionId) this.finishHide();
     }, transitionTimeMs(this.popupElement));
+  }
+
+  /** 完成關閉：popover 離開 top layer、停止定位並分派 aui-after-hide */
+  private finishHide(): void {
+    if (typeof this.popupElement.hidePopover === 'function') {
+      try {
+        this.popupElement.hidePopover();
+      } catch {
+        // 忽略例外
+      }
+    }
+    this.stopAutoUpdate();
+    this.isHiding = false;
+    this.dispatchEvent(new CustomEvent('aui-after-hide', { bubbles: true, composed: true }));
   }
 
   /**
@@ -523,24 +619,7 @@ export class AuiTooltip extends LitElement {
     this.popupElement.setAttribute('data-placement', placement);
 
     // 根據方位設定 transform-origin，使微縮放動畫朝向目標元素自然展開
-    const transformOrigins: Record<string, string> = {
-      top: 'bottom center',
-      'top-start': 'bottom left',
-      'top-end': 'bottom right',
-      bottom: 'top center',
-      'bottom-start': 'top left',
-      'bottom-end': 'top right',
-      left: 'right center',
-      'left-start': 'right top',
-      'left-end': 'right bottom',
-      right: 'left center',
-      'right-start': 'left top',
-      'right-end': 'left bottom',
-    };
-    this.popupElement.style.setProperty(
-      '--tooltip-transform-origin',
-      transformOrigins[placement] || 'center',
-    );
+    this.popupElement.style.setProperty('--tooltip-transform-origin', TRANSFORM_ORIGINS[placement]);
 
     // 校正箭頭位置
     if (this.arrow && this.arrowElement && middlewareData.arrow) {
@@ -570,6 +649,19 @@ export class AuiTooltip extends LitElement {
   /**
    * 提示內容的純文字（rich content slot 優先，否則使用 content 屬性）
    */
+  private get hasContent(): boolean {
+    // 以 light DOM 判斷：首次渲染前 Shadow DOM 內還沒有 slot
+    return (
+      (this.content ?? '').trim() !== '' ||
+      [...this.children].some((child) => child.slot === 'content')
+    );
+  }
+
+  /** 開啟中更換 content slot 的內容：作為描述的文字須跟著更新（content 屬性的變更由 updated() 處理） */
+  private handleContentSlotChange = (): void => {
+    if (this.describing) this.syncAriaDescribedBy();
+  };
+
   private get descriptionText(): string {
     const slot = this.shadowRoot?.querySelector<HTMLSlotElement>('slot[name="content"]');
     const slotted = (slot?.assignedNodes({ flatten: true }) ?? [])
@@ -688,7 +780,7 @@ export class AuiTooltip extends LitElement {
         @mouseleave=${this.handlePopupMouseLeave}
       >
         <div part="content" class="tooltip__content">
-          <slot name="content">${this.content}</slot>
+          <slot name="content" @slotchange=${this.handleContentSlotChange}>${this.content}</slot>
         </div>
 
         ${this.arrow ? html`<div part="arrow" class="tooltip__arrow"></div>` : nothing}

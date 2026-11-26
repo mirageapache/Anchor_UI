@@ -8,6 +8,9 @@ import { hasLightContent, LightContentController } from '../../internal/slot.js'
 import { footerStyles } from './footer.styles.js';
 import type { FooterColumn, FooterHeadingLevel, FooterLink } from './footer.types.js';
 
+const isRecord = <T extends object>(item: T | null | undefined): item is T =>
+  typeof item === 'object' && item !== null;
+
 /**
  * Anchor UI — Footer 元件 (`<aui-footer>`)
  *
@@ -107,9 +110,16 @@ export class AuiFooter extends LitElement {
       : html`<a href=${href}>${link.label}</a>`;
   }
 
-  /** 框架可能綁定 null 等非陣列值，一律視為沒有欄位 */
+  /**
+   * 框架可能綁定 null 等非陣列值，一律視為沒有欄位；資料來自使用端（API 回應等），不信任型別：
+   * 不是物件的欄位與連結略過，links 不是陣列時視為沒有連結，避免單一筆壞資料讓整個頁尾無法渲染
+   */
   private get columnList(): FooterColumn[] {
-    return Array.isArray(this.columns) ? this.columns : [];
+    if (!Array.isArray(this.columns)) return [];
+    return this.columns.filter(isRecord).map((column) => ({
+      ...column,
+      links: Array.isArray(column.links) ? column.links.filter(isRecord) : [],
+    }));
   }
 
   private renderColumns(columns: FooterColumn[]) {
@@ -138,10 +148,7 @@ export class AuiFooter extends LitElement {
                 class="footer__list"
                 aria-labelledby=${ifDefined(column.heading ? `column-${i}` : undefined)}
               >
-                ${
-                  // 資料來自使用端（可能缺少 links），不信任型別
-                  (column.links ?? []).map((link) => html`<li>${this.renderLink(link)}</li>`)
-                }
+                ${column.links.map((link) => html`<li>${this.renderLink(link)}</li>`)}
               </ul>
             </div>
           `,

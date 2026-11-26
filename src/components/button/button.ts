@@ -1,10 +1,17 @@
 import { LitElement, html, nothing } from 'lit';
 import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { buttonStyles } from './button.styles.js';
 import { findFormOwner } from '../../internal/form-owner.js';
 import { afterDispatch } from '../../internal/implicit-submit.js';
 import { interceptInactiveClick } from '../../internal/inactive-click.js';
+import {
+  POPUP_TRIGGER,
+  popupTriggerAttributes,
+  type PopupTrigger,
+  type PopupTriggerState,
+} from '../../internal/popup-trigger.js';
 import { spinnerIcon, spinnerStyles } from '../../internal/spinner.js';
 import type { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
 
@@ -15,7 +22,8 @@ import type { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
  * 點擊微縮放動態、載入中 Spinner 以及與宿主表單（form）的原生提交互動。
  * `type="submit"` / `"reset"` 的表單動作與原生按鈕相同，是點擊的預設行為：在 `click` 監聽器中
  * `preventDefault()` 可取消（因此在事件分派完畢後才執行）；所屬的 `<fieldset disabled>` 也會停用按鈕。
- * host 上的 `aria-describedby`（例如被 `<aui-tooltip>` 包住時的提示描述）會轉交給內部的 `<button>`。
+ * host 上的 `aria-describedby`（例如被 `<aui-tooltip>` 包住時的提示描述）會轉交給內部的 `<button>`；
+ * 作為 `<aui-popover>` 的觸發元素時，展開狀態（`aria-expanded` 等）也會寫在內部的 `<button>` 上。
  *
  * @element aui-button
  *
@@ -29,7 +37,7 @@ import type { ButtonSize, ButtonType, ButtonVariant } from './button.types.js';
  * @csspart label - 主內容包裝容器
  * @csspart suffix - 後綴內容包裝容器
  */
-export class AuiButton extends LitElement {
+export class AuiButton extends LitElement implements PopupTrigger {
   static override styles = [spinnerStyles, buttonStyles];
 
   static override shadowRootOptions: ShadowRootInit = {
@@ -94,6 +102,15 @@ export class AuiButton extends LitElement {
   @state()
   private formDisabled = false;
 
+  /** 作為彈出式元件（如 `<aui-popover>`）的觸發元素時的展開狀態，寫在內部的 `<button>` 上 */
+  @state()
+  private popupTrigger: PopupTriggerState | null = null;
+
+  /** @internal 由彈出式元件呼叫（見 src/internal/popup-trigger.ts） */
+  [POPUP_TRIGGER](state: PopupTriggerState | null): void {
+    this.popupTrigger = state;
+  }
+
   constructor() {
     super();
     this.internals = typeof this.attachInternals === 'function' ? this.attachInternals() : null;
@@ -149,6 +166,7 @@ export class AuiButton extends LitElement {
     // 否則聚焦中的按鈕進入 loading 時會失去焦點（焦點掉回 body）
     const isDisabled = this.isDisabled;
     const isInactive = isDisabled || this.loading;
+    const popup = popupTriggerAttributes(this.popupTrigger);
 
     return html`
       <button
@@ -164,7 +182,10 @@ export class AuiButton extends LitElement {
         ?disabled=${isDisabled}
         aria-busy=${this.loading ? 'true' : 'false'}
         aria-disabled=${isInactive ? 'true' : 'false'}
+        aria-haspopup=${ifDefined(popup.hasPopup)}
+        aria-expanded=${ifDefined(popup.expanded)}
         .ariaDescribedByElements=${this.describedByElements}
+        .ariaControlsElements=${popup.controls}
       >
         ${
           this.loading

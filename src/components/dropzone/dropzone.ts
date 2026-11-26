@@ -14,6 +14,9 @@ import type {
 /** 原生 accept 允許的類型萬用字元（其他如 text/* 不是合法的 accept 值） */
 const WILDCARD_TYPES = new Set(['audio/*', 'video/*', 'image/*']);
 
+/** 拒絕訊息中最多列出的檔名數 */
+const MAX_LISTED_NAMES = 5;
+
 /** 是否為合法的 accept 條件：副檔名、完整的 MIME 類型，或 audio/* / video/* / image/* */
 function isValidAcceptToken(token: string): boolean {
   if (token.startsWith('.')) return token.length > 1;
@@ -95,8 +98,8 @@ function droppedDirectories(dataTransfer: DataTransfer | null): Set<File> {
  * @csspart hint - 輔助提示文字
  * @csspart error - 錯誤訊息（live region）
  *
- * @fires aui-file-drop - 取得通過檢查的檔案時觸發；`detail.files` 為 File 陣列，`detail.source` 為 `drop` 或 `picker`
- * @fires aui-file-reject - 有檔案因格式、數量或為資料夾而被拒絕時觸發；`detail.rejections` 列出檔案與原因
+ * @fires {CustomEvent<FileDropDetail>} aui-file-drop - 取得通過檢查的檔案時觸發；`detail.files` 為 File 陣列，`detail.source` 為 `drop` 或 `picker`
+ * @fires {CustomEvent<FileRejectDetail>} aui-file-reject - 有檔案因格式、數量或為資料夾而被拒絕時觸發；`detail.rejections` 列出檔案與原因
  */
 export class AuiDropzone extends LitElement {
   static override styles = dropzoneStyles;
@@ -297,7 +300,12 @@ export class AuiDropzone extends LitElement {
     const messages: string[] = [];
     const unsupported = rejections.filter(({ reason }) => reason !== 'count');
     if (unsupported.length > 0) {
-      messages.push(this.invalidTypeMessage + unsupported.map(({ file }) => file.name).join('、'));
+      // 只列出前幾個檔名：一次放入大量不符的檔案時，訊息（也是按鈕的描述與 alert 的播報內容）不會變成一整面文字
+      const names = unsupported.slice(0, MAX_LISTED_NAMES).map(({ file }) => file.name);
+      const rest = unsupported.length - names.length;
+      messages.push(
+        this.invalidTypeMessage + names.join('、') + (rest > 0 ? ` …（+${rest}）` : ''),
+      );
     }
     if (rejections.some(({ reason }) => reason === 'count')) {
       messages.push(this.tooManyMessage);

@@ -20,6 +20,14 @@ const normalize = <T extends AlertOptions>(options: string | T): T =>
  * 因此也能在已開啟的 Modal 之上再開啟。
  */
 function open(mode: AlertMode, options: PromptOptions): Promise<Result> {
+  // 伺服器端渲染（SSR，沒有 document）時沒有人能回應對話框，也就沒有正確的結果：以明確的錯誤 reject。
+  // 不以「取消」結束（伺服器端會執行取消後的流程，例如導向其他頁面），也不保持 pending
+  // （在 route guard / resolver 中 await 時，伺服器端渲染會一直等待而使請求卡住）
+  if (typeof document === 'undefined') {
+    return Promise.reject(
+      new Error('AlertService 只能在瀏覽器端使用：請在事件處理或 afterNextRender 中呼叫'),
+    );
+  }
   const alert = document.createElement('aui-alert') as AuiAlert;
   alert.mode = mode;
   alert.heading = options.title ?? '';
@@ -67,6 +75,8 @@ function open(mode: AlertMode, options: PromptOptions): Promise<Result> {
  * if (await AlertService.confirm({ title: '確定刪除？', destructive: true })) { ... }
  * const name = await AlertService.prompt({ title: '重新命名', defaultValue: 'draft' });
  * ```
+ *
+ * 只能在瀏覽器端使用：伺服器端渲染時回傳的 Promise 會以錯誤 reject（沒有人能回應對話框）。
  */
 export const AlertService = {
   /**

@@ -20,7 +20,15 @@
 // 此時重新取得最新的分支內容再套用一次變更並重試。workflow 不以 concurrency 讓部署排隊：
 // GitHub 的 concurrency 群組只保留一個等候中的 run，較早排隊的部署（或 PR 關閉時的清除）會被取消。
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  existsSync,
+  mkdtempSync,
+  readdirSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -215,7 +223,8 @@ function parseArgs(argv) {
   return options;
 }
 
-if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+// 以實際路徑比對（同 pack.mjs）：經由符號連結執行時若不成立，腳本會什麼都不做卻以結束碼 0 結束
+if (process.argv[1] && realpathSync(resolve(process.argv[1])) === fileURLToPath(import.meta.url)) {
   try {
     const options = parseArgs(process.argv.slice(2));
     const changed = deploy(options);

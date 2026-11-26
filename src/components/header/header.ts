@@ -24,10 +24,12 @@ import type { HeaderFavoriteChangeDetail, HeaderHeadingLevel } from './header.ty
  *
  * @slot - 簡述文字（未提供時使用 `description` 屬性）
  * @slot heading - 主標題（未提供時使用 `heading` 屬性）
+ * @slot breadcrumb - 最上方的階層導覽（如 `<aui-breadcrumb>`；沒有層級時請不要放入，否則會留下空白間距）
  * @slot tags - 標題上方的分類標籤（如 `<aui-tag>`）
  * @slot actions - 標題列右側的其他操作（如按鈕）
  *
  * @csspart base - 外層容器
+ * @csspart breadcrumb - 階層導覽的容器
  * @csspart tags - 分類標籤與 HOT 徽標所在的列
  * @csspart hot-badge - HOT 徽標（`<aui-tag>`）
  * @csspart title-row - 主標題、收藏鈕與操作所在的列（空間不足時操作會換到下一行）
@@ -36,7 +38,7 @@ import type { HeaderFavoriteChangeDetail, HeaderHeadingLevel } from './header.ty
  * @csspart actions - 右側操作容器
  * @csspart description - 簡述文字
  *
- * @fires aui-favorite-change - 使用者切換收藏鈕後觸發，`detail.favorite` 為新狀態；支援 bubbles 與 composed。可在事件中把 `favorite` 設回原值以取消變更
+ * @fires {CustomEvent<HeaderFavoriteChangeDetail>} aui-favorite-change - 使用者切換收藏鈕後觸發，`detail.favorite` 為新狀態；支援 bubbles 與 composed。可在事件中把 `favorite` 設回原值以取消變更
  */
 export class AuiHeader extends LitElement {
   static override styles = headerStyles;
@@ -100,6 +102,7 @@ export class AuiHeader extends LitElement {
   };
 
   override render() {
+    const hasBreadcrumb = hasLightContent(this, 'breadcrumb');
     const hasTags = hasLightContent(this, 'tags');
     const hasHeading = !!this.heading || hasLightContent(this, 'heading');
     const hasActions = hasLightContent(this, 'actions');
@@ -121,6 +124,9 @@ export class AuiHeader extends LitElement {
     // 簡述外層同樣使用 <div>：預設 slot 可放入段落或清單，用 <p> 會形成巢狀段落。
     return html`
       <div class="header" part="base">
+        <div class="header__breadcrumb" part="breadcrumb" ?hidden=${!hasBreadcrumb}>
+          <slot name="breadcrumb"></slot>
+        </div>
         <div class="header__tags" part="tags" ?hidden=${!hasTags && !this.hot}>
           <slot name="tags"></slot>
           ${

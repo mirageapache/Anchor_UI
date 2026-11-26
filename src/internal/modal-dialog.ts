@@ -5,7 +5,7 @@ import { ifDefined } from 'lit/directives/if-defined.js';
 import { defaultTrue } from './converters.js';
 import { rememberFocus } from './focus-return.js';
 import { lockScroll } from './scroll-lock.js';
-import { MODAL_OVERLAY_SLOT, pushModalLayer } from './top-layer.js';
+import { MODAL_OVERLAY_SLOT, getModalLayers, pushModalLayer } from './top-layer.js';
 import { transitionTimeMs } from './transition.js';
 
 /**
@@ -35,7 +35,27 @@ interface DialogRenderOptions {
  * 以本基底實作的元件標籤：尋找初始焦點時略過巢狀於其中的 `[autofocus]`（屬於內層對話框）。
  * 新增子類別時須一併加入
  */
-const DIALOG_HOSTS = 'aui-modal, aui-drawer';
+const DIALOG_HOSTS = 'aui-modal, aui-drawer, aui-alert';
+
+/**
+ * 立即關閉（不可取消、不播放動畫）的方法名稱。以 `Symbol.for` 登記，頁面上有多份程式庫時
+ * 外層對話框仍能關閉另一份程式庫的內層對話框
+ */
+const FORCE_CLOSE = Symbol.for('aui.modal-dialog.force-close');
+
+interface ForceClosable {
+  [FORCE_CLOSE]?: () => void;
+}
+
+/** node 是否位於 ancestor 的子樹內（跨越 Shadow DOM 邊界） */
+function isComposedDescendant(node: Node, ancestor: Node): boolean {
+  let current: Node | null = node;
+  while (current) {
+    if (current === ancestor) return true;
+    current = current.parentNode ?? (current instanceof ShadowRoot ? current.host : null);
+  }
+  return false;
+}
 
 /**
  * 模態對話框的共用基底（`<aui-modal>`、`<aui-drawer>`）。
@@ -184,6 +204,14 @@ export abstract class ModalDialogElement extends LitElement {
    */
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this[FORCE_CLOSE]();
+  }
+
+  /**
+   * 立即關閉：不播放動畫、不返還焦點，補發不可取消的關閉事件。
+   * 用於被移出頁面，以及外層對話框關閉時（內層的 dialog 會隨外層一起不再渲染，見 closeNestedDialogs）
+   */
+  private [FORCE_CLOSE](): void {
     if (!this.isShown && !this.dialog?.open) return;
 
     const wasShown = this.isShown;
@@ -202,6 +230,19 @@ export abstract class ModalDialogElement extends LitElement {
     this.settleTransition();
   }
 
+  /**
+   * 關閉位於本對話框子樹內、仍開啟的對話框（含其他元件 Shadow DOM 內的，如 Alert 內部的 Modal）。
+   * 外層的 dialog 關閉後為 `display: none`，內層的 dialog 隨之不再渲染，卻仍是 Top Layer 中的 modal：
+   * 畫面上什麼都沒有，頁面卻保持 inert 且無法捲動。因此外層關閉時一併結束內層（由上而下）
+   */
+  private closeNestedDialogs(): void {
+    for (const layer of getModalLayers().reverse()) {
+      if (layer !== this && isComposedDescendant(layer, this)) {
+        (layer as ForceClosable)[FORCE_CLOSE]?.();
+      }
+    }
+  }
+
   private requestClose(reason: DialogCloseReason): void {
     if (!this.open) return;
     this.pendingReason = reason;
@@ -216,20 +257,23 @@ export abstract class ModalDialogElement extends LitElement {
       this.hasHeaderSlot = slots.includes('header');
       this.hasFooterSlot = slots.includes('footer');
     }
-  }
 
-  override updated(changed: PropertyValues<this>): void {
-    super.updated(changed);
     if (!changed.has('open')) return;
     // 每次處理 open 的變化都取用並清除關閉原因：關閉要求在同一個 task 內被撤回（open 又設回 true）時，
     // 殘留的原因不可套用到之後以 `open = false` 觸發的關閉
     const reason = this.pendingReason;
     this.pendingReason = 'api';
-    if (this.open && !this.isShown) {
-      this.startShow();
-    } else if (!this.open && this.isShown) {
-      this.startHide(reason);
-    }
+    // 關閉在渲染前處理：退場樣式（isLeaving）與 open 的變化在同一次渲染套用。
+    // 若在 updated() 才改 isLeaving，Lit 會再排一次更新（開發模式的 change-in-update 警告）
+    if (!this.open && this.isShown) this.startHide(reason);
+    // 退場動畫中重新開啟：dialog 已渲染且仍開著，同樣在渲染前處理（取消退場樣式）
+    else if (this.open && !this.isShown && this.dialog?.open) this.startShow();
+  }
+
+  /** 開啟須等 dialog 已渲染（首次渲染即開啟時），因此在 updated() 處理 */
+  override updated(changed: PropertyValues<this>): void {
+    super.updated(changed);
+    if (changed.has('open') && this.open && !this.isShown) this.startShow();
   }
 
   private startShow(): void {
@@ -241,14 +285,17 @@ export abstract class ModalDialogElement extends LitElement {
 
     const event = new CustomEvent('aui-show', { bubbles: true, composed: true, cancelable: true });
     this.dispatchEvent(event);
-    if (event.defaultPrevented) {
+    // 監聽者也可能在 aui-show 中把元素移出頁面：同樣無法 showModal()（會拋出 InvalidStateError）
+    if (event.defaultPrevented || !this.isConnected) {
       this.open = false;
       return;
     }
 
-    // 退場動畫期間重新開啟時，dialog 仍開著，沿用既有的鎖定與 modal 層
+    // 退場動畫期間重新開啟時，dialog 仍開著，沿用既有的鎖定與 modal 層；
+    // 先結束被中斷的那次關閉（aui-hide 已分派），事件才會成對
     const reopening = this.dialog.open;
-    if (!reopening) {
+    if (reopening) this.dispatchAfterHide(this.hidingReason);
+    else {
       const restoreFocus = rememberFocus();
       // 須在 showModal() 前鎖定（隱藏捲軸前才量得到捲軸寬度）；showModal() 失敗時立即歸還，
       // 否則計數永遠不會歸零，整頁無法捲動
@@ -292,6 +339,7 @@ export abstract class ModalDialogElement extends LitElement {
     this.isShown = false;
     this.isLeaving = true;
     this.hidingReason = reason;
+    this.closeNestedDialogs();
 
     void this.updateComplete.then(() => {
       window.setTimeout(() => {
@@ -316,12 +364,15 @@ export abstract class ModalDialogElement extends LitElement {
       return;
     }
     autofocus.focus();
+    if (autofocus.matches(':focus-within')) return;
 
+    // 目標無法取得焦點（隱藏、停用、位於未開啟的浮層內…）：改聚焦面板，
+    // 否則焦點會留在 showModal() 預設的位置（通常是頁首的關閉鈕，Enter 就會關閉對話框）。
     // 自訂元素（如 <aui-button>）若與對話框同時建立並開啟，首次渲染前內部還沒有可聚焦的元素：
-    // 先聚焦面板讓焦點進入對話框，渲染完成後再移到目標
+    // 同樣先聚焦面板，渲染完成後再移到目標
+    this.panel.focus();
     const pending = (autofocus as Partial<{ updateComplete: Promise<unknown> }>).updateComplete;
-    if (pending && !autofocus.matches(':focus-within')) {
-      this.panel.focus();
+    if (pending) {
       void pending.then(() => {
         if (transitionId === this.transitionId && this.isShown) autofocus.focus();
       });
@@ -379,6 +430,7 @@ export abstract class ModalDialogElement extends LitElement {
     this.isLeaving = false;
     this.open = false;
     if (wasShown) this.dispatchHide('escape', { cancelable: false });
+    this.closeNestedDialogs();
     this.releaseResources({ restoreFocus: true });
     this.dispatchAfterHide('escape');
     this.settleTransition();
@@ -488,9 +540,13 @@ export abstract class ModalDialogElement extends LitElement {
     `;
   }
 
-  /** `description` 的螢幕閱讀器專用文字（id 為 `description`，由 dialog 的 aria-describedby 參照） */
+  /**
+   * `description` 的文字（id 為 `description`，由 dialog 的 aria-describedby 參照）。
+   * `hidden`：只作為描述的來源，不出現在瀏覽模式的閱讀順序中（Alert 的訊息已顯示在畫面上，否則會被讀兩次）；
+   * 被 aria-describedby 參照的隱藏元素仍會計入描述
+   */
   private renderDescription() {
     if (!this.description) return nothing;
-    return html`<span id="description" class="sr-only">${this.description}</span>`;
+    return html`<span id="description" hidden>${this.description}</span>`;
   }
 }

@@ -22,6 +22,13 @@ const sample = () => html`
     <aui-accordion heading="支援哪些瀏覽器？" variant="faq" name="faq">
       <p>最新兩個版本的 Chrome、Edge、Firefox 與 Safari。</p>
     </aui-accordion>
+    <aui-accordion heading="報表" variant="plain" open>
+      <ul>
+        <li><a href="#daily">日報表</a></li>
+        <li><a href="#monthly">月報表</a></li>
+      </ul>
+    </aui-accordion>
+    <aui-accordion heading="設定" variant="plain"><p>帳號與權限。</p></aui-accordion>
   </div>
 `;
 
@@ -52,7 +59,7 @@ describe('AuiAccordion Accessibility (<aui-accordion>)', () => {
   });
 
   describe('axe-core automated WCAG audit', () => {
-    it('passes axe audit for doc and faq layouts, open and closed, in light theme', async () => {
+    it('passes axe audit for doc, faq and plain layouts, open and closed, in light theme', async () => {
       const el = await fixture(sample());
       await expect(el).to.be.accessible();
     });

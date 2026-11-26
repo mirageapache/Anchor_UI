@@ -96,7 +96,7 @@ _非獨立 UI 元件，但為所有元件實作之外觀基礎與依賴單一事
 13. **Accordion（手風琴說明與 FAQ）**
     - **自訂標籤**：`<aui-accordion>`
     - **說明**：基於語意 `<details>` 與 `<summary>` 的內容收折區塊，用於工具下方展示操作說明、限制規範或常見問題。
-    - **狀態與能力**：展開時外框平滑高亮、標題旋轉箭頭指示、支援多區塊手風琴聯動或獨立開闔。
+    - **狀態與能力**：展開時外框平滑高亮、標題旋轉箭頭指示、支援多區塊手風琴聯動或獨立開闔；排版有 `doc`、`faq` 與無外框的 `plain`（側欄的可收合選單）。
 
 14. **FileUpload Dropzone（拖放檔案上傳區）**
     - **自訂標籤**：`<aui-dropzone>`
@@ -146,50 +146,50 @@ _來源為 `1.0.0-beta` 的整合測試回饋；排程與驗收條件見 [`ancho
 21. **Popover（彈出面板）**
     - **自訂標籤**：`<aui-popover>`
     - **說明**：點擊觸發、承載可互動內容（清單、連結、按鈕）的非強制回應浮層，例如導覽列的通知清單。Tooltip 只用於說明文字，不放互動內容。
-    - **狀態與能力**：沿用 Tooltip 的 top layer 與動態定位；觸發元素帶 `aria-expanded`，開啟後焦點移入面板，ESC 或點擊外部關閉並還原焦點。
+    - **狀態與能力**：沿用 Tooltip 的 top layer 與動態定位；觸發元素帶 `aria-expanded`，開啟後焦點移入面板，ESC 或點擊外部關閉並還原焦點。（已完成，TASK-505）
 
 22. **Dropdown Menu（下拉選單）**
     - **自訂標籤**：`<aui-menu>`
     - **說明**：基於 Popover 的操作選單，例如導覽列的使用者選單、表格列的「更多」操作。
-    - **狀態與能力**：依 WAI-ARIA Menu Button 模式實作，方向鍵與 Home / End 移動、首字跳轉、Enter / Space 選取並分派 `aui-select`。
+    - **狀態與能力**：依 WAI-ARIA Menu Button 模式實作，方向鍵與 Home / End 移動、首字跳轉、Enter / Space 選取並分派 `aui-select`。（已完成，TASK-506）
 
 23. **Breadcrumb（麵包屑導覽）**
     - **自訂標籤**：`<aui-breadcrumb>`
     - **說明**：頁首的階層導覽，可放進 `<aui-header>`。
-    - **狀態與能力**：navigation landmark、目前頁面帶 `aria-current="page"`、分隔符號不進入無障礙樹，連結只接受安全的協定。
+    - **狀態與能力**：navigation landmark、目前頁面帶 `aria-current="page"`、分隔符號不進入無障礙樹，連結只接受安全的協定。（已完成，TASK-507：以 `items` 傳入各層；`<aui-header>` 新增 `breadcrumb` slot）
 
 既有元件的擴充：
 
-- **Accordion**：新增無外框變體（`variant="plain"`），用於側欄的可收合選單。
-- **Card**：新增圖示 slot，用於左側圖示加右側數值的 KPI 卡片。
+- **Accordion**：新增無外框變體（`variant="plain"`），用於側欄的可收合選單。（已完成，TASK-503）
+- **Card**：新增圖示 slot，用於左側圖示加右側數值的 KPI 卡片。（已完成，TASK-504：`icon` slot）
 
 ---
 
 ## 二、元件清單總覽對照表 (Component Inventory)
 
-| 序號 | 元件名稱                    | 建議自訂標籤                  | 分類 (Category) | 核心職責與特性簡述                                                                                 |
-| :--: | --------------------------- | ----------------------------- | :-------------: | -------------------------------------------------------------------------------------------------- |
-|  -   | **Design Tokens & Base**    | _(CSS / SCSS)_                |   Foundation    | 樣式系統基石，包含色彩、字型、間距、Reset 與雙主題切換。                                           |
-|  1   | **Button**                  | `<aui-button>`                |      Atom       | 4 種語意層級按鈕，支援 Hover/Active/Disabled/Loading 狀態。                                        |
-|  2   | **Icon Button**             | `<aui-icon-button>`           |      Atom       | 32×32px 微型圖示操作鈕，複製/下載狀態微動態回饋。                                                  |
-|  3   | **Tag / Badge**             | `<aui-tag>`                   |      Atom       | JetBrains Mono 等寬標籤，7 種語意色彩多態變體。                                                    |
-|  4   | **Segmented Control**       | `<aui-segmented>`             |      Atom       | 膠囊軌道單選切換器，具備平滑選中過渡與鍵盤無障礙。                                                 |
-|  5   | **Kbd**                     | `<aui-kbd>`                   |      Atom       | 鍵盤按鍵鍵帽微元件，等寬字體微立體邊框風格。                                                       |
-|  6   | **Input & Form Field**      | `<aui-input>`, `<aui-field>`  |      Atom       | 單行/多行等寬輸入框，整合標籤與右側快捷操作鈕。                                                    |
-|  7   | **Output**                  | `<aui-output>`                |      Atom       | 結果輸出展示框，4px 左側語意指示條與安全換行防禦。                                                 |
-|  8   | **Tooltip**                 | `<aui-tooltip>`               |     Overlay     | Shadcn 風格冷黑浮層氣泡，微縮放動態與全域定位。                                                    |
-|  9   | **Toast Notification**      | `<aui-toast>`, `ToastService` |     Overlay     | 可設定位置（預設右下角）的堆疊全域通知，5 種語意狀態與 TS 單例調用 API。                           |
-|  10  | **Modal**                   | `<aui-modal>`                 |     Overlay     | 通用彈窗外框容器（大/中/小尺寸），具備 Header/Body/Footer 插槽供自訂業務功能，似 Bootstrap Modal。 |
-|  11  | **Alert**                   | `<aui-alert>`, `AlertService` |     Overlay     | 提示與確認彈窗（SweetAlert2 風格），專注於語意圖示、標題、訊息與確認/取消。                        |
-|  12  | **Card**                    | `<aui-card>`                  |    Molecule     | 卡片，自適應 Grid、Hover 微浮凸與 HOT 邊框。                                                       |
-|  13  | **Accordion**               | `<aui-accordion>`             |    Molecule     | 基於 `<details>` 封裝的收折說明與 FAQ 區塊。                                                       |
-|  14  | **FileUpload Dropzone**     | `<aui-dropzone>`              |    Molecule     | 虛線框拖放上傳區，Dragover 琥珀金背景與邊框染色提示。                                              |
-|  15  | **Favorite Toggle**         | `<aui-favorite-btn>`          |    Molecule     | 星號收藏按鈕，微縮放彈跳動態與實心琥珀金高亮。                                                     |
-|  16  | **Code View**               | `<aui-code-view>`             |    Molecule     | IDE 風格代碼檢視區，Sticky 黏性行號列與程式碼摺疊。                                                |
-|  17  | **Header**                  | `<aui-header>`                |    Molecule     | 整合標籤、HOT 徽標、H1 標題、收藏鈕與簡述的頁首展示容器。                                          |
-|  18  | **Drawer**                  | `<aui-drawer>`                |   Navigation    | 可收合抽屜側邊欄，支援側滑展開/收合、遮罩與背景捲動鎖定。                                          |
-|  19  | **Navbar**                  | `<aui-navbar>`                |   Navigation    | 64px 獨立頂部導覽列，整合 Logo、搜尋按鈕、導覽選單與主題切換。                                     |
-|  20  | **Footer**                  | `<aui-footer>`                |   Navigation    | 獨立通用頁尾，整合版權宣告、版本資訊、外部連結與次要選單。                                         |
-|  21  | **Popover**（規劃中）       | `<aui-popover>`               |     Overlay     | 點擊觸發、承載互動內容的彈出面板，焦點移入與還原。                                                 |
-|  22  | **Dropdown Menu**（規劃中） | `<aui-menu>`                  |     Overlay     | 基於 Popover 的操作選單，WAI-ARIA Menu Button 鍵盤操作。                                           |
-|  23  | **Breadcrumb**（規劃中）    | `<aui-breadcrumb>`            |   Navigation    | 麵包屑導覽，navigation landmark 與 `aria-current`。                                                |
+| 序號 | 元件名稱                 | 建議自訂標籤                  | 分類 (Category) | 核心職責與特性簡述                                                                                 |
+| :--: | ------------------------ | ----------------------------- | :-------------: | -------------------------------------------------------------------------------------------------- |
+|  -   | **Design Tokens & Base** | _(CSS / SCSS)_                |   Foundation    | 樣式系統基石，包含色彩、字型、間距、Reset 與雙主題切換。                                           |
+|  1   | **Button**               | `<aui-button>`                |      Atom       | 4 種語意層級按鈕，支援 Hover/Active/Disabled/Loading 狀態。                                        |
+|  2   | **Icon Button**          | `<aui-icon-button>`           |      Atom       | 32×32px 微型圖示操作鈕，複製/下載狀態微動態回饋。                                                  |
+|  3   | **Tag / Badge**          | `<aui-tag>`                   |      Atom       | JetBrains Mono 等寬標籤，7 種語意色彩多態變體。                                                    |
+|  4   | **Segmented Control**    | `<aui-segmented>`             |      Atom       | 膠囊軌道單選切換器，具備平滑選中過渡與鍵盤無障礙。                                                 |
+|  5   | **Kbd**                  | `<aui-kbd>`                   |      Atom       | 鍵盤按鍵鍵帽微元件，等寬字體微立體邊框風格。                                                       |
+|  6   | **Input & Form Field**   | `<aui-input>`, `<aui-field>`  |      Atom       | 單行/多行等寬輸入框，整合標籤與右側快捷操作鈕。                                                    |
+|  7   | **Output**               | `<aui-output>`                |      Atom       | 結果輸出展示框，4px 左側語意指示條與安全換行防禦。                                                 |
+|  8   | **Tooltip**              | `<aui-tooltip>`               |     Overlay     | Shadcn 風格冷黑浮層氣泡，微縮放動態與全域定位。                                                    |
+|  9   | **Toast Notification**   | `<aui-toast>`, `ToastService` |     Overlay     | 可設定位置（預設右下角）的堆疊全域通知，5 種語意狀態與 TS 單例調用 API。                           |
+|  10  | **Modal**                | `<aui-modal>`                 |     Overlay     | 通用彈窗外框容器（大/中/小尺寸），具備 Header/Body/Footer 插槽供自訂業務功能，似 Bootstrap Modal。 |
+|  11  | **Alert**                | `<aui-alert>`, `AlertService` |     Overlay     | 提示與確認彈窗（SweetAlert2 風格），專注於語意圖示、標題、訊息與確認/取消。                        |
+|  12  | **Card**                 | `<aui-card>`                  |    Molecule     | 卡片，自適應 Grid、Hover 微浮凸與 HOT 邊框。                                                       |
+|  13  | **Accordion**            | `<aui-accordion>`             |    Molecule     | 基於 `<details>` 封裝的收折說明與 FAQ 區塊。                                                       |
+|  14  | **FileUpload Dropzone**  | `<aui-dropzone>`              |    Molecule     | 虛線框拖放上傳區，Dragover 琥珀金背景與邊框染色提示。                                              |
+|  15  | **Favorite Toggle**      | `<aui-favorite-btn>`          |    Molecule     | 星號收藏按鈕，微縮放彈跳動態與實心琥珀金高亮。                                                     |
+|  16  | **Code View**            | `<aui-code-view>`             |    Molecule     | IDE 風格代碼檢視區，Sticky 黏性行號列與程式碼摺疊。                                                |
+|  17  | **Header**               | `<aui-header>`                |    Molecule     | 整合標籤、HOT 徽標、H1 標題、收藏鈕與簡述的頁首展示容器。                                          |
+|  18  | **Drawer**               | `<aui-drawer>`                |   Navigation    | 可收合抽屜側邊欄，支援側滑展開/收合、遮罩與背景捲動鎖定。                                          |
+|  19  | **Navbar**               | `<aui-navbar>`                |   Navigation    | 64px 獨立頂部導覽列，整合 Logo、搜尋按鈕、導覽選單與主題切換。                                     |
+|  20  | **Footer**               | `<aui-footer>`                |   Navigation    | 獨立通用頁尾，整合版權宣告、版本資訊、外部連結與次要選單。                                         |
+|  21  | **Popover**              | `<aui-popover>`               |     Overlay     | 點擊觸發、承載互動內容的彈出面板，焦點移入與還原。                                                 |
+|  22  | **Dropdown Menu**        | `<aui-menu>`                  |     Overlay     | 基於 Popover 的操作選單，WAI-ARIA Menu Button 鍵盤操作。                                           |
+|  23  | **Breadcrumb**           | `<aui-breadcrumb>`            |   Navigation    | 麵包屑導覽，navigation landmark 與 `aria-current`。                                                |

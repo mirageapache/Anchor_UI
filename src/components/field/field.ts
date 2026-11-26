@@ -14,6 +14,27 @@ type FieldControl = AuiInput | AuiOutput | AuiSegmented;
 
 const CONTROL_TAGS = new Set(['aui-input', 'aui-output', 'aui-segmented']);
 
+/** 自訂元素是否已定義（不使用 :defined：happy-dom 等環境不支援這個選擇器） */
+const isUpgraded = (element: Element): boolean =>
+  customElements.get(element.localName) !== undefined;
+
+/**
+ * 是否被外層的 `<fieldset disabled>` 停用（第一個 `<legend>` 內的控制項不受影響，與原生規則相同）。
+ * 不使用 `:disabled`：不支援表單關聯自訂元素的環境中它不會符合
+ */
+function inDisabledFieldset(control: Element): boolean {
+  for (
+    let fieldset = control.closest('fieldset');
+    fieldset;
+    fieldset = fieldset.parentElement?.closest('fieldset') ?? null
+  ) {
+    if (!fieldset.disabled) continue;
+    const legend = fieldset.querySelector(':scope > legend');
+    if (!legend?.contains(control)) return true;
+  }
+  return false;
+}
+
 const isInput = (control: FieldControl | null): control is AuiInput =>
   control?.localName === 'aui-input';
 
@@ -39,8 +60,8 @@ const isInput = (control: FieldControl | null): control is AuiInput =>
  * @csspart clear-button - 內建清除鈕（`<aui-icon-button>`）
  * @csspart description - 次要描述文字
  *
- * @fires aui-copy - 複製鈕成功複製控制項內容時觸發（來自內建 `<aui-icon-button>`）
- * @fires aui-copy-error - 複製失敗或控制項為空時觸發（來自內建 `<aui-icon-button>`）
+ * @fires {CustomEvent<CopyDetail>} aui-copy - 複製鈕成功複製控制項內容時觸發（來自內建 `<aui-icon-button>`）
+ * @fires {CustomEvent<CopyErrorDetail>} aui-copy-error - 複製失敗或控制項為空時觸發（來自內建 `<aui-icon-button>`）
  */
 export class AuiField extends LitElement {
   static override styles = fieldStyles;
@@ -69,6 +90,24 @@ export class AuiField extends LitElement {
    */
   @property({ type: Boolean, reflect: true })
   clearable = false;
+
+  /**
+   * 複製鈕的名稱；會接上欄位的標題（如「複製 輸出」）
+   */
+  @property({ type: String, attribute: 'copy-label' })
+  copyLabel = '複製';
+
+  /**
+   * 複製成功後短暫顯示的提示文字
+   */
+  @property({ type: String, attribute: 'copied-label' })
+  copiedLabel = '已複製！';
+
+  /**
+   * 清除鈕的名稱與提示文字；名稱會接上欄位的標題（如「清除 關鍵字」）
+   */
+  @property({ type: String, attribute: 'clear-label' })
+  clearLabel = '清除';
 
   /** 目前關聯的控制項 */
   @state()
@@ -99,15 +138,32 @@ export class AuiField extends LitElement {
   }
 
   private observeControl(control: FieldControl): void {
-    this.controlObserver.observe(control, {
-      attributes: true,
-      attributeFilter: ['disabled', 'readonly'],
-    });
+    const options = { attributes: true, attributeFilter: ['disabled', 'readonly'] };
+    this.controlObserver.observe(control, options);
+    // 外層的 <fieldset disabled> 也會停用輸入框，但輸入框本身的屬性不會變：一併觀察各層 fieldset
+    for (
+      let fieldset = control.closest('fieldset');
+      fieldset;
+      fieldset = fieldset.parentElement?.closest('fieldset') ?? null
+    ) {
+      this.controlObserver.observe(fieldset, options);
+    }
+    // 控制項比欄位晚定義（元件分開載入）：升級前讀不到 disabled / readOnly，升級後再同步一次
+    if (!isUpgraded(control)) {
+      void customElements.whenDefined(control.localName).then(() => {
+        if (this.control === control) this.syncClearDisabled();
+      });
+    }
   }
 
   private syncClearDisabled(): void {
     const control = this.control;
-    this.clearDisabled = !isInput(control) || control.disabled || control.readOnly;
+    this.clearDisabled =
+      !isInput(control) ||
+      !isUpgraded(control) ||
+      control.disabled ||
+      inDisabledFieldset(control) ||
+      control.readOnly;
   }
 
   /** 從預設 slot 的元素中找出控制項並建立關聯 */
@@ -221,8 +277,8 @@ export class AuiField extends LitElement {
                     part="copy-button"
                     preset="copy"
                     action="custom"
-                    label=${`複製${target}`}
-                    success-tooltip="已複製！"
+                    label=${`${this.copyLabel || '複製'}${target}`}
+                    success-tooltip=${this.copiedLabel || '已複製！'}
                     @click=${this.handleCopy}
                   ></aui-icon-button>
                 `
@@ -234,8 +290,8 @@ export class AuiField extends LitElement {
                   <aui-icon-button
                     part="clear-button"
                     preset="close"
-                    tooltip="清除"
-                    label=${`清除${target}`}
+                    tooltip=${this.clearLabel || '清除'}
+                    label=${`${this.clearLabel || '清除'}${target}`}
                     ?disabled=${this.clearDisabled}
                     @click=${this.handleClear}
                   ></aui-icon-button>

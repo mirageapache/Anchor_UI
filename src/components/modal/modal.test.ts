@@ -7,6 +7,7 @@ import type { ModalHideDetail } from './modal.types.js';
 import { followTopModal, getTopModalLayer } from '../../internal/top-layer.js';
 import { getDeepActiveElement } from '../../internal/focus-return.js';
 import { isScrollLocked } from '../../internal/scroll-lock.js';
+import { trackChangeInUpdate } from '../../test-utils/lit.js';
 
 const dialogOf = (el: AuiModal) => el.shadowRoot!.querySelector('dialog')!;
 const panelOf = (el: AuiModal) => el.shadowRoot!.querySelector<HTMLElement>('[part="panel"]')!;
@@ -163,6 +164,16 @@ describe('AuiModal (<aui-modal>)', () => {
       expect(el.open).to.be.true; // 之後插入頁面時才開啟
     });
 
+    it('stays closed without throwing when an aui-show listener removes it from the page', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Removed"></aui-modal>`);
+      el.addEventListener('aui-show', () => el.remove());
+      // showModal() 在不在頁面上的 dialog 會拋出，show() 不可因此 reject
+      await el.show();
+      expect(el.open).to.be.false;
+      expect(isScrollLocked()).to.be.false;
+      expect(getTopModalLayer()).to.be.null;
+    });
+
     it('stays closed when aui-show is cancelled', async () => {
       const el = await fixture<AuiModal>(html`<aui-modal heading="Cancel show"></aui-modal>`);
       el.addEventListener('aui-show', (event) => event.preventDefault());
@@ -225,6 +236,15 @@ describe('AuiModal (<aui-modal>)', () => {
   });
 
   describe('closing', () => {
+    it('opens and closes without scheduling another update from updated()', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Lifecycle"></aui-modal>`);
+      const hits = trackChangeInUpdate(el);
+      await openModal(el);
+      expect(await closeWith(el, () => el.hide())).to.equal('api');
+      expect(dialogOf(el).open).to.be.false;
+      expect(hits, 'updates scheduled from updated()').to.deep.equal([]);
+    });
+
     it('forgets the reason of a close request that was reverted in the same task', async () => {
       const el = await fixture<AuiModal>(html`<aui-modal heading="Reverted"></aui-modal>`);
       await openModal(el);
@@ -498,20 +518,40 @@ describe('AuiModal (<aui-modal>)', () => {
     it('can be reopened during the exit transition', async () => {
       const el = await fixture<AuiModal>(html`<aui-modal heading="Reopen"></aui-modal>`);
       await openModal(el);
-      let afterHide = 0;
-      el.addEventListener('aui-after-hide', () => afterHide++);
+      const events: string[] = [];
+      for (const name of ['aui-hide', 'aui-after-hide', 'aui-show', 'aui-after-show']) {
+        el.addEventListener(name, () => events.push(name));
+      }
+      const hits = trackChangeInUpdate(el);
 
       const hiding = el.hide();
       await el.updateComplete;
       await openModal(el);
       await hiding; // 被重新開啟取代時 resolve
       await new Promise((resolve) => setTimeout(resolve, 300));
-      expect(afterHide).to.equal(0);
+      // 被中斷的那次關閉先結束（事件成對），之後不再有過期的 aui-after-hide
+      expect(events).to.deep.equal(['aui-hide', 'aui-show', 'aui-after-hide', 'aui-after-show']);
+      expect(hits, 'updates scheduled from updated()').to.deep.equal([]);
       expect(dialogOf(el).open).to.be.true;
       expect(dialogOf(el).classList.contains('modal--leaving')).to.be.false;
       expect(getComputedStyle(panelOf(el)).opacity).to.equal('1');
 
       await closeWith(el, () => el.hide());
+      expect(isScrollLocked()).to.be.false;
+    });
+
+    it('keeps closing when the reopening aui-show is cancelled', async () => {
+      const el = await fixture<AuiModal>(html`<aui-modal heading="Reopen cancelled"></aui-modal>`);
+      await openModal(el);
+      const hidden = oneEvent(el, 'aui-after-hide');
+      void el.hide();
+      await el.updateComplete;
+      el.addEventListener('aui-show', (event) => event.preventDefault(), { once: true });
+      el.open = true;
+      await el.updateComplete;
+      expect(el.open).to.be.false;
+      await hidden;
+      expect(dialogOf(el).open).to.be.false;
       expect(isScrollLocked()).to.be.false;
     });
 
@@ -625,6 +665,15 @@ describe('AuiModal (<aui-modal>)', () => {
       }
     });
 
+    it('focuses the panel when the [autofocus] element cannot take focus', async () => {
+      const el = await fixture<AuiModal>(html`
+        <aui-modal heading="Unfocusable"><button autofocus disabled>Disabled</button></aui-modal>
+      `);
+      await openModal(el);
+      expect(getDeepActiveElement() === panelOf(el), 'not left on the close button').to.be.true;
+      await closeWith(el, () => el.hide());
+    });
+
     it('focuses the panel when there is no [autofocus] element', async () => {
       const el = await fixture<AuiModal>(
         html`<aui-modal heading="Panel focus"><button>A</button></aui-modal>`,
@@ -693,6 +742,32 @@ describe('AuiModal (<aui-modal>)', () => {
       await closeWith(outer, () => outer.hide());
       expect(isScrollLocked()).to.be.false;
       expect(getTopModalLayer()).to.be.null;
+    });
+
+    it('closes an open nested modal when the outer one closes', async () => {
+      const outer = await fixture<AuiModal>(html`
+        <aui-modal heading="Outer">
+          <aui-modal id="inner" heading="Inner"></aui-modal>
+        </aui-modal>
+      `);
+      const inner = outer.querySelector<AuiModal>('#inner')!;
+      await openModal(outer);
+      await openModal(inner);
+      const innerEvents: string[] = [];
+      for (const name of ['aui-hide', 'aui-after-hide']) {
+        inner.addEventListener(name, (event) => {
+          event.stopPropagation();
+          const { detail, cancelable } = event as CustomEvent<ModalHideDetail>;
+          innerEvents.push(`${name}:${detail.reason}:${cancelable}`);
+        });
+      }
+
+      await closeWith(outer, () => outer.hide());
+      expect(innerEvents).to.deep.equal(['aui-hide:api:false', 'aui-after-hide:api:false']);
+      expect(inner.open).to.be.false;
+      expect(dialogOf(inner).open).to.be.false;
+      expect(isScrollLocked(), 'no leaked scroll lock').to.be.false;
+      expect(getTopModalLayer(), 'no leaked modal layer').to.be.null;
     });
 
     it('hosts followTopModal() overlays in its overlay slot, keeping them interactive', async () => {

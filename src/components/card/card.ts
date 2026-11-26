@@ -21,13 +21,19 @@ import type { CardHeadingLevel, CardTarget } from './card.types.js';
  *
  * 整張卡片為連結時，請勿在其中放入按鈕、連結等互動元素（互動元素不可巢狀），並請提供卡片名稱作為連結的名稱。
  *
+ * 放入 `icon` slot 時改為左右排版：左側為圖示，右側為名稱、簡介與標籤（例如 KPI 卡片的圖示加數值）。
+ * 圖示的大小與外觀由放入的元素決定；純裝飾的圖示請加上 `aria-hidden="true"`。
+ *
  * @element aui-card
  *
  * @slot - 簡介描述（未提供時使用 `description` 屬性）
  * @slot heading - 卡片名稱（未提供時使用 `heading` 屬性）
  * @slot tags - 卡片底部的標籤群（如 `<aui-tag>`）
+ * @slot icon - 左側的圖示（放入時改為左右排版）
  *
  * @csspart base - 卡片外層容器（有 `href` 時為 `<a>`，否則為 `<div>`）
+ * @csspart icon - 圖示容器（只在放入 `icon` slot 時出現）
+ * @csspart body - 圖示右側的內容容器（只在放入 `icon` slot 時出現）
  * @csspart header - 名稱與 HOT 徽標所在的標題列
  * @csspart heading - 卡片名稱（`<h1>` ~ `<h6>`）
  * @csspart hot-badge - HOT 徽標
@@ -96,6 +102,7 @@ export class AuiCard extends LitElement {
     const hasSlottedDescription = hasLightContent(this);
     const hasDescription = hasSlottedDescription || !!this.description;
     const hasTags = hasLightContent(this, 'tags');
+    const hasIcon = hasLightContent(this, 'icon');
 
     const content = html`
       <div class="card__header" part="header">
@@ -127,10 +134,22 @@ export class AuiCard extends LitElement {
     // 簡介不使用 slot 的 fallback 內容（見上方範本）：只要 host 內有任何節點（包含換行空白、其他具名 slot 的
     // 元素之間的空白），預設 slot 就視為已指派，fallback 不會顯示。
     // （說明寫在這裡而不是範本內的 HTML 註解，避免註解進入發布產物。）
-    const classes = classMap({ card: true, 'card--hot': this.hot, 'card--link': isLink });
+    const classes = classMap({
+      card: true,
+      'card--hot': this.hot,
+      'card--link': isLink,
+      'card--icon': hasIcon,
+    });
+    // 有圖示時左右排版：圖示與其餘內容分成兩欄；沒有圖示時維持原本的結構
+    const body = hasIcon
+      ? html`
+          <div class="card__icon" part="icon"><slot name="icon"></slot></div>
+          <div class="card__body" part="body">${content}</div>
+        `
+      : content;
 
     if (!isLink) {
-      return html`<div class=${classes} part="base">${content}</div>`;
+      return html`<div class=${classes} part="base">${body}</div>`;
     }
 
     const rel = this.rel ?? (this.target === '_blank' ? 'noopener noreferrer' : undefined);
@@ -151,7 +170,7 @@ export class AuiCard extends LitElement {
         aria-labelledby=${ifDefined(labelledBy)}
         aria-describedby=${ifDefined(describedBy)}
       >
-        ${content}
+        ${body}
       </a>
     `;
   }

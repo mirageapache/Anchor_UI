@@ -243,6 +243,76 @@ describe('AuiAlert (<aui-alert>)', () => {
       expect(await result).to.deep.equal({ type: 'aui-cancel', reason: 'cancel-button' });
     });
 
+    it('leaves Enter to interactive content in the default slot', async () => {
+      const el = await fixture<AuiAlert>(html`
+        <aui-alert mode="confirm" heading="Terms">
+          <a href="#terms">Read the terms</a>
+        </aui-alert>
+      `);
+      await openAlert(el);
+      const link = el.querySelector('a')!;
+      link.focus();
+      const event = new KeyboardEvent('keydown', {
+        key: 'Enter',
+        bubbles: true,
+        composed: true,
+        cancelable: true,
+      });
+      link.dispatchEvent(event);
+      await el.updateComplete;
+      expect(event.defaultPrevented, 'the link keeps its Enter').to.be.false;
+      expect(el.open).to.be.true;
+      el.cancel();
+    });
+
+    it('ignores an Enter that was already handled (defaultPrevented)', async () => {
+      const el = await fixture<AuiAlert>(
+        html`<aui-alert mode="prompt" heading="Name"></aui-alert>`,
+      );
+      await openAlert(el);
+      const control = part(el, 'input')!.shadowRoot!.querySelector('.control')!;
+      control.addEventListener('keydown', (event) => event.preventDefault(), { once: true });
+      await sendKeys({ press: 'Enter' });
+      await el.updateComplete;
+      expect(el.open).to.be.true;
+      el.cancel();
+    });
+
+    it('confirms on Enter with focus on the panel, but not for destructive confirmations', async () => {
+      const panelOf = (alert: AuiAlert) =>
+        modalOf(alert).shadowRoot!.querySelector<HTMLElement>('[part~="panel"]')!;
+
+      const el = await fixture<AuiAlert>(
+        html`<aui-alert mode="confirm" heading="Proceed?"></aui-alert>`,
+      );
+      await openAlert(el);
+      panelOf(el).focus();
+      const result = nextResult(el);
+      await sendKeys({ press: 'Enter' });
+      expect((await result).type).to.equal('aui-confirm');
+
+      const destructive = await fixture<AuiAlert>(
+        html`<aui-alert mode="confirm" heading="Delete?" destructive></aui-alert>`,
+      );
+      await openAlert(destructive);
+      panelOf(destructive).focus();
+      await sendKeys({ press: 'Enter' });
+      await destructive.updateComplete;
+      expect(destructive.open, 'Enter outside the buttons must not delete').to.be.true;
+      destructive.cancel();
+    });
+
+    it('still confirms a destructive prompt on Enter in its input', async () => {
+      const el = await fixture<AuiAlert>(
+        html`<aui-alert mode="prompt" heading="Type DELETE" destructive></aui-alert>`,
+      );
+      await openAlert(el);
+      const result = nextResult(el);
+      await sendKeys({ type: 'DELETE' });
+      await sendKeys({ press: 'Enter' });
+      expect(await result).to.deep.equal({ type: 'aui-confirm', value: 'DELETE' });
+    });
+
     it('focuses the input in prompt mode', async () => {
       const el = await fixture<AuiAlert>(
         html`<aui-alert mode="prompt" heading="Name"></aui-alert>`,
@@ -448,6 +518,79 @@ describe('AuiAlert (<aui-alert>)', () => {
       el.cancel();
       expect(await result).to.deep.equal({ type: 'aui-cancel', reason: 'cancel-button' });
       expect(results).to.equal(1);
+    });
+
+    it('keeps the original reason when confirm() is called while the modal is already closing', async () => {
+      const el = await fixture<AuiAlert>(
+        html`<aui-alert mode="confirm" heading="Late"></aui-alert>`,
+      );
+      await openAlert(el);
+      const result = nextResult(el);
+      // 與 ESC / 遮罩相同：由 Modal 自己開始關閉，Alert 的 open 要到 aui-after-hide 才更新
+      modalOf(el).open = false;
+      await modalOf(el).updateComplete;
+      expect(el.open, 'still waiting for the exit transition').to.be.true;
+      el.confirm();
+      expect(await result).to.deep.equal({ type: 'aui-cancel', reason: 'api' });
+    });
+
+    it('reports the interrupted close when reopened during the exit transition', async () => {
+      const el = await fixture<AuiAlert>(
+        html`<aui-alert mode="confirm" heading="Again"></aui-alert>`,
+      );
+      await openAlert(el);
+      const results: string[] = [];
+      el.addEventListener('aui-confirm', () => results.push('confirm'));
+      el.addEventListener('aui-cancel', () => results.push('cancel'));
+
+      el.confirm();
+      await el.updateComplete;
+      const shown = oneEvent(el, 'aui-after-show');
+      el.open = true;
+      await shown;
+      expect(results).to.deep.equal(['confirm']);
+
+      const result = nextResult(el);
+      el.cancel();
+      expect(await result).to.deep.equal({ type: 'aui-cancel', reason: 'cancel-button' });
+      expect(results).to.deep.equal(['confirm', 'cancel']);
+    });
+
+    it('is cancelled when an enclosing modal closes', async () => {
+      const outer = await fixture<AuiModal>(html`
+        <aui-modal heading="Outer"
+          ><aui-alert mode="confirm" heading="Inner"></aui-alert
+        ></aui-modal>
+      `);
+      const el = outer.querySelector<AuiAlert>('aui-alert')!;
+      const outerShown = oneEvent(outer, 'aui-after-show');
+      outer.open = true;
+      await outerShown;
+      await openAlert(el);
+
+      const result = nextResult(el);
+      // 內層的 aui-after-hide 也會冒泡到外層，因此以 hide() 等待外層關閉完成
+      const outerHidden = outer.hide();
+      expect(await result).to.deep.equal({ type: 'aui-cancel', reason: 'api' });
+      await outerHidden;
+      expect(el.open).to.be.false;
+      expect(isScrollLocked()).to.be.false;
+      expect(getTopModalLayer()).to.be.null;
+    });
+
+    it('drops the result of a close request that is withdrawn in the same task', async () => {
+      const el = await fixture<AuiAlert>(
+        html`<aui-alert mode="confirm" heading="Withdrawn"></aui-alert>`,
+      );
+      await openAlert(el);
+      el.confirm();
+      el.open = true;
+      await el.updateComplete;
+      expect(el.open).to.be.true;
+
+      const result = nextResult(el);
+      await el.hide();
+      expect(await result).to.deep.equal({ type: 'aui-cancel', reason: 'api' });
     });
 
     it('re-dispatches the modal lifecycle events from the alert host', async () => {

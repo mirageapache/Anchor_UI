@@ -70,6 +70,13 @@ describe('AuiOutput (<aui-output>)', () => {
     expect(base(el).classList.contains('output--empty')).to.be.true;
   });
 
+  it('uses status-label as the screen-reader status text', async () => {
+    const el = await fixture<AuiOutput>(
+      html`<aui-output status="error" status-label="Error:" value="Bad input"></aui-output>`,
+    );
+    expect(srPrefix(el)).to.equal('Error: ');
+  });
+
   it('falls back to success for an unknown status', async () => {
     const el = await fixture<AuiOutput>(
       html`<aui-output status=${'pending'} value="text"></aui-output>`,

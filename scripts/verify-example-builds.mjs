@@ -1,4 +1,4 @@
-// 檢查範例專案（examples/vue3、examples/angular）的正式建置結果確實包含應用程式與元件庫。
+// 檢查範例專案（examples/vue3、examples/angular、examples/react）的正式建置結果確實包含應用程式與元件庫。
 //   node scripts/verify-example-builds.mjs      於 pnpm build:examples 之後執行
 //
 // 建置指令成功不代表產物正確：examples/angular 曾因 tsconfig 的 "noEmit": true，
@@ -10,7 +10,7 @@ import { join, resolve } from 'node:path';
 import { listComponents } from './components.mjs';
 
 const root = resolve(import.meta.dirname, '..');
-const EXAMPLES = ['vue3', 'angular'];
+const EXAMPLES = ['vue3', 'angular', 'react'];
 
 /** 列出目錄下所有檔案（遞迴，回傳絕對路徑） */
 function listFiles(dir) {
@@ -20,7 +20,7 @@ function listFiles(dir) {
 }
 
 const expectedTags = listComponents(root).map((name) => `aui-${name}`);
-/** 兩個範例的範本中都有的文字：出現在產物中代表應用程式本身（而不只是元件庫）確實被編譯進去 */
+/** 各範例的範本中都有的文字：出現在產物中代表應用程式本身（而不只是元件庫）確實被編譯進去 */
 const APP_MARKER = 'npm install @anchor-ui/core';
 const failures = [];
 

@@ -38,6 +38,9 @@
   - [5.9 可收合抽屜側邊欄 (Drawer)](#59-可收合抽屜側邊欄-drawer)
   - [5.10 頂部導覽列 (Navbar)](#510-頂部導覽列-navbar)
   - [5.11 通用頁尾 (Footer)](#511-通用頁尾-footer)
+  - [5.12 彈出面板 (Popover)](#512-彈出面板-popover)
+  - [5.13 下拉選單 (Dropdown Menu)](#513-下拉選單-dropdown-menu)
+  - [5.14 麵包屑導覽 (Breadcrumb)](#514-麵包屑導覽-breadcrumb)
 - [六、前端共用元件專案建置與發佈指南](#六前端共用元件專案建置與發佈指南)
 
 ---
@@ -1055,6 +1058,9 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
 }
 ```
 
+圖示版面（`icon` slot，KPI 卡片）：放入圖示時卡片改為橫向 flex，圖示與內容間距 `--space-ms`，圖示靠上對齊、顏色為 `--color-brand-text`，
+大小由放入的元素決定；名稱、簡介與標籤移到右側的內容欄（`::part(body)`），標籤仍貼齊底部。
+
 ---
 
 ### 5.2 拖放檔案上傳區 (FileUpload Dropzone)
@@ -1201,6 +1207,10 @@ JetBrains Mono 專屬等寬標籤，代表性的 IDE 語義色 Token 外觀：
   }
 }
 ```
+
+排版變體（`variant`）：`doc`（上方的預設樣式）；`faq` 內距縮為 `--space-ms` / `--space-md`、圓角 `--radius-md`；
+`plain` 用於側欄等已有外框的容器（可收合選單），不畫外框、背景與內容上方的虛線分隔線；
+內距 `--space-xs` 放在標題列上（點擊範圍至少 24px 高），焦點框畫在內側（`outline-offset: -2px`），標題字重為 `--weight-semibold`。
 
 ---
 
@@ -1779,6 +1789,103 @@ Shadcn/ui 風格黑色懸浮氣泡，帶微縮放動畫（`scale: 0.95 -> 1`）�
   }
 }
 ```
+
+### 5.12 彈出面板 (Popover)
+
+點擊觸發、承載可互動內容的非強制回應浮層（導覽列的通知清單、使用者資訊面板）。面板以 Popover API 進入 Top Layer，
+位置由 `@floating-ui/dom` 計算（預設 `bottom-start`，空間不足時翻轉與平移，與視窗邊緣保留 8px）；
+進出場與 Tooltip 相同為淡入加 `scale(0.95 → 1)`，縮放原點朝向觸發元素。
+
+```scss
+.popover__panel {
+  min-width: 10rem;
+  max-width: min(22.5rem, calc(100vw - 16px));
+  max-height: calc(100vh - 16px);
+  padding: var(--space-sm);
+  font-size: var(--text-sm);
+  color: var(--color-text-primary);
+  background-color: var(--color-base); // 與 Modal 面板相同
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-popover);
+  transition:
+    opacity var(--transition-base),
+    transform var(--transition-base);
+}
+```
+
+焦點落在面板本身時（內容沒有可聚焦的元素）不畫焦點框：面板不在 Tab 順序中，也不可操作（同 Modal 面板）。
+
+### 5.13 下拉選單 (Dropdown Menu)
+
+沿用 Popover 的面板（內距縮為 `--space-xs`），面板的直接子元素統一為選單項目的外觀：
+
+```scss
+.menu-item {
+  display: flex;
+  width: 100%;
+  padding: var(--space-xs) var(--space-sm);
+  color: inherit; // 連結項目也沿用面板文字色
+  text-align: start;
+  text-decoration: none;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+
+  &:hover,
+  &:focus {
+    background-color: var(--color-surface);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-brand-500);
+    outline-offset: -2px; // 畫在項目內側，不與相鄰項目重疊
+  }
+
+  &[aria-disabled='true'] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+hr {
+  margin: var(--space-xs) 0;
+  border-top: 1px solid var(--color-border);
+}
+```
+
+### 5.14 麵包屑導覽 (Breadcrumb)
+
+以行內文字排列（`<ol>` / `<li>` 皆為 inline），空間不足時像句子一樣換行；分隔符號前後的空格是換行點，
+各層以 `word-break: keep-all` 避免中文名稱在字與字之間斷開，過長的英文字串仍以 `overflow-wrap: anywhere` 斷行。
+
+```scss
+.breadcrumb {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+
+  a {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      color: var(--color-brand-text);
+      text-decoration: underline;
+    }
+  }
+
+  [aria-current='page'] {
+    font-weight: var(--weight-medium);
+    color: var(--color-text-primary);
+  }
+
+  .separator {
+    color: var(--color-text-muted);
+  }
+}
+```
+
+放在 `<aui-header>` 時位於分類標籤與標題之上（`breadcrumb` slot）。
 
 ---
 

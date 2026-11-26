@@ -45,6 +45,14 @@ export interface CopyDetail {
 }
 
 /**
+ * 複製失敗事件資料
+ */
+export interface CopyErrorDetail {
+  /** 失敗原因（Clipboard API 拋出的錯誤，或沒有可複製內容時的 Error） */
+  error: unknown;
+}
+
+/**
  * 下載觸發事件資料
  */
 export interface DownloadDetail {

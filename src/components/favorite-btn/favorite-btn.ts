@@ -41,7 +41,7 @@ const FAVORITE_BTN_SIZES = new Set<FavoriteBtnSize>(['sm', 'md', 'lg']);
  * @csspart icon - 星號圖示（SVG）
  * @csspart tooltip - 內建的 `<aui-tooltip>`（`no-tooltip` 時不存在）
  *
- * @fires aui-change - 使用者切換收藏狀態後觸發（由程式設定 `favorite` 不會觸發），`detail.favorite` 為新狀態；支援 bubbles 與 composed
+ * @fires {CustomEvent<FavoriteChangeDetail>} aui-change - 使用者切換收藏狀態後觸發（由程式設定 `favorite` 不會觸發），`detail.favorite` 為新狀態；支援 bubbles 與 composed
  */
 export class AuiFavoriteBtn extends LitElement {
   static override styles = favoriteBtnStyles;
@@ -80,14 +80,26 @@ export class AuiFavoriteBtn extends LitElement {
   @property({ type: Boolean, attribute: 'no-tooltip' })
   noTooltip = false;
 
+  @query('.fav-btn')
+  private button?: HTMLButtonElement;
+
   @query('.fav-btn__icon')
   private icon?: SVGElement;
 
   /** 目前播放中的彈跳動態（只取消自己建立的動畫，不影響使用端透過 ::part(icon) 加上的動畫） */
   private bounceAnimation?: Animation;
 
-  private handleClick = (): void => {
+  constructor() {
+    super();
+    // 監聽 host 而不是內部按鈕：el.click() 與使用端對 host 分派的點擊也能切換（與 <aui-button> 一致）
+    this.addEventListener('click', this.handleClick);
+  }
+
+  private handleClick = (event: MouseEvent): void => {
     if (this.disabled) return;
+    // 只處理按鈕本身或直接對 host 的點擊：提示氣泡等其他內部元素的點擊不切換
+    const origin = event.composedPath()[0];
+    if (origin !== this && !(this.button && event.composedPath().includes(this.button))) return;
     const next = !this.favorite;
     this.favorite = next;
     this.dispatchEvent(
@@ -137,7 +149,6 @@ export class AuiFavoriteBtn extends LitElement {
         aria-pressed=${this.favorite ? 'true' : 'false'}
         aria-label=${label}
         ?disabled=${this.disabled}
-        @click=${this.handleClick}
       >
         <svg
           class="fav-btn__icon"

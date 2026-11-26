@@ -25,6 +25,7 @@ const chevron = html`
  *
  * - **行號**：左側行號列為 sticky，水平捲動時不位移；行號與摺疊鈕不會被選取或複製。
  * - **摺疊**：依縮排自動判斷可摺疊的區塊（下一個非空白行縮排更深的行即可摺疊，與 VS Code 預設相同）。
+ *   複製選取的內容時以原始文字為準：選取範圍跨過已摺疊的區塊時，摺疊中的行也會一併複製。
  *   摺疊鈕為一組：Tab 只會停在其中一個，以 ↑ / ↓ 在摺疊鈕之間移動、Home / End 到第一個 / 最後一個，
  *   Enter 或空白鍵切換。`code` 變更時摺疊狀態會重設。
  * - **大量內容**：所有展開中的行都在 DOM 中（瀏覽器的頁內搜尋與跨行選取皆可用；摺疊中的行不在 DOM 中，
@@ -54,12 +55,20 @@ export class AuiCodeView extends LitElement {
   @property({ type: String })
   label = '程式碼';
 
+  /**
+   * 摺疊鈕的無障礙名稱樣板：`{start}` 與 `{end}` 會換成區塊的起訖行號（從 1 起算）
+   */
+  @property({ type: String, attribute: 'fold-label' })
+  foldLabel = '第 {start}–{end} 行';
+
   /** 已摺疊區塊的起始行（0 起算） */
   @state()
   private collapsed = new Set<number>();
 
-  /** 摺疊鈕中位於 Tab 順序上的那一個（起始行，0 起算；roving tabindex） */
-  @state()
+  /**
+   * 摺疊鈕中位於 Tab 順序上的那一個（起始行，0 起算；roving tabindex）。
+   * 不是 reactive state：以方向鍵移動時直接改兩個按鈕的 tabindex，不必重新渲染所有行（萬行內容時按住方向鍵會卡頓）
+   */
   private activeFold = -1;
 
   private lines: string[] = [];
@@ -128,20 +137,104 @@ export class AuiCodeView extends LitElement {
   private handleKeydown = (event: KeyboardEvent) => {
     const button = (event.target as Element).closest?.<HTMLButtonElement>('.code-view__fold');
     if (!button) return;
-    const buttons = [...this.renderRoot.querySelectorAll<HTMLButtonElement>('.code-view__fold')];
-    const index = buttons.indexOf(button);
+    // 由資料找出目標行，再查詢那一個按鈕（不列舉所有摺疊鈕）
+    const folds = this.visibleLines().filter((i) => this.foldRanges.has(i));
+    const index = folds.indexOf(Number(button.dataset.line));
     const targetIndex: Record<string, number> = {
       ArrowDown: index + 1,
       ArrowUp: index - 1,
       Home: 0,
-      End: buttons.length - 1,
+      End: folds.length - 1,
     };
-    const target = buttons[targetIndex[event.key] ?? -1];
-    if (!target) return;
+    const line = folds[targetIndex[event.key] ?? -1];
+    if (line === undefined) return;
     event.preventDefault();
-    this.activeFold = Number(target.dataset.line);
+    const target = this.renderRoot.querySelector<HTMLButtonElement>(
+      `.code-view__fold[data-line="${line}"]`,
+    );
+    if (!target) return;
+    // 直接搬移 tabindex：下一次渲染以同一個 activeFold 計算，結果與這裡寫入的相同
+    this.renderRoot
+      .querySelector<HTMLButtonElement>('.code-view__fold[tabindex="0"]')
+      ?.setAttribute('tabindex', '-1');
+    target.setAttribute('tabindex', '0');
+    this.activeFold = line;
     target.focus();
   };
+
+  /**
+   * 複製：以原始文字寫入剪貼簿。畫面上的選取範圍不含已摺疊的行（不在 DOM 中），
+   * 空白行在序列化選取範圍時也可能被瀏覽器合併；選取範圍超出本元件時交給瀏覽器處理
+   */
+  private handleCopy = (event: ClipboardEvent) => {
+    const range = this.selectedRange();
+    if (!range || !event.clipboardData) return;
+    const codes = [...this.renderRoot.querySelectorAll<HTMLElement>('.code-view__code')].filter(
+      (code) => range.intersectsNode(code),
+    );
+    if (codes.length === 0) return;
+    const lineOf = (code: HTMLElement) =>
+      Number(code.parentElement!.querySelector<HTMLElement>('.code-view__number')!.textContent) - 1;
+    const firstCode = codes[0];
+    const lastCode = codes.at(-1)!;
+    const first = lineOf(firstCode);
+    let last = lineOf(lastCode);
+    const startColumn = firstCode.contains(range.startContainer)
+      ? this.columnOf(firstCode, range.startContainer, range.startOffset)
+      : 0;
+    const endsInCode = lastCode.contains(range.endContainer);
+    const endColumn = endsInCode
+      ? this.columnOf(lastCode, range.endContainer, range.endOffset)
+      : this.lines[last].length;
+    const selected = this.lines.slice(first, last + 1);
+    selected[selected.length - 1] = selected[selected.length - 1].slice(0, endColumn);
+    selected[0] = selected[0].slice(startColumn);
+    // 選到已摺疊區塊起始行的結尾之後：連同摺疊中的行一起複製
+    if (this.collapsed.has(last) && !endsInCode) {
+      const end = this.foldRanges.get(last)!;
+      selected.push(...this.lines.slice(last + 1, end + 1));
+      last = end;
+    }
+    event.clipboardData.setData('text/plain', selected.join('\n'));
+    event.preventDefault();
+  };
+
+  /** 選取範圍的端點在該行文字中的欄位：該行開頭到端點之間的文字長度（Lit 的註解標記不計入） */
+  private columnOf(code: HTMLElement, container: Node, offset: number): number {
+    const before = document.createRange();
+    before.selectNodeContents(code);
+    before.setEnd(container, offset);
+    return before.toString().length;
+  }
+
+  /** 位於本元件 Shadow DOM 內的選取範圍；沒有、或端點在元件之外時為 null */
+  private selectedRange(): Range | null {
+    const root = this.shadowRoot;
+    if (!root) return null;
+    type ComposedSelection = Selection & {
+      getComposedRanges?: (options: { shadowRoots: ShadowRoot[] }) => StaticRange[];
+    };
+    type SelectableRoot = ShadowRoot & { getSelection?: () => Selection | null };
+    try {
+      const selection = document.getSelection() as ComposedSelection | null;
+      let bounds: AbstractRange | undefined = selection?.getComposedRanges?.({
+        shadowRoots: [root],
+      })[0];
+      if (!bounds) {
+        // 舊版 Chromium：Shadow Root 自己的 getSelection()
+        const legacy = (root as SelectableRoot).getSelection?.();
+        bounds = legacy?.rangeCount ? legacy.getRangeAt(0) : undefined;
+      }
+      if (!bounds || bounds.collapsed) return null;
+      if (!root.contains(bounds.startContainer) || !root.contains(bounds.endContainer)) return null;
+      const range = document.createRange();
+      range.setStart(bounds.startContainer, bounds.startOffset);
+      range.setEnd(bounds.endContainer, bounds.endOffset);
+      return range;
+    } catch {
+      return null;
+    }
+  }
 
   private renderLine(i: number, activeFold: number) {
     const end = this.foldRanges.get(i);
@@ -156,7 +249,9 @@ export class AuiCodeView extends LitElement {
             data-line=${i}
             tabindex=${i === activeFold ? 0 : -1}
             aria-expanded=${String(!isCollapsed)}
-            aria-label=${`第 ${i + 1}–${end + 1} 行`}
+            aria-label=${(this.foldLabel || '第 {start}–{end} 行')
+              .replace('{start}', String(i + 1))
+              .replace('{end}', String(end + 1))}
           >
             ${chevron}
           </button>`;
@@ -204,6 +299,7 @@ export class AuiCodeView extends LitElement {
         tabindex="0"
         @keydown=${this.handleKeydown}
         @click=${this.handleClick}
+        @copy=${this.handleCopy}
       >
         <div class="code-view__content" style=${content}>
           ${

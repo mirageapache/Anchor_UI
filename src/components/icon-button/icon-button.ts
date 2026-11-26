@@ -1,11 +1,19 @@
 import { LitElement, html, type TemplateResult } from 'lit';
 import { property, state, query } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
+import { ifDefined } from 'lit/directives/if-defined.js';
 import { iconButtonStyles } from './icon-button.styles.js';
 import { interceptInactiveClick } from '../../internal/inactive-click.js';
+import {
+  POPUP_TRIGGER,
+  popupTriggerAttributes,
+  type PopupTrigger,
+  type PopupTriggerState,
+} from '../../internal/popup-trigger.js';
 import { spinnerIcon, spinnerStyles } from '../../internal/spinner.js';
 import type {
   CopyDetail,
+  CopyErrorDetail,
   DownloadDetail,
   DownloadErrorDetail,
   IconButtonAction,
@@ -164,7 +172,7 @@ function parseDownloadUrl(value: string): URL | null {
  *
  * 專為複製 (Copy)、下載 (Download)、關閉、重新整理等動作打造之 32×32px 方形微型操作鈕。
  * 具備 Active 成功回饋狀態（背景與圖示變換為 Success 翠綠色）、平滑淡入淡出切換、
- * 深度結合 `<aui-tooltip>` 與螢幕閱讀器無障礙標籤播報。
+ * 深度結合 `<aui-tooltip>` 與螢幕閱讀器無障礙標籤播報；作為 `<aui-popover>` 的觸發元素時，展開狀態（`aria-expanded` 等）寫在內部的 `<button>` 上。
  *
  * @element aui-icon-button
  *
@@ -180,13 +188,13 @@ function parseDownloadUrl(value: string): URL | null {
  * @csspart success-icon - 成功回饋狀態圖示層
  * @csspart loading-icon - 載入中狀態圖示層
  *
- * @fires aui-copy - 複製文字至剪貼簿成功時觸發
- * @fires aui-copy-error - 剪貼簿存取失敗或沒有可複製內容（copy-value 為空）時觸發
- * @fires aui-download - 觸發下載行為時分派（可被 preventDefault 取消以自行接手下載）
- * @fires aui-download-error - download-url 使用不允許的協定（如 javascript:）而拒絕下載時觸發
- * @fires aui-status-change - 元件狀態發生改變時觸發
+ * @fires {CustomEvent<CopyDetail>} aui-copy - 複製文字至剪貼簿成功時觸發
+ * @fires {CustomEvent<CopyErrorDetail>} aui-copy-error - 剪貼簿存取失敗或沒有可複製內容（copy-value 為空）時觸發
+ * @fires {CustomEvent<DownloadDetail>} aui-download - 觸發下載行為時分派（可被 preventDefault 取消以自行接手下載）
+ * @fires {CustomEvent<DownloadErrorDetail>} aui-download-error - download-url 使用不允許的協定（如 javascript:）而拒絕下載時觸發
+ * @fires {CustomEvent<StatusChangeDetail>} aui-status-change - 元件狀態發生改變時觸發
  */
-export class AuiIconButton extends LitElement {
+export class AuiIconButton extends LitElement implements PopupTrigger {
   static override styles = [spinnerStyles, iconButtonStyles];
 
   static override shadowRootOptions: ShadowRootInit = {
@@ -320,6 +328,15 @@ export class AuiIconButton extends LitElement {
   @state()
   private announcement = '';
 
+  /** 作為彈出式元件（如 `<aui-popover>`）的觸發元素時的展開狀態，寫在內部的 `<button>` 上 */
+  @state()
+  private popupTrigger: PopupTriggerState | null = null;
+
+  /** @internal 由彈出式元件呼叫（見 src/internal/popup-trigger.ts） */
+  [POPUP_TRIGGER](state: PopupTriggerState | null): void {
+    this.popupTrigger = state;
+  }
+
   /** 複製進行中（等待剪貼簿）：期間不重複複製 */
   private copying = false;
 
@@ -330,7 +347,9 @@ export class AuiIconButton extends LitElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.clearFeedbackTimer();
+    // 回饋期間被移出頁面（清單重排、拖曳排序）：計時器不會再觸發，直接結束回饋，
+    // 否則重新插入後會一直停在 success / error，回饋用的提示也一直開著
+    if (this.feedbackTimer) this.resetFeedback();
   }
 
   /**
@@ -460,7 +479,7 @@ export class AuiIconButton extends LitElement {
       if (!this.isConnected) return false;
       this.triggerFeedback('error');
       this.dispatchEvent(
-        new CustomEvent('aui-copy-error', {
+        new CustomEvent<CopyErrorDetail>('aui-copy-error', {
           detail: { error: err },
           bubbles: true,
           composed: true,
@@ -634,6 +653,7 @@ export class AuiIconButton extends LitElement {
     const currentTooltipText = isSuccess ? this.computeSuccessTooltip() : this.computeIdleTooltip();
 
     const ariaLabel = this.computeAriaLabel();
+    const popup = popupTriggerAttributes(this.popupTrigger);
 
     const buttonTemplate = html`
       <button
@@ -655,6 +675,9 @@ export class AuiIconButton extends LitElement {
         aria-label=${ariaLabel}
         aria-busy=${isLoading ? 'true' : 'false'}
         aria-disabled=${isInactive ? 'true' : 'false'}
+        aria-haspopup=${ifDefined(popup.hasPopup)}
+        aria-expanded=${ifDefined(popup.expanded)}
+        .ariaControlsElements=${popup.controls}
       >
         <span class="icon-wrapper" part="icon-wrapper">
           <!-- 1. 閒置圖示層 -->

@@ -996,6 +996,44 @@ describe('ToastService', () => {
       expect(hitsToast(toasts()[0])).to.be.true;
     });
 
+    it('resumes auto-close when the modal holding it is removed while a toast has focus', async () => {
+      const modal = await fixture<AuiModal>(html`<aui-modal heading="Editor">Body</aui-modal>`);
+      const shown = oneEvent(modal, 'aui-after-show');
+      modal.open = true;
+      await shown;
+
+      const handle = ToastService.info('Focused, then orphaned', { duration: 200 });
+      await rendered();
+      toasts()[0].shadowRoot!.querySelector<HTMLButtonElement>('[part~="close-button"]')!.focus();
+      await wait(350);
+      expect(toasts(), 'paused while focused').to.have.length(1);
+
+      // 移除含焦點的節點不會觸發 focusout
+      modal.remove();
+      await handle.closed;
+    });
+
+    it('goes back into the open modal when its content was replaced', async () => {
+      const modal = await fixture<AuiModal>(html`<aui-modal heading="Editor">Body</aui-modal>`);
+      const shown = oneEvent(modal, 'aui-after-show');
+      modal.open = true;
+      await shown;
+
+      ToastService.info('First', { duration: 0 });
+      await rendered();
+      const viewport = viewportEl()!;
+      modal.replaceChildren('New body'); // Viewport 也被一併移除
+      expect(viewport.isConnected).to.be.false;
+
+      ToastService.info('Second', { duration: 0 });
+      await rendered();
+      expect(viewport.parentElement === modal, 'inside the modal, not inert on <body>').to.be.true;
+      expect(viewport.assignedSlot?.name).to.equal('overlay');
+
+      await modal.hide();
+      expect(viewport.parentElement === document.body).to.be.true;
+    });
+
     it('stays above an alert opened after it', async () => {
       ToastService.warning('Still visible', { duration: 0 });
       await rendered();

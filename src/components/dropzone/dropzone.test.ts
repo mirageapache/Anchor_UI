@@ -181,6 +181,22 @@ describe('AuiDropzone (<aui-dropzone>)', () => {
       expect(drops).to.have.lengthOf(2);
     });
 
+    it('lists only the first few rejected file names', async () => {
+      const el = await fixture<AuiDropzone>(
+        html`<aui-dropzone accept=".json" multiple></aui-dropzone>`,
+      );
+      const files = Array.from(
+        { length: 8 },
+        (_, index) => new File(['x'], `note-${index}.txt`, { type: 'text/plain' }),
+      );
+      pick(el, files);
+      await el.updateComplete;
+      const message = el.shadowRoot!.querySelector('[role="alert"]')!.textContent!;
+      expect(message).to.include('note-4.txt');
+      expect(message).to.not.include('note-5.txt');
+      expect(message).to.include('+3');
+    });
+
     it('filters picker selections too (the native filter can be bypassed)', async () => {
       const el = await fixture<AuiDropzone>(html`<aui-dropzone accept=".json"></aui-dropzone>`);
       const { drops, rejects } = record(el);

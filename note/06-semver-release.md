@@ -1,6 +1,11 @@
 # 語意化版本 (SemVer) 與發布產物
 
 > 對應任務：Phase 2 TASK-205「版本與發布產物規範」；Phase 4 TASK-405 將以 Changesets 自動化
+>
+> **這是 Phase 2 當時的筆記，手動發布的步驟已不適用。** TASK-405 最後採用 release-please 而不是 Changesets：
+> 版號、tag 與 GitHub Release 都由 release PR 產生，`release.yml` 也不再由推送 `v*` tag 觸發；
+> 請勿手動修改 `package.json` 的版號（`pnpm release:verify` 會檢查它與 `.release-please-manifest.json` 一致）。
+> 現行流程見 [`doc/anchor-ui-release-guide.md`](../doc/anchor-ui-release-guide.md)。
 
 ## 1. SemVer 是什麼
 

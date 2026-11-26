@@ -43,4 +43,43 @@ describeVisual('AuiCard visual regression', [
       </div>
     `,
   },
+  {
+    // KPI 卡片：左側圖示、右側數值（heading slot）與說明
+    name: 'card-icon',
+    render: () => html`
+      <div class="visual-frame" style=${grid(620)}>
+        <aui-card description="本月營收" href="/revenue">
+          <svg
+            slot="icon"
+            aria-hidden="true"
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <path d="M3 17l6-6 4 4 8-8" />
+          </svg>
+          <span slot="heading" style="font-size: 1.5rem;">NT$ 1.2M</span>
+        </aui-card>
+        <aui-card heading="Users" description="Active users this week" hot>
+          <svg
+            slot="icon"
+            aria-hidden="true"
+            width="32"
+            height="32"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+          >
+            <circle cx="12" cy="8" r="4" />
+            <path d="M4 21c0-4 4-6 8-6s8 2 8 6" />
+          </svg>
+          <aui-tag slot="tags" variant="success">+12%</aui-tag>
+        </aui-card>
+      </div>
+    `,
+  },
 ]);

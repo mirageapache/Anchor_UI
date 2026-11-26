@@ -33,6 +33,16 @@ function axNodePlugin() {
           // inert / display: none / aria-hidden 等使節點不會被輔助科技讀取時為 true
           ignored: node?.ignored ?? true,
           live: node?.properties?.find((property) => property.name === 'live')?.value?.value ?? '',
+          // 其餘 ARIA 狀態與屬性（expanded、hasPopup、modal、focusable…），值為 Chromium 計算後的結果；
+          // 關聯（controls、labelledby…）沒有值，改為所指向節點的數量
+          properties: Object.fromEntries(
+            (node?.properties ?? []).map((property) => [
+              property.name,
+              property.value?.relatedNodes
+                ? property.value.relatedNodes.length
+                : property.value?.value,
+            ]),
+          ),
         };
       } finally {
         await cdp.detach();

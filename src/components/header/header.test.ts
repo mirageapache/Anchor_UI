@@ -103,6 +103,25 @@ describe('AuiHeader (<aui-header>)', () => {
   });
 
   describe('slots', () => {
+    it('shows the breadcrumb container above the tags only when a breadcrumb is slotted', async () => {
+      const el = await fixture<AuiHeader>(html`<aui-header heading="Tool"></aui-header>`);
+      expect(part(el, 'breadcrumb').hidden).to.be.true;
+
+      const nav = document.createElement('nav');
+      nav.slot = 'breadcrumb';
+      nav.textContent = '首頁 / 工具';
+      el.append(nav);
+      await el.updateComplete;
+      await new Promise((resolve) => requestAnimationFrame(resolve));
+      await el.updateComplete;
+      const container = part(el, 'breadcrumb');
+      expect(container.hidden).to.be.false;
+      expect(container.querySelector('slot')!.assignedElements()[0]).to.equal(nav);
+      // 位於分類標籤與標題之前
+      const order = [...part(el, 'base').children].map((child) => child.getAttribute('part'));
+      expect(order.indexOf('breadcrumb')).to.be.lessThan(order.indexOf('tags'));
+    });
+
     it('shows slotted category tags before the HOT badge', async () => {
       const el = await fixture<AuiHeader>(html`
         <aui-header heading="A" hot>

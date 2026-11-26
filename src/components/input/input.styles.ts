@@ -90,4 +90,15 @@ export const inputStyles = css`
       transition: none;
     }
   }
+
+  /*
+   * 強制色彩（Windows 高對比）：box-shadow 會被移除、邊框顏色被統一成系統色，
+   * 焦點光環因此消失，改以 outline 呈現（WCAG 2.4.7）
+   */
+  @media (forced-colors: active) {
+    .control:focus {
+      outline: 2px solid Highlight;
+      outline-offset: 1px;
+    }
+  }
 `;

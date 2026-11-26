@@ -117,4 +117,20 @@ export const segmentedStyles = css`
       transition: none;
     }
   }
+
+  /*
+   * 強制色彩（Windows 高對比）：背景與文字顏色被統一成系統色，選中項只剩字重的差異。
+   * 改用系統的選取色，並讓焦點外框與選中項的底色有所區別
+   */
+  @media (forced-colors: active) {
+    .option[aria-checked='true'] {
+      forced-color-adjust: none;
+      color: HighlightText;
+      background: Highlight;
+    }
+
+    .option:focus-visible {
+      outline-color: CanvasText;
+    }
+  }
 `;

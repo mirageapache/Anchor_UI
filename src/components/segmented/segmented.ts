@@ -52,8 +52,8 @@ const normalizeOption = (item: SegmentedOption): SegmentedOption =>
  * @csspart option-checked - 選中的選項
  * @csspart option-disabled - 停用的選項
  *
- * @fires input - 使用者改變選取時分派，觸發時 `value` 已更新
- * @fires change - 使用者改變選取時於 `input` 之後分派，觸發時 `value` 已更新
+ * @fires {Event} input - 使用者改變選取時分派，觸發時 `value` 已更新
+ * @fires {Event} change - 使用者改變選取時於 `input` 之後分派，觸發時 `value` 已更新
  */
 export class AuiSegmented extends LitElement {
   static override styles = segmentedStyles;
@@ -231,9 +231,8 @@ export class AuiSegmented extends LitElement {
   }
 
   private get selectedIndex(): number {
-    return this.currentValue === ''
-      ? -1
-      : this.options.findIndex((option) => option.value === this.currentValue);
+    // 空字串也是合法的選項值（如「全部」）：沒有這樣的選項時，空值自然不對應任何選項
+    return this.options.findIndex((option) => option.value === this.currentValue);
   }
 
   /** roving tabindex 的停留點：選中且可用的選項，否則為第一個可用選項 */
@@ -308,6 +307,8 @@ export class AuiSegmented extends LitElement {
   private handleKeyDown = (event: KeyboardEvent) => {
     const button = (event.target as Element).closest<HTMLButtonElement>('.option');
     if (!button || this.isDisabled) return;
+    // 帶修飾鍵的方向鍵是瀏覽器或系統的快捷鍵（如 Alt+← 上一頁），不攔截
+    if (event.altKey || event.ctrlKey || event.metaKey) return;
     const current = Number(button.dataset.index);
     const rtl = getComputedStyle(this).direction === 'rtl';
     const forward = (key: string) =>

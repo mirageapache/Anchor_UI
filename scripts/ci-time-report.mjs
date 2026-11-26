@@ -4,6 +4,8 @@
 // - 整體時間 = 這次執行（attempt）開始 → 最後一個已完成的 job 結束，即開發者實際等待的時間（含排隊）。
 // - 於 CI 最後一個 job 中執行：自身尚未完成，不列入統計。
 // - 只發出警告、不讓 CI 失敗：runner 偶爾變慢不該擋住合併，但超出預算時應在 PR 上看得到。
+//   報告本身產生失敗（GitHub API 錯誤、還沒有已完成的 job）同樣只發出警告：否則全部通過的 CI
+//   會因為這個附帶的報告被標成失敗並觸發失敗通知。
 // - 環境變數：GITHUB_TOKEN（或 GH_TOKEN）、GITHUB_REPOSITORY、GITHUB_RUN_ID、GITHUB_RUN_ATTEMPT、
 //   GITHUB_STEP_SUMMARY（有設定時寫入 job summary）、CI_TIME_BUDGET_MINUTES（預設 8）。
 import { appendFileSync } from 'node:fs';
@@ -46,57 +48,64 @@ const formatDuration = (seconds) =>
     ? `${Math.floor(seconds / 60)}m ${String(Math.round(seconds % 60)).padStart(2, '0')}s`
     : `${Math.round(seconds)}s`;
 
-const run = await api(`/actions/runs/${runId}/attempts/${attempt}`);
-const { jobs } = await api(`/actions/runs/${runId}/attempts/${attempt}/jobs?per_page=100`);
-const runStart = Date.parse(run.run_started_at);
-
-const finished = jobs
-  .filter((job) => job.status === 'completed' && job.started_at && job.completed_at)
-  .map((job) => {
-    const started = Date.parse(job.started_at);
-    const completed = Date.parse(job.completed_at);
-    return {
-      name: job.name,
-      conclusion: job.conclusion,
-      // 被略過的 job 開始與結束時間相同，耗時為 0
-      seconds: Math.max(0, (completed - started) / 1000),
-      startOffset: Math.max(0, (started - runStart) / 1000),
-      completed,
-    };
-  })
-  .sort((a, b) => a.startOffset - b.startOffset || a.name.localeCompare(b.name));
-
-if (!finished.length) {
-  console.error('✗ 這次執行還沒有已完成的 job');
-  process.exit(1);
+try {
+  await report();
+} catch (error) {
+  // workflow command 只取一行：把 API 回應中的換行壓成空白
+  const message = String(error.message).replace(/\s+/g, ' ');
+  console.log(`::warning title=CI 時間預算::無法產生時間報告：${message}`);
 }
 
-const lastCompleted = Math.max(...finished.map((job) => job.completed));
-const totalSeconds = (lastCompleted - runStart) / 1000;
-const budgetSeconds = budgetMinutes * 60;
-const withinBudget = totalSeconds <= budgetSeconds;
+async function report() {
+  const run = await api(`/actions/runs/${runId}/attempts/${attempt}`);
+  const { jobs } = await api(`/actions/runs/${runId}/attempts/${attempt}/jobs?per_page=100`);
+  const runStart = Date.parse(run.run_started_at);
 
-const rows = finished.map(
-  (job) =>
-    `| ${job.name} | ${job.conclusion} | +${formatDuration(job.startOffset)} | ${formatDuration(job.seconds)} |`,
-);
-const summary = [
-  `### CI 時間預算：${formatDuration(totalSeconds)} / ${budgetMinutes}m ${withinBudget ? '✅' : '⚠️ 超出預算'}`,
-  '',
-  '| Job | 結果 | 開始（相對於本次執行） | 耗時 |',
-  '| --- | --- | --- | --- |',
-  ...rows,
-  '',
-  '整體時間為本次執行開始到最後一個 job 結束（含排隊），不含此報告 job 本身。',
-  '',
-].join('\n');
+  const finished = jobs
+    .filter((job) => job.status === 'completed' && job.started_at && job.completed_at)
+    .map((job) => {
+      const started = Date.parse(job.started_at);
+      const completed = Date.parse(job.completed_at);
+      return {
+        name: job.name,
+        conclusion: job.conclusion,
+        // 被略過的 job 開始與結束時間相同，耗時為 0
+        seconds: Math.max(0, (completed - started) / 1000),
+        startOffset: Math.max(0, (started - runStart) / 1000),
+        completed,
+      };
+    })
+    .sort((a, b) => a.startOffset - b.startOffset || a.name.localeCompare(b.name));
 
-console.log(summary);
-if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
+  if (!finished.length) throw new Error('這次執行還沒有已完成的 job');
 
-if (!withinBudget) {
-  const slowest = [...finished].sort((a, b) => b.seconds - a.seconds)[0];
-  console.log(
-    `::warning title=CI 時間預算::本次 CI 共 ${formatDuration(totalSeconds)}，超出 ${budgetMinutes} 分鐘預算（最慢的 job：${slowest.name}，${formatDuration(slowest.seconds)}）`,
+  const lastCompleted = Math.max(...finished.map((job) => job.completed));
+  const totalSeconds = (lastCompleted - runStart) / 1000;
+  const budgetSeconds = budgetMinutes * 60;
+  const withinBudget = totalSeconds <= budgetSeconds;
+
+  const rows = finished.map(
+    (job) =>
+      `| ${job.name} | ${job.conclusion} | +${formatDuration(job.startOffset)} | ${formatDuration(job.seconds)} |`,
   );
+  const summary = [
+    `### CI 時間預算：${formatDuration(totalSeconds)} / ${budgetMinutes}m ${withinBudget ? '✅' : '⚠️ 超出預算'}`,
+    '',
+    '| Job | 結果 | 開始（相對於本次執行） | 耗時 |',
+    '| --- | --- | --- | --- |',
+    ...rows,
+    '',
+    '整體時間為本次執行開始到最後一個 job 結束（含排隊），不含此報告 job 本身。',
+    '',
+  ].join('\n');
+
+  console.log(summary);
+  if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary);
+
+  if (!withinBudget) {
+    const slowest = [...finished].sort((a, b) => b.seconds - a.seconds)[0];
+    console.log(
+      `::warning title=CI 時間預算::本次 CI 共 ${formatDuration(totalSeconds)}，超出 ${budgetMinutes} 分鐘預算（最慢的 job：${slowest.name}，${formatDuration(slowest.seconds)}）`,
+    );
+  }
 }

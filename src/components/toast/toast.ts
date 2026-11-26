@@ -32,7 +32,7 @@ const VARIANTS = new Set<ToastVariant>(['success', 'error', 'warning', 'info', '
  * @csspart message - 訊息
  * @csspart close-button - 關閉鈕
  *
- * @fires aui-close - 點擊關閉鈕時觸發（ToastService 建立的通知會隨之關閉）
+ * @fires {CustomEvent<null>} aui-close - 點擊關閉鈕時觸發（ToastService 建立的通知會隨之關閉）
  */
 export class AuiToast extends LitElement {
   static override styles = [spinnerStyles, toastStyles];

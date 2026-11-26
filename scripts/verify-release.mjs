@@ -34,6 +34,22 @@ if (!SEMVER.test(version)) {
   failures.push(`package.json 的 version「${version}」不是合法的 SemVer（例如 0.2.0-beta、1.0.0）`);
 }
 
+// release-please 以 .release-please-manifest.json 記錄目前版號並據此計算下一版：兩者必須相同。
+// 手動改了 package.json（例如 npm version）而沒有經過 release PR 時在這裡擋下
+try {
+  const manifest = JSON.parse(
+    readFileSync(resolve(root, '.release-please-manifest.json'), 'utf-8'),
+  );
+  if (manifest['.'] !== version) {
+    failures.push(
+      `.release-please-manifest.json 的版號「${manifest['.']}」與 package.json「${version}」不一致` +
+        '（版號由 release-please 的 release PR 更新，請勿手動修改）',
+    );
+  }
+} catch (error) {
+  failures.push(`無法讀取 .release-please-manifest.json：${error.message}`);
+}
+
 const tagOption = readOption('tag');
 const tag =
   tagOption !== undefined

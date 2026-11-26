@@ -101,6 +101,18 @@ describe('AuiTag (<aui-tag>)', () => {
     expect(base?.classList.contains('tag--interactive')).to.be.false;
   });
 
+  it('gives the remove button a hit area of at least 24px', async () => {
+    for (const size of ['sm', 'md', 'lg']) {
+      const el = await fixture<AuiTag>(html`<aui-tag removable size=${size}>Tag</aui-tag>`);
+      const button = el.shadowRoot!.querySelector<HTMLButtonElement>('.tag__remove')!;
+      const box = button.getBoundingClientRect();
+      const hit = getComputedStyle(button, '::after');
+      const width = box.width - parseFloat(hit.left) - parseFloat(hit.right);
+      const height = box.height - parseFloat(hit.top) - parseFloat(hit.bottom);
+      expect(Math.min(width, height), size).to.be.at.least(24);
+    }
+  });
+
   it('renders remove button with default label and fires aui-remove event when clicked', async () => {
     const el = await fixture<AuiTag>(html`<aui-tag removable>Removable</aui-tag>`);
     const removeBtn = el.shadowRoot?.querySelector<HTMLButtonElement>('.tag__remove');

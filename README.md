@@ -36,9 +36,9 @@ Anchor UI 是一套以 **Web Component（[Lit](https://lit.dev/)）** 實作的�
 | ---- | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
 | 基礎 | 按鈕、圖示按鈕、標籤、鍵帽                                   | `aui-button`、`aui-icon-button`、`aui-tag`、`aui-kbd`                                          | `button`、`icon-button`、`tag`、`kbd`                                  |
 | 表單 | 輸入框、欄位、分段控制器、輸出框                             | `aui-input`、`aui-field`、`aui-segmented`、`aui-output`                                        | `input`、`field`、`segmented`、`output`                                |
-| 浮層 | 提示氣泡、通知、彈窗、確認對話框                             | `aui-tooltip`、`aui-toast`、`aui-modal`、`aui-alert`                                           | `tooltip`、`toast`、`modal`、`alert`                                   |
+| 浮層 | 提示氣泡、彈出面板、下拉選單、通知、彈窗、確認對話框         | `aui-tooltip`、`aui-popover`、`aui-menu`、`aui-toast`、`aui-modal`、`aui-alert`                | `tooltip`、`popover`、`menu`、`toast`、`modal`、`alert`                |
 | 複合 | 卡片、摺疊面板、檔案拖放區、收藏鈕、工具頁標頭、程式碼檢視區 | `aui-card`、`aui-accordion`、`aui-dropzone`、`aui-favorite-btn`、`aui-header`、`aui-code-view` | `card`、`accordion`、`dropzone`、`favorite-btn`、`header`、`code-view` |
-| 導覽 | 側邊抽屜、頂部導覽列、頁尾                                   | `aui-drawer`、`aui-navbar`、`aui-footer`                                                       | `drawer`、`navbar`、`footer`                                           |
+| 導覽 | 側邊抽屜、頂部導覽列、頁尾、麵包屑導覽                       | `aui-drawer`、`aui-navbar`、`aui-footer`、`aui-breadcrumb`                                     | `drawer`、`navbar`、`footer`、`breadcrumb`                             |
 
 Toast 與 Alert 另有以程式呼叫的服務：`ToastService`（`@anchor-ui/core/toast`）、`AlertService`（`@anchor-ui/core/alert`）。
 
@@ -52,7 +52,7 @@ Toast 與 Alert 另有以程式呼叫的服務：`ToastService`（`@anchor-ui/co
 
 - **需要打包工具**（Vite、Angular CLI、webpack 等）：套件為純 ESM，並以 bare import 引用 `lit`，需由打包工具解析，無法直接用 `<script>` 載入。
 - **TypeScript** 的 `moduleResolution` 需為 `"bundler"`、`"node16"` 或 `"nodenext"`，才能解析 `@anchor-ui/core/button` 這類子路徑入口（Vite 與 Angular 新專案的預設值皆符合）。
-- **ESM-only**：不提供 CommonJS 輸出。在 CommonJS 環境（如部分 Jest / SSR 設定）中，請把 `@anchor-ui/core` 加入打包工具的轉換清單（例如 Vite 的 `ssr.noExternal`）。
+- **ESM-only**：不提供 CommonJS 輸出。在 CommonJS 環境（如部分 Jest / SSR 設定）中，請把 `@anchor-ui/core` 加入打包工具的轉換清單（例如 Vite 的 `ssr.noExternal`、Jest 的 `transformIgnorePatterns`）。
 
 ### 2. 安裝
 
@@ -136,7 +136,7 @@ import '@anchor-ui/core';
 - 型別可從全量入口或個別入口取得，例如 `import type { ButtonVariant } from '@anchor-ui/core/button'`。
 - 全域服務從各自的入口取得：`import { ToastService } from '@anchor-ui/core/toast'`、`import { AlertService } from '@anchor-ui/core/alert'`。
 
-### 6. 框架設定（Vue 3 / Angular）
+### 6. 框架設定（Vue 3 / Angular / React）
 
 **Vue 3（Vite）**：告訴 Vue 編譯器 `aui-` 開頭的標籤是自訂元素，否則會出現「Failed to resolve component」警告：
 
@@ -182,6 +182,21 @@ createApp(App).mount('#app');
 - 單字的屬性（`:disabled`、`:open`）與陣列 / 物件屬性（`:options`、`:columns`）元素上都有同名 property，直接綁定即可。
 - 靜態寫在範本中的布林屬性（`<aui-button full-width>`）不受影響。
 
+**範本型別檢查（vue-tsc）**：在宣告檔（如 `src/env.d.ts`）的開頭加入下列參考，`vue-tsc` 就會檢查 `aui-*` 的屬性值與事件處理器的 `detail` 型別，編輯器也會提供自動完成：
+
+```ts
+// src/env.d.ts
+/// <reference types="vite/client" />
+/// <reference types="@anchor-ui/core/vue" />
+```
+
+- 屬性型別取自元件，例如 `variant` 為 `ButtonVariant`、`:options` 為 `SegmentedOption[]`；寫錯值時 `vue-tsc` 會報錯。
+- 事件處理器的參數為 `CustomEvent<Detail>`，例如 `@aui-file-drop` 為 `CustomEvent<FileDropDetail>`；行內函式的 `event.detail` 會自動推斷型別，不需再手動標註。
+- `/// <reference>` 必須寫在檔案最上方（任何陳述式之前），否則會被當成一般註解。
+- 靜態 attribute 以字串撰寫也會檢查：`heading-level="2"`、`lines="3"`、`close-on-escape="false"` 可通過，`heading-level="9"` 會報錯。
+- 範本只有 `vue-tsc` 會檢查（`tsc` 不檢查 `.vue` 檔）。`@anchor-ui/core/vue` 只有型別宣告，不可在程式中 import。
+- `tsconfig.json` 的 `moduleResolution` 需為 `bundler`、`node16` 或 `nodenext`（才會讀取套件的 `exports`；Vite 專案預設為 `bundler`）。`vue` 是元件庫的選用 peerDependency，型別宣告會從專案安裝的 `vue` 取得型別。
+
 **Angular**：在使用 `aui-` 標籤的元件（或 NgModule）加上 `CUSTOM_ELEMENTS_SCHEMA`，樣式加進 `angular.json`，元件在 `main.ts` 註冊：
 
 ```ts
@@ -206,7 +221,30 @@ export class AppComponent {}
 import '@anchor-ui/core/button';
 ```
 
-完整可執行的設定可參考 [`examples/vue3`](examples/vue3) 與 [`examples/angular`](examples/angular)。
+**React 19**：React 19 起原生支援自訂元素，不需額外設定，載入元件後即可在 JSX 中使用：
+
+```tsx
+// src/main.tsx
+import '@anchor-ui/core/styles.css';
+import '@anchor-ui/core/button';
+import '@anchor-ui/core/segmented';
+import '@anchor-ui/core/dropzone';
+```
+
+```tsx
+<aui-button variant="primary" fullWidth onClick={save}>儲存</aui-button>
+<aui-segmented options={modes} value={mode} onInput={(event) => setMode(event.currentTarget.value)} />
+<aui-dropzone onaui-file-drop={(event) => upload(event.detail.files)} />
+```
+
+- 屬性直接寫成 JSX 屬性，React 19 會設定元素的 property，陣列與物件（`options`、`columns`）也可以；數值與布林寫成 `lines={3}`、`disabled`，名稱使用 camelCase（`fullWidth`、`headingLevel`，型別檢查以 property 名稱為準）。
+- **先載入元件再渲染**：React 只在元素已有同名 property（元件已註冊）時設定 property，否則改寫成 attribute——camelCase 的名稱會變成元件不認得的小寫 attribute（`fullwidth`），陣列會變成 `"[object Object]"`。請在 `createRoot().render()` 之前 import 用到的元件入口；以動態 import 延後載入時，等載入完成再渲染使用它的元件。
+- `aui-` 自訂事件以 `on` 加上事件名稱監聽：`onaui-file-drop`、`onaui-select`；原生事件沿用 React 的 `onClick`、`onInput`。
+- 表單元件以 `value` 加 `onInput` 受控，處理器中以 `event.currentTarget.value` 取得目前的值。
+- **JSX 型別**：在宣告檔（如 `src/env.d.ts`）開頭加入 `/// <reference types="@anchor-ui/core/react" />`，`tsc` 會檢查屬性值與事件處理器的 `detail` 型別（需要 `@types/react` 19，`moduleResolution` 為 `bundler`、`node16` 或 `nodenext`）。注意 TypeScript 不檢查含連字號的 JSX 屬性名稱：拼錯的事件（`onaui-fle-drop`）或 kebab-case 的屬性不會報錯，屬性請用 camelCase。
+- **React 18 以前**：所有屬性都寫成 attribute，陣列與物件會被轉成字串（如 `"[object Object]"`），`disabled={false}` 會寫成 `disabled="false"` 而被視為 true；JSX 也無法監聽 `aui-` 事件。請升級至 React 19；無法升級時，以 [`@lit/react`](https://www.npmjs.com/package/@lit/react) 的 `createComponent` 包裝元件（屬性設為 property、事件對應為 React 的 props），或以 `ref` 取得元素後自行設定 property 並 `addEventListener`。
+
+完整可執行的設定可參考 [`examples/vue3`](examples/vue3)、[`examples/angular`](examples/angular) 與 [`examples/react`](examples/react)；Angular SSR 見[伺服器端渲染](#10-伺服器端渲染angular-ssr)。
 
 ### 7. 綁定表單元件
 
@@ -249,6 +287,43 @@ modal.addEventListener('aui-hide', (event) => {
   console.log((event as CustomEvent<{ reason: string }>).detail.reason);
 });
 ```
+
+### 10. 伺服器端渲染（Angular SSR）
+
+伺服器端只輸出元件的標籤、attribute 與標籤內的文字，瀏覽器載入元件庫後才升級為完整的元件（建立 Shadow DOM、套用樣式）；Angular 的 hydration 會沿用伺服器輸出的 DOM。元件內部（Shadow DOM）不在伺服器端渲染，因此 JS 載入前的畫面與搜尋引擎只看得到標籤內的文字。
+
+- **載入元件庫**：在元件檔或 `main.ts` import 都可以，伺服器端 import 不會出錯（Lit 在 Node 會提供最小的 `HTMLElement` / `customElements` 實作）。
+- **屬性綁定**：範本中的靜態 attribute（`variant="primary"`）會出現在伺服器輸出的 HTML；`[options]`、`[headingLevel]` 這類 property 綁定只在瀏覽器端套用。
+- **命令式 API**：`setTheme()`、`ToastService`、`AlertService` 只在瀏覽器端呼叫：放在事件處理中，或頁面載入時放在 `afterNextRender`（只在瀏覽器端執行）。`constructor`、`ngOnInit` 會在伺服器與瀏覽器各執行一次，誤在伺服器端呼叫時：`setTheme()` 與 `ToastService` 不做任何事（由瀏覽器端那一次顯示）；`AlertService` 需要使用者回應，回傳的 Promise 會以「只能在瀏覽器端使用」的錯誤 reject。
+
+```ts
+import { afterNextRender, Component } from '@angular/core';
+import { setTheme, ToastService } from '@anchor-ui/core';
+
+@Component({/* … */})
+export class AppComponent {
+  constructor() {
+    afterNextRender(() => {
+      setTheme(localStorage.getItem('theme') === 'dark' ? 'dark' : 'light');
+      ToastService.info('歡迎回來');
+    });
+  }
+}
+```
+
+- **主題**：`setTheme()` 不會影響伺服器輸出的 `<html>`，深色主題的使用者會先看到淺色頁面，hydration 後才切換。要避免時，在伺服器端渲染時就設定 `<html>` 的 `data-theme`（例如依 cookie 透過 Angular 的 `DOCUMENT` 設定）。
+- **升級前的版面**：元件 JS 載入前，標籤內的文字會以未套用樣式的狀態顯示。可以先隱藏尚未升級的元件，但請逐一列出標籤：單獨的 `:not(:defined)` 也會選到 `<app-root>` 等 Angular 元件（它們不是自訂元素），整個頁面都會被隱藏。
+
+```css
+aui-button:not(:defined),
+aui-card:not(:defined) {
+  visibility: hidden;
+}
+```
+
+- **伺服器的 Host 檢查**：Angular 19.2 起，SSR 伺服器只接受 `angular.json` 的 `security.allowedHosts` 中列出的 Host，其他 Host 的請求會改為客戶端渲染（伺服器 log 出現 `Header "host" … is not allowed`），與元件庫無關。
+
+完整可執行的設定可參考 [`smoke/angular-ssr`](smoke/angular-ssr)（CI 中以 tarball 安裝並檢查伺服器輸出與 hydration）。
 
 ---
 

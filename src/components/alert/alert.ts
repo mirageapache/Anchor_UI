@@ -11,7 +11,7 @@ import type {
 } from './alert.types.js';
 import type { AuiInput } from '../input/input.js';
 import type { AuiModal } from '../modal/modal.js';
-import type { ModalHideDetail } from '../modal/modal.types.js';
+import type { ModalCloseReason, ModalHideDetail } from '../modal/modal.types.js';
 import { defaultTrue } from '../../internal/converters.js';
 import { PausableTimer } from '../../internal/pausable-timer.js';
 import '../button/index.js';
@@ -55,6 +55,8 @@ type Decision =
  * 命令式呼叫請使用 `AlertService.alert()` / `confirm()` / `prompt()`。
  *
  * - **鍵盤**：Enter 確認、ESC 取消；焦點在按鈕上時 Enter 啟動該按鈕（輸入法組字中的 Enter 不算）。
+ *   預設 slot 內的互動內容（連結、表單控制項…）保有自己的 Enter 行為；`destructive` 時 Enter 只在
+ *   prompt 的輸入框內確認，其餘須按下確定鈕。
  * - **初始焦點**：prompt 為輸入框；`destructive` 為取消鈕（避免誤按 Enter 執行破壞性操作）；其餘為確定鈕。
  * - **無障礙**：以 `alertdialog` 呈現，標題（含圖示狀態）為名稱、訊息為描述；圖示遵循減少動畫設定。
  * - **自動關閉**：設定 `timer`（毫秒）後時間到即以取消關閉（原因 `timer`）。依 WCAG 2.2.1，
@@ -73,12 +75,12 @@ type Decision =
  * @csspart confirm-button - 確定鈕（`<aui-button>`）
  * @csspart cancel-button - 取消鈕（`<aui-button>`）
  *
- * @fires aui-show - 開始開啟前觸發（可被 preventDefault 取消；來自內部 `<aui-modal>`）
- * @fires aui-after-show - 完全開啟後觸發（來自內部 `<aui-modal>`）
- * @fires aui-hide - 開始關閉前觸發（可被 preventDefault 取消；來自內部 `<aui-modal>`）
- * @fires aui-after-hide - 完全關閉後觸發（來自內部 `<aui-modal>`）
- * @fires aui-confirm - 以確定關閉後觸發，`detail.value` 為 prompt 的輸入值
- * @fires aui-cancel - 以取消關閉後觸發，`detail.reason` 為取消原因
+ * @fires {CustomEvent<null>} aui-show - 開始開啟前觸發（可被 preventDefault 取消；來自內部 `<aui-modal>`）
+ * @fires {CustomEvent<null>} aui-after-show - 完全開啟後觸發（來自內部 `<aui-modal>`）
+ * @fires {CustomEvent<ModalHideDetail>} aui-hide - 開始關閉前觸發（可被 preventDefault 取消；來自內部 `<aui-modal>`）
+ * @fires {CustomEvent<ModalHideDetail>} aui-after-hide - 完全關閉後觸發（來自內部 `<aui-modal>`）
+ * @fires {CustomEvent<AlertConfirmDetail>} aui-confirm - 以確定關閉後觸發，`detail.value` 為 prompt 的輸入值
+ * @fires {CustomEvent<AlertCancelDetail>} aui-cancel - 以取消關閉後觸發，`detail.reason` 為取消原因
  */
 export class AuiAlert extends LitElement {
   static override styles = alertStyles;
@@ -88,6 +90,9 @@ export class AuiAlert extends LitElement {
 
   @query('aui-input')
   private input?: AuiInput;
+
+  @query('slot:not([name])')
+  private contentSlot?: HTMLSlotElement;
 
   /**
    * 是否開啟
@@ -170,11 +175,15 @@ export class AuiAlert extends LitElement {
   /** 本次開啟的結果；由按鈕、Enter、自動關閉或 Modal 的關閉原因決定 */
   private decision: Decision | null = null;
 
+  /** 內部 Modal 正在關閉（aui-hide 已分派、aui-after-hide 尚未）時的關閉原因；否則為 null */
+  private closingReason: ModalCloseReason | null = null;
+
   /** 自動關閉計時（可暫停：滑鼠停在對話框上時） */
   private readonly autoClose = new PausableTimer(() => this.closeByTimer());
 
   constructor() {
     super();
+    this.addEventListener('aui-hide', this.handleModalHide);
     this.addEventListener('aui-after-hide', this.handleModalAfterHide);
   }
 
@@ -231,10 +240,14 @@ export class AuiAlert extends LitElement {
    */
   confirm(): void {
     if (!this.open) return;
-    this.decision = {
-      confirmed: true,
-      value: this.mode === 'prompt' ? (this.input?.value ?? '') : '',
-    };
+    // 內部 Modal 尚未開啟、或已在關閉中（ESC / 遮罩觸發的退場動畫期間）：沒有可以確定的對話框，
+    // 結果以當時的關閉原因為準
+    if (this.modal?.open) {
+      this.decision = {
+        confirmed: true,
+        value: this.mode === 'prompt' ? (this.input?.value ?? '') : '',
+      };
+    }
     this.open = false;
   }
 
@@ -243,7 +256,8 @@ export class AuiAlert extends LitElement {
    */
   cancel(): void {
     if (!this.open) return;
-    this.decision = { confirmed: false, reason: 'cancel-button' };
+    // 同 confirm()：已在關閉中時不覆寫當時的關閉原因
+    if (this.modal?.open) this.decision = { confirmed: false, reason: 'cancel-button' };
     this.open = false;
   }
 
@@ -260,13 +274,18 @@ export class AuiAlert extends LitElement {
     }
     if (!changed.has('open')) return;
 
-    if (this.open && !this.modal.open) {
+    if (this.open && this.modal.open) {
+      // 關閉要求在同一個 task 內被撤回（confirm() 後又把 open 設回 true）：殘留的結果不可套用到之後的關閉
+      this.decision = null;
+    } else if (this.open && !this.modal.open) {
       // 不在頁面上（例如開啟前就被移出）時內部 Modal 無法開啟，其 updateComplete 也可能永不 resolve
       if (!this.isConnected) {
         this.open = false;
         return;
       }
-      this.decision = null;
+      // 退場動畫中重新開啟：Modal 會先以 aui-after-hide 結束被中斷的那次關閉（由 handleModalAfterHide 回報），
+      // 其結果須保留到那時；aui-show 被取消時退場照常完成，同樣需要它
+      if (this.closingReason === null) this.decision = null;
       if (this.input) this.input.value = this.inputValue;
       this.modal.open = true;
       await this.modal.updateComplete;
@@ -287,16 +306,28 @@ export class AuiAlert extends LitElement {
     }
   }
 
+  /** 記下進行中的關閉原因（aui-hide 被取消時 Modal 保持開啟，下一次關閉會覆寫） */
+  private handleModalHide = (event: Event) => {
+    if (event.composedPath()[0] !== this.modal) return;
+    this.closingReason = (event as CustomEvent<ModalHideDetail>).detail.reason;
+  };
+
   /** Modal 完全關閉後（不論原因）決定結果並分派 aui-confirm / aui-cancel */
   private handleModalAfterHide = (event: Event) => {
     if (event.composedPath()[0] !== this.modal) return;
-    const { reason } = (event as CustomEvent<ModalHideDetail>).detail;
+    // 退場動畫中重新開啟時 Modal 仍開著：只回報被中斷的那次關閉
+    if (!this.modal.open) this.open = false;
+    this.reportResult((event as CustomEvent<ModalHideDetail>).detail.reason);
+  };
+
+  /** 結束一次關閉：以按鈕 / Enter / 計時的結果為準，否則依 Modal 的關閉原因視為取消 */
+  private reportResult(reason: ModalCloseReason): void {
     const decision: Decision = this.decision ?? {
       confirmed: false,
       reason: reason === 'escape' || reason === 'backdrop' ? reason : 'api',
     };
     this.decision = null;
-    this.open = false;
+    this.closingReason = null;
 
     if (decision.confirmed) {
       this.dispatchEvent(
@@ -315,7 +346,7 @@ export class AuiAlert extends LitElement {
         }),
       );
     }
-  };
+  }
 
   private closeByTimer(): void {
     // Modal 已在關閉中（遮罩或 ESC 觸發的退場動畫期間）：這次關閉的原因以當時的操作為準
@@ -344,8 +375,12 @@ export class AuiAlert extends LitElement {
 
   /**
    * 任何鍵盤操作都代表使用者正在處理對話框，不再自動關閉。
-   * Enter 確認：焦點在按鈕或多行輸入框上、或正在以輸入法組字時，交由原生行為處理。
+   * Enter 確認：焦點在按鈕上、或正在以輸入法組字時，交由原生行為處理。
    *
+   * - 來自預設 slot 的內容（連結、select、checkbox、textarea…）或已被處理（defaultPrevented）的 Enter
+   *   不屬於對話框：不攔截、不確認。
+   * - `destructive` 時只有 prompt 輸入框內的 Enter 會確認：焦點可能因點擊訊息而落在面板上，
+   *   此時的 Enter 不可執行破壞性操作。
    * - 長按 Enter 的重複按鍵一律忽略（含按鈕的原生啟動）：以 Enter 開啟對話框時若按住不放，
    *   重複的 keydown 會在使用者看到內容前就確認或取消。
    * - Safari 以 Enter 選字時會先結束組字再分派 keydown（`isComposing` 為 false），
@@ -353,14 +388,16 @@ export class AuiAlert extends LitElement {
    */
   private handleKeyDown = (event: KeyboardEvent) => {
     this.autoClose.stop();
-    if (event.key !== 'Enter') return;
+    if (event.key !== 'Enter' || event.defaultPrevented) return;
+    const path = event.composedPath();
+    if (this.contentSlot && path.includes(this.contentSlot)) return;
     if (event.repeat) {
       event.preventDefault();
       return;
     }
     if (event.isComposing || event.keyCode === 229) return;
-    const origin = event.composedPath()[0];
-    if (origin instanceof HTMLButtonElement || origin instanceof HTMLTextAreaElement) return;
+    if (path[0] instanceof HTMLButtonElement) return;
+    if (this.destructive && !(this.input && path.includes(this.input))) return;
     event.preventDefault();
     this.confirm();
   };

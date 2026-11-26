@@ -125,6 +125,20 @@ export function getTopModalLayer(): Element | null {
   return state.layers.at(-1) ?? null;
 }
 
+/** 所有開啟中的 modal 層（由下而上）的副本 */
+export function getModalLayers(): Element[] {
+  return [...state.layers];
+}
+
+/**
+ * modal 層有變動（開啟、關閉、被移出頁面）時通知，回傳取消函式。
+ * 在 `followTopModal()` 之後登記的 listener 會在元素移動完成後才被呼叫
+ */
+export function onModalLayerChange(listener: () => void): () => void {
+  state.listeners.add(listener);
+  return () => state.listeners.delete(listener);
+}
+
 export interface FollowTopModalOptions {
   /** 移入容器時套用的 slot 名稱（容器為 Shadow DOM 中 dialog 的 host 時使用） */
   slot?: string;

@@ -2,7 +2,7 @@ import { LitElement, html, nothing } from 'lit';
 import { property } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { tagStyles } from './tag.styles.js';
-import type { TagSize, TagVariant } from './tag.types.js';
+import type { TagRemoveDetail, TagSize, TagVariant } from './tag.types.js';
 
 /**
  * Anchor UI — Tag / Badge 元件 (`<aui-tag>`)
@@ -24,7 +24,7 @@ import type { TagSize, TagVariant } from './tag.types.js';
  * @csspart suffix - 後綴內容包裝容器
  * @csspart remove-button - 移除按鈕（當 removable 為 true 時）
  *
- * @fires aui-remove - 當點擊移除按鈕時觸發，支援 bubbles 與 composed
+ * @fires {CustomEvent<TagRemoveDetail>} aui-remove - 當點擊移除按鈕時觸發，支援 bubbles 與 composed；元件不會移除自己，由監聽者處理
  */
 export class AuiTag extends LitElement {
   static override styles = tagStyles;
@@ -94,7 +94,7 @@ export class AuiTag extends LitElement {
 
   private handleRemoveClick = (event: MouseEvent): void => {
     event.stopPropagation();
-    const removeEvent = new CustomEvent('aui-remove', {
+    const removeEvent = new CustomEvent<TagRemoveDetail>('aui-remove', {
       bubbles: true,
       composed: true,
       cancelable: true,

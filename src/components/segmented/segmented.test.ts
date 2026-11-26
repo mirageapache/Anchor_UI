@@ -186,6 +186,29 @@ describe('AuiSegmented (<aui-segmented>)', () => {
       expect(buttons(el).every((b) => b.getAttribute('aria-checked') === 'false')).to.be.true;
     });
 
+    it('supports an option whose value is the empty string', async () => {
+      const form = await fixture<HTMLFormElement>(html`
+        <form>
+          <aui-segmented
+            name="status"
+            value="open"
+            .options=${[
+              { value: '', label: 'All' },
+              { value: 'open', label: 'Open' },
+            ]}
+          ></aui-segmented>
+        </form>
+      `);
+      const el = form.querySelector<AuiSegmented>('aui-segmented')!;
+      const events = recordEvents(el);
+      buttons(el)[0].click();
+      await el.updateComplete;
+      expect(events).to.deep.equal(['input:', 'change:']);
+      expect(buttons(el)[0].getAttribute('aria-checked')).to.equal('true');
+      expect(buttons(el)[0].tabIndex).to.equal(0);
+      expect(new FormData(form).get('status')).to.equal('');
+    });
+
     it('selects the option once it appears in options', async () => {
       const el = await fixture<AuiSegmented>(html`<aui-segmented value="b"></aui-segmented>`);
       el.options = [
@@ -374,6 +397,24 @@ describe('AuiSegmented (<aui-segmented>)', () => {
       await sendKeys({ press: 'Space' });
       expect(el.value).to.equal('encode');
       expect(events).to.deep.equal(['input:encode', 'change:encode']);
+    });
+
+    it('leaves arrow keys with a modifier to the browser (e.g. Alt+ArrowLeft)', async () => {
+      const el = await fixture<AuiSegmented>(
+        html`<aui-segmented .options=${MODES} value="decode"></aui-segmented>`,
+      );
+      for (const modifier of ['altKey', 'ctrlKey', 'metaKey']) {
+        const event = new KeyboardEvent('keydown', {
+          key: 'ArrowLeft',
+          [modifier]: true,
+          bubbles: true,
+          composed: true,
+          cancelable: true,
+        });
+        buttons(el)[1].dispatchEvent(event);
+        expect(event.defaultPrevented, modifier).to.be.false;
+      }
+      expect(el.value).to.equal('decode');
     });
 
     it('ignores unrelated keys', async () => {

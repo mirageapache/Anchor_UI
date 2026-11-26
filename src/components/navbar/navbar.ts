@@ -94,9 +94,9 @@ const moonIcon = svg`<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"><
  * @csspart search-button - 搜尋鈕
  * @csspart theme-toggle - 主題切換開關
  *
- * @fires aui-menu-click - 點擊漢堡選單鈕時觸發（可被 preventDefault 取消開啟 `menu-drawer`）
- * @fires aui-search - 點擊搜尋鈕或按下快捷鍵時觸發，`detail.source` 為 `click` 或 `shortcut`
- * @fires aui-theme-change - 點擊主題開關時觸發（可被 preventDefault 取消切換），`detail.theme` 為即將切換到的主題
+ * @fires {CustomEvent<null>} aui-menu-click - 點擊漢堡選單鈕時觸發（可被 preventDefault 取消開啟 `menu-drawer`）
+ * @fires {CustomEvent<NavbarSearchDetail>} aui-search - 點擊搜尋鈕或按下快捷鍵時觸發，`detail.source` 為 `click` 或 `shortcut`
+ * @fires {CustomEvent<NavbarThemeChangeDetail>} aui-theme-change - 點擊主題開關時觸發（可被 preventDefault 取消切換），`detail.theme` 為即將切換到的主題
  */
 export class AuiNavbar extends LitElement {
   static override styles = navbarStyles;
@@ -305,7 +305,8 @@ export class AuiNavbar extends LitElement {
   private renderBrand() {
     const hasLogo = hasLightContent(this, 'logo');
     if (!this.brand && !hasLogo) return nothing;
-    const initial = [...this.brand.trim()][0]?.toUpperCase() ?? '';
+    // 框架可能綁定 null / undefined（只提供 logo slot 時）
+    const initial = [...(this.brand ?? '').trim()][0]?.toUpperCase() ?? '';
     const content = html`
       <span class="navbar__logo" part="logo">
         <slot name="logo"><span aria-hidden="true">${initial}</span></slot>
