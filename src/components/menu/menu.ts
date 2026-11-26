@@ -79,6 +79,8 @@ export class AuiMenu extends AuiPopover {
 
   /** 下一次開啟時聚焦最後一個項目（以 ↑ 開啟） */
   private focusLastOnOpen = false;
+  /** 已用 Space 的 keydown 選取，接下來的 keyup 不可再觸發點擊 */
+  private swallowSpaceKeyUp = false;
 
   /** 選單改寫過的項目與其原本的屬性值（MANAGED_ATTRIBUTES 的順序） */
   private readonly managedItems = new Map<HTMLElement, ManagedItem>();
@@ -89,6 +91,7 @@ export class AuiMenu extends AuiPopover {
   constructor() {
     super();
     this.addEventListener('keydown', this.handleMenuKeyDown);
+    this.addEventListener('keyup', this.handleMenuKeyUp);
     this.addEventListener('click', this.handleItemClick);
     this.addEventListener('pointermove', this.handlePointerMove);
   }
@@ -226,6 +229,8 @@ export class AuiMenu extends AuiPopover {
     // 觸發元素：↓ / ↑ 開啟（Enter / Space 由原生點擊開啟）
     if (fromTrigger) {
       if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return;
+      // 停用或載入中的觸發元素不開啟選單（點擊已被元件自己攔下，按鍵也須一致）
+      if (this.triggerElement!.matches('[disabled], [aria-disabled="true"], [loading]')) return;
       event.preventDefault();
       if (this.open) {
         const items = this.navigableItems;
@@ -275,6 +280,7 @@ export class AuiMenu extends AuiPopover {
     }
     if (event.key === ' ') {
       event.preventDefault();
+      this.swallowSpaceKeyUp = true;
       current.click();
       return;
     }
@@ -289,6 +295,16 @@ export class AuiMenu extends AuiPopover {
         this.focusItem(match);
       }
     }
+  };
+
+  /**
+   * 以 Space 選取後放開按鍵：攔下 keydown 並不保證瀏覽器不在 keyup 時觸發按鈕的點擊（Firefox），
+   * 選取被取消而焦點留在項目上時會選取第二次，因此一併攔下這次 keyup
+   */
+  private handleMenuKeyUp = (event: KeyboardEvent): void => {
+    if (event.key !== ' ' || !this.swallowSpaceKeyUp) return;
+    this.swallowSpaceKeyUp = false;
+    event.preventDefault();
   };
 
   /** 滑鼠移到項目上時焦點跟著移動（APG 範例的行為），只會有一個項目呈現選取中的樣式 */

@@ -105,7 +105,10 @@ export class AuiPopover extends LitElement {
   override connectedCallback(): void {
     super.connectedCallback();
     // 重新插入頁面（框架重排節點等）：重新綁定觸發元素
-    if (this.hasUpdated) this.syncTrigger();
+    if (!this.hasUpdated) return;
+    this.syncTrigger();
+    // 不在頁面上時設定的 open（面板無法進入 Top Layer，當時沒有開啟）：現在補上，視同渲染時即為開啟（不移動焦點）
+    if (this.open && !this.isShowing) this.requestUpdate('open', undefined);
   }
 
   override disconnectedCallback(): void {
@@ -144,7 +147,7 @@ export class AuiPopover extends LitElement {
     if (!changed.has('open')) return;
     if (!this.open && this.isShowing) {
       this.startHide();
-    } else if (this.open && !this.isShowing) {
+    } else if (this.open && !this.isShowing && this.isConnected) {
       // 退場動畫中重新開啟：先結束被中斷的關閉，成對監聽 aui-hide / aui-after-hide 的使用端才會收到結果
       if (this.isHiding) this.finishHide();
       const event = new CustomEvent('aui-show', {
@@ -158,7 +161,7 @@ export class AuiPopover extends LitElement {
 
   override updated(changed: PropertyValues<this>): void {
     super.updated(changed);
-    if (changed.has('open') && this.open && !this.isShowing) {
+    if (changed.has('open') && this.open && !this.isShowing && this.isConnected) {
       // 初次渲染就是開啟狀態（例如 HTML 寫了 open）時不搶走頁面的焦點
       this.startShow(changed.get('open') !== undefined);
     } else if (

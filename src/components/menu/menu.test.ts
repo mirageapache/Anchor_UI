@@ -217,6 +217,35 @@ describe('AuiMenu (<aui-menu>)', () => {
       expect(el.open).to.be.true;
     });
 
+    it('swallows the keyup of a Space that selected, so the button is not clicked again', async () => {
+      const { el, trigger, item } = await setup();
+      await openWith(el, () => clickOn(trigger));
+      el.addEventListener('aui-select', (event) => event.preventDefault());
+      item('duplicate').focus();
+      const press = (type: string) => {
+        const event = new KeyboardEvent(type, {
+          key: ' ',
+          bubbles: true,
+          composed: true,
+          cancelable: true,
+        });
+        item('duplicate').dispatchEvent(event);
+        return event.defaultPrevented;
+      };
+      expect(press('keydown')).to.be.true;
+      expect(press('keyup'), 'keyup after a selecting keydown').to.be.true;
+      expect(press('keyup'), 'an unrelated keyup is left alone').to.be.false;
+    });
+
+    it('does not open from the keyboard while the trigger is disabled', async () => {
+      const { el, trigger } = await setup();
+      trigger.setAttribute('aria-disabled', 'true');
+      trigger.focus();
+      await sendKeys({ press: 'ArrowDown' });
+      await el.updateComplete;
+      expect(el.open).to.be.false;
+    });
+
     it('does not submit an enclosing form', async () => {
       const form = await fixture<HTMLFormElement>(html`
         <form>

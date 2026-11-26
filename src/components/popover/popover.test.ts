@@ -297,6 +297,22 @@ describe('AuiPopover (<aui-popover>)', () => {
   });
 
   describe('edge cases', () => {
+    it('opens after being inserted again when open was set while detached', async () => {
+      const { wrapper, el, trigger, panel } = await setup();
+      el.remove();
+      let shows = 0;
+      el.addEventListener('aui-show', () => shows++);
+      el.open = true;
+      await el.updateComplete;
+      expect(shows, 'nothing is shown while detached').to.equal(0);
+
+      await opened(el, () => wrapper.prepend(el));
+      expect(shows).to.equal(1);
+      expect(isPopoverOpen(panel), 'the panel is in the top layer').to.be.true;
+      expect(trigger.getAttribute('aria-expanded')).to.equal('true');
+      expect(await closedBy(el, () => el.hide())).to.equal('api');
+    });
+
     it('does not move focus to the trigger on an outside click when focus was elsewhere', async () => {
       const wrapper = await fixture<HTMLElement>(html`
         <div>
@@ -436,6 +452,36 @@ describe('AuiPopover (<aui-popover>)', () => {
   });
 
   describe('library triggers', () => {
+    it('hands the state over to a trigger that is defined after the popover rendered', async () => {
+      const el = await fixture<AuiPopover>(html`
+        <aui-popover>
+          <late-popup-trigger slot="trigger" tabindex="0">Late</late-popup-trigger>
+          <p>Body</p>
+        </aui-popover>
+      `);
+      const trigger = el.querySelector<HTMLElement>('late-popup-trigger')!;
+      expect(trigger.getAttribute('aria-expanded'), 'plain attributes before the upgrade').to.equal(
+        'false',
+      );
+      await opened(el, () => el.show());
+
+      const states: unknown[] = [];
+      customElements.define(
+        'late-popup-trigger',
+        class extends HTMLElement {
+          [Symbol.for('anchor-ui.popup-trigger')](state: unknown) {
+            states.push(state);
+          }
+        },
+      );
+      await customElements.whenDefined('late-popup-trigger');
+      await Promise.resolve();
+      expect(trigger.hasAttribute('aria-expanded'), 'host attributes are cleaned up').to.be.false;
+      expect(trigger.hasAttribute('aria-haspopup')).to.be.false;
+      expect(states).to.have.length(1);
+      expect((states[0] as { expanded: boolean }).expanded, 'latest state').to.be.true;
+    });
+
     it('writes the expanded state on the inner button of <aui-button>', async () => {
       const el = await fixture<AuiPopover>(html`
         <aui-popover>

@@ -37,12 +37,38 @@ const MANAGED_ATTRIBUTES = ['aria-haspopup', 'aria-expanded'] as const;
 /** 一般元素作為觸發元素前原有的屬性值：不再作為觸發元素時還原，不覆蓋使用者自己的設定 */
 const originalAttributes = new WeakMap<Element, (string | null)[]>();
 
+/**
+ * 尚未定義（升級）的自訂元素觸發元素與它最新的狀態。元件分開載入時，`<aui-button>` 可能比 Popover 晚定義：
+ * 當下只能把屬性寫在 host 上，升級後須改交給 POPUP_TRIGGER，並清掉 host 上沒有作用的屬性
+ */
+const awaitingUpgrade = new WeakMap<Element, PopupTriggerState | null>();
+
 /** 更新觸發元素的展開狀態；`state` 為 `null` 時還原為作為觸發元素之前的屬性 */
 export function setPopupTriggerState(trigger: Element, state: PopupTriggerState | null): void {
+  if (awaitingUpgrade.has(trigger)) awaitingUpgrade.set(trigger, state);
   if (isPopupTrigger(trigger)) {
     trigger[POPUP_TRIGGER](state);
     return;
   }
+  if (
+    trigger.localName.includes('-') &&
+    !trigger.matches(':defined') &&
+    !awaitingUpgrade.has(trigger)
+  ) {
+    awaitingUpgrade.set(trigger, state);
+    void customElements.whenDefined(trigger.localName).then(() => {
+      const latest = awaitingUpgrade.get(trigger) ?? null;
+      awaitingUpgrade.delete(trigger);
+      if (!isPopupTrigger(trigger)) return;
+      writePlainAttributes(trigger, null);
+      if (latest) trigger[POPUP_TRIGGER](latest);
+    });
+  }
+  writePlainAttributes(trigger, state);
+}
+
+/** 一般元素：直接寫入屬性 */
+function writePlainAttributes(trigger: Element, state: PopupTriggerState | null): void {
   const target = trigger as AriaControlsTarget;
   if (state) {
     if (!originalAttributes.has(trigger)) {
