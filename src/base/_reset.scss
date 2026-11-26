@@ -45,17 +45,27 @@ select {
 // 在 JavaScript setTheme() 切換時，會暫時為 <html> 添加此 class（約 250ms），
 // 讓所有可視屬性在主題切換時產生平滑過渡，而非只有 body 元素有動態。
 // Phase 1+ 的元件層級過渡由各元件的 :host / Shadow DOM 樣式各自處理。
-// 只在未要求減少動畫時套用：這裡的 !important 與較高的優先度會蓋過
-// _utilities.scss 對 prefers-reduced-motion 的重設（transition-duration: 0.01ms）。
-@media (prefers-reduced-motion: no-preference) {
+.theme-transitioning,
+.theme-transitioning *,
+.theme-transitioning *::before,
+.theme-transitioning *::after {
+  transition:
+    background-color var(--transition-theme),
+    color var(--transition-theme),
+    border-color var(--transition-theme),
+    box-shadow var(--transition-theme) !important;
+}
+
+// 上面的 !important 與較高的優先度會蓋過 _utilities.scss 對 prefers-reduced-motion 的重設
+// （transition-duration: 0.01ms），要求減少動畫的使用者切換主題時仍會看到顏色過渡：在此把時長壓回去。
+// 只覆寫時長、保留上面的屬性清單，不可把整條規則改成只在 no-preference 時套用：
+// 重設的對象是所有屬性（transition-property 預設為 all），少了這份清單，
+// 切換主題當下的版面變更（寬度等）也會變成極短的轉場，同步讀取樣式會拿到舊值。
+@media (prefers-reduced-motion: reduce) {
   .theme-transitioning,
   .theme-transitioning *,
   .theme-transitioning *::before,
   .theme-transitioning *::after {
-    transition:
-      background-color var(--transition-theme),
-      color var(--transition-theme),
-      border-color var(--transition-theme),
-      box-shadow var(--transition-theme) !important;
+    transition-duration: 0.01ms !important;
   }
 }

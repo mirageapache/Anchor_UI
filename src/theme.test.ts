@@ -1,4 +1,5 @@
 import { expect } from '@open-wc/testing';
+import { emulateMedia } from '@web/test-runner-commands';
 import { getTheme, setTheme, toggleTheme } from './theme.js';
 
 describe('theme', () => {
@@ -47,5 +48,50 @@ describe('theme', () => {
     expect(toggleTheme()).to.equal('dark');
     expect(toggleTheme()).to.equal('light');
     expect(getTheme()).to.equal('light');
+  });
+
+  describe('transition styles (dist/styles.css; run pnpm build first)', () => {
+    let link: HTMLLinkElement;
+
+    before(async () => {
+      link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = '/dist/styles.css';
+      document.head.appendChild(link);
+      await new Promise((resolve) => {
+        link.onload = resolve;
+        link.onerror = resolve;
+      });
+    });
+
+    after(async () => {
+      link.remove();
+      await emulateMedia({ reducedMotion: 'no-preference' });
+    });
+
+    it('limits the transition to colour properties, and to 0.01ms under reduced motion', async () => {
+      const probe = document.createElement('div');
+      document.body.appendChild(probe);
+      try {
+        await emulateMedia({ reducedMotion: 'no-preference' });
+        setTheme('dark');
+        const animated = getComputedStyle(probe);
+        expect(animated.transitionProperty).to.equal(
+          'background-color, color, border-color, box-shadow',
+        );
+        expect(parseFloat(animated.transitionDuration)).to.be.above(0.1);
+
+        await emulateMedia({ reducedMotion: 'reduce' });
+        const reduced = getComputedStyle(probe);
+        // 屬性清單不變（否則版面變更也會變成轉場），只有時長被壓到 0.01ms
+        expect(reduced.transitionProperty).to.equal(
+          'background-color, color, border-color, box-shadow',
+        );
+        const durations = reduced.transitionDuration.split(',').map((value) => parseFloat(value));
+        expect(Math.max(...durations)).to.be.below(0.001);
+      } finally {
+        probe.remove();
+      }
+    });
   });
 });
