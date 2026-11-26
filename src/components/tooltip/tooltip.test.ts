@@ -631,6 +631,42 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
       expect(hits, 'updates scheduled from updated()').to.deep.equal([]);
     });
 
+    it('does not open without content', async () => {
+      const el = await fixture<AuiTooltip>(
+        html`<aui-tooltip><button>Target</button></aui-tooltip>`,
+      );
+      let shows = 0;
+      el.addEventListener('aui-show', () => shows++);
+      await el.show();
+      await el.updateComplete;
+      expect(el.open, 'open is withdrawn').to.be.false;
+      expect(shows).to.equal(0);
+
+      const rich = document.createElement('span');
+      rich.slot = 'content';
+      rich.textContent = 'Rich tip';
+      el.append(rich);
+      const shown = oneEvent(el, 'aui-after-show');
+      await el.show();
+      await shown;
+      expect(el.open).to.be.true;
+    });
+
+    it('binds a for target that is added after the tooltip', async () => {
+      const container = await fixture<HTMLDivElement>(html`
+        <div><aui-tooltip for="late-target" content="Late tip" trigger="click"></aui-tooltip></div>
+      `);
+      const el = container.querySelector('aui-tooltip')!;
+      const button = document.createElement('button');
+      button.id = 'late-target';
+      container.append(button);
+      await new Promise((resolve) => setTimeout(resolve)); // MutationObserver
+      const shown = oneEvent(el, 'aui-after-show');
+      button.click();
+      await shown;
+      expect(el.open).to.be.true;
+    });
+
     it('withdraws open when set while disabled, so it can be shown again later', async () => {
       const el = await fixture<AuiTooltip>(html`
         <aui-tooltip content="Tip" disabled><button>Target</button></aui-tooltip>

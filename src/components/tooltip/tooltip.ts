@@ -171,6 +171,9 @@ export class AuiTooltip extends LitElement {
   @state()
   private isVisible = false;
 
+  /** `for` 指定的目標尚未出現時，等待它加入的觀察器 */
+  private targetObserver: MutationObserver | null = null;
+
   override connectedCallback(): void {
     super.connectedCallback();
 
@@ -193,6 +196,8 @@ export class AuiTooltip extends LitElement {
     this.clearTimeouts();
     this.stopAutoUpdate();
     this.detachTargetListeners();
+    this.targetObserver?.disconnect();
+    this.targetObserver = null;
     this.clearAriaDescribedBy();
     // 離開 document 時瀏覽器會自動關閉 popover，同步內部狀態並作廢尚未執行的轉場回呼
     this.transitionId++;
@@ -234,6 +239,10 @@ export class AuiTooltip extends LitElement {
       this.disabled &&
       (changedProperties.has('open') || changedProperties.has('disabled'))
     ) {
+      this.open = false;
+    }
+    // 沒有內容（content 為空且沒有 content slot）時不開啟：否則會顯示一個空的氣泡
+    if (this.open && changedProperties.has('open') && !this.hasContent) {
       this.open = false;
     }
     // 以 isShowing（而非 isVisible）判斷：isVisible 要等到 rAF 才變 true，
@@ -279,10 +288,24 @@ export class AuiTooltip extends LitElement {
     // 目標切換時，描述關聯須跟著從舊目標移到新目標
     this.removeAriaDescribedBy();
     this.detachTargetListeners();
+    this.targetObserver?.disconnect();
+    this.targetObserver = null;
 
     if (this.for) {
       const root = this.getRootNode() as Document | ShadowRoot;
       this.targetElement = root.getElementById(this.for) as HTMLElement;
+      // 目標還不存在（比提示晚渲染）：等它出現再綁定，否則這個提示永遠不會作用
+      if (!this.targetElement && this.isConnected) {
+        this.targetObserver = new MutationObserver(() => {
+          if (root.getElementById(this.for)) this.setupTarget();
+        });
+        this.targetObserver.observe(root, {
+          childList: true,
+          subtree: true,
+          attributes: true,
+          attributeFilter: ['id'],
+        });
+      }
     } else {
       // 預設以 slot 內的第一個元素或 wrapper 本身作為目標
       const slot = this.shadowRoot?.querySelector('slot:not([name])') as HTMLSlotElement | null;
@@ -626,6 +649,19 @@ export class AuiTooltip extends LitElement {
   /**
    * 提示內容的純文字（rich content slot 優先，否則使用 content 屬性）
    */
+  private get hasContent(): boolean {
+    // 以 light DOM 判斷：首次渲染前 Shadow DOM 內還沒有 slot
+    return (
+      (this.content ?? '').trim() !== '' ||
+      [...this.children].some((child) => child.slot === 'content')
+    );
+  }
+
+  /** 開啟中更換 content slot 的內容：作為描述的文字須跟著更新（content 屬性的變更由 updated() 處理） */
+  private handleContentSlotChange = (): void => {
+    if (this.describing) this.syncAriaDescribedBy();
+  };
+
   private get descriptionText(): string {
     const slot = this.shadowRoot?.querySelector<HTMLSlotElement>('slot[name="content"]');
     const slotted = (slot?.assignedNodes({ flatten: true }) ?? [])
@@ -744,7 +780,7 @@ export class AuiTooltip extends LitElement {
         @mouseleave=${this.handlePopupMouseLeave}
       >
         <div part="content" class="tooltip__content">
-          <slot name="content">${this.content}</slot>
+          <slot name="content" @slotchange=${this.handleContentSlotChange}>${this.content}</slot>
         </div>
 
         ${this.arrow ? html`<div part="arrow" class="tooltip__arrow"></div>` : nothing}
