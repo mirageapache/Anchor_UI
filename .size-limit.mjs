@@ -18,7 +18,7 @@ const BASELINES = {
   input: 3622, // Enter 隱式送出表單（+414；原 3208）
   field: 18058, // 含相依的 Icon Button、Tooltip 與 @floating-ui/dom
   output: 2501,
-  segmented: 3722,
+  segmented: 4097, // 強制色彩樣式與修飾鍵判斷（先前累積到 +10% 上限邊緣；原 3722）
   modal: 5276, // 範本與樣式改由 internal/modal-dialog 產生（單一入口 +228，全量入口因共用而 -527；原 5021）
   alert: 12574, // 含相依的 Modal、Button 與 Input（Modal 範本共用後 +309；Input 的 Enter 送出、Button 的表單動作與 fieldset 停用後 +1124；原 11141）
   toast: 6437, // 新增 placement（六種位置與對應的堆疊、動畫方向；原 5750）
