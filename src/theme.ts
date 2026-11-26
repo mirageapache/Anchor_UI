@@ -4,6 +4,8 @@
  * 獨立成模組（不載入全域樣式），讓測試工具與其他模組可直接使用，不必重寫相同邏輯。
  */
 
+import { sharedState } from './internal/shared-state.js';
+
 export type Theme = 'light' | 'dark';
 
 export interface SetThemeOptions {
@@ -14,8 +16,15 @@ export interface SetThemeOptions {
   transition?: boolean;
 }
 
-/** 移除 .theme-transitioning 的計時器：連續切換時以最後一次為準 */
-let transitionTimer: ReturnType<typeof setTimeout> | undefined;
+/**
+ * 移除 .theme-transitioning 的計時器：連續切換時以最後一次為準。
+ * class 加在整頁共用的 <html> 上，因此計時器也存放在整頁共用的狀態：頁面上有多份元件庫時，
+ * 一份的計時器不會在另一份的轉場進行到一半時把 class 移除
+ */
+const transitionState = sharedState<{ timer?: ReturnType<typeof setTimeout> }>(
+  'theme@1',
+  () => ({}),
+);
 
 /**
  * 設定目前頁面之視覺主題 ('light' | 'dark')
@@ -36,13 +45,15 @@ export function setTheme(theme: Theme, options: SetThemeOptions = {}): void {
   // 250ms 後移除過渡 class，避免影響後續一般互動動畫。
   // 先取消前一次的計時器：否則快速連續切換時，較早的計時器會在後一次轉場進行到一半時移除 class，畫面瞬間跳變
   if (transition) {
-    clearTimeout(transitionTimer);
-    transitionTimer = setTimeout(() => html.classList.remove('theme-transitioning'), 250);
+    clearTimeout(transitionState.timer);
+    transitionState.timer = setTimeout(() => html.classList.remove('theme-transitioning'), 250);
   }
 }
 
 /**
- * 取得目前頁面所處之主題狀態
+ * 取得目前頁面所處之主題狀態。
+ * 只看 `<html>` 的 `data-theme`：在頁面的某個區塊上另外設定 `data-theme="dark"` 雖然會套用深色的 token，
+ * 但不是受支援的用法，`getTheme()` / `setTheme()` 與跟隨主題的元件（如 Navbar 的主題切換）都不會反映它
  */
 export function getTheme(): Theme {
   if (typeof document !== 'undefined') {

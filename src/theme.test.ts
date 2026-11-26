@@ -1,5 +1,6 @@
 import { expect } from '@open-wc/testing';
 import { emulateMedia } from '@web/test-runner-commands';
+import { sharedState } from './internal/shared-state.js';
 import { getTheme, setTheme, toggleTheme } from './theme.js';
 
 describe('theme', () => {
@@ -25,6 +26,21 @@ describe('theme', () => {
     expect(html.classList.contains('theme-transitioning')).to.be.true;
     await new Promise((resolve) => setTimeout(resolve, 300));
     expect(html.classList.contains('theme-transitioning')).to.be.false;
+  });
+
+  it('shares the pending timer page-wide, so another copy of the library does not cut the transition short', async () => {
+    // 另一份元件庫會從同一個 key 取得同一份狀態
+    const shared = sharedState<{ timer?: ReturnType<typeof setTimeout> }>('theme@1', () => ({}));
+    setTheme('dark');
+    const first = shared.timer;
+    expect(first, 'the timer is stored in the shared state').to.not.be.undefined;
+    // 模擬另一份元件庫在轉場中途再次切換：取消前一個計時器並登記自己的
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    clearTimeout(shared.timer);
+    shared.timer = setTimeout(() => html.classList.remove('theme-transitioning'), 250);
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(html.classList.contains('theme-transitioning'), 'at t=300').to.be.true;
+    clearTimeout(shared.timer);
   });
 
   it('keeps the transition class for the full duration after the last of several rapid toggles', async () => {
