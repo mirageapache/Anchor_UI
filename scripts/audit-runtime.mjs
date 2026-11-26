@@ -12,7 +12,7 @@
 //
 // 用法：node scripts/audit-runtime.mjs（pnpm audit:runtime）
 import { spawnSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 /** 會讓檢查失敗的嚴重程度 */
@@ -121,4 +121,6 @@ function main() {
   console.log('✓ 發布套件的 runtime 相依沒有 High / Critical 漏洞');
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main();
+// 以實際路徑比對（同 pack.mjs）：repo 經由符號連結開啟時 import.meta.url 是解析後的路徑而 argv[1] 不是，
+// 直接比對會讓 main() 不執行、以結束碼 0 靜默通過，與「寧可失敗也不放行」相違
+if (process.argv[1] && realpathSync(process.argv[1]) === fileURLToPath(import.meta.url)) main();
