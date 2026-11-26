@@ -79,9 +79,13 @@ export const navbarStyles = css`
       color var(--transition-base, 150ms ease);
   }
 
+  /*
+   * 滑過 / 目前頁面的底色以文字色混出，而不是 --color-surface：深色主題中 --color-surface 與
+   * 導覽列的底色（--color-base）相同，底色完全看不出來
+   */
   .navbar__icon-button:hover {
     color: var(--color-text-primary, #0f172a);
-    background: var(--color-surface, #f1f5f9);
+    background: color-mix(in srgb, currentColor 8%, transparent);
   }
 
   .navbar__icon-button svg,
@@ -177,7 +181,7 @@ export const navbarStyles = css`
   .navbar__nav ::slotted(a:hover),
   .navbar__nav ::slotted(a[aria-current='page']) {
     color: var(--color-text-primary, #0f172a);
-    background: var(--color-surface, #f1f5f9);
+    background: color-mix(in srgb, currentColor 8%, transparent);
   }
 
   /* ─── 右側操作 ─── */

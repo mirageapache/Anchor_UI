@@ -118,6 +118,20 @@ describe('AuiNavbar (<aui-navbar>)', () => {
       expect(visible(part(empty, 'nav'))).to.be.false;
     });
 
+    it('marks the current page with a background that does not depend on the surface token', async () => {
+      // 深色主題的 --color-surface 與導覽列底色相同：底色改由文字色混出，任何底色上都看得出來
+      const el = await fixture<AuiNavbar>(html`
+        <aui-navbar brand="X" style="--color-surface: #ffffff; --color-base: #ffffff">
+          <a href="#a" aria-current="page">A</a>
+          <a href="#b">B</a>
+        </aui-navbar>
+      `);
+      const [current, other] = el.querySelectorAll('a');
+      const background = getComputedStyle(current).backgroundColor;
+      expect(background).to.not.equal(getComputedStyle(other).backgroundColor);
+      expect(background).to.not.equal('rgb(255, 255, 255)');
+    });
+
     it('shows the menu and full search button when wide', async () => {
       const el = await navbarAt(1024);
       expect(visible(part(el, 'menu-button')), 'no menu button').to.be.false;
