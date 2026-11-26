@@ -156,19 +156,6 @@ export function dialogBaseStyles(prefix: string): CSSResult {
       border-top: 1px solid var(--color-border, #e2e8f0);
     }
 
-    /* ─── 螢幕閱讀器專用文字（description） ─── */
-    .sr-only {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      padding: 0;
-      margin: -1px;
-      overflow: hidden;
-      clip: rect(0, 0, 0, 0);
-      white-space: nowrap;
-      border: 0;
-    }
-
     /* 沒有內容的頁首與頁尾不顯示（須寫在頁首 / 頁尾的規則之後才能覆蓋 display） */
     .${p}__header--empty, .${p}__footer--empty {
       display: none;

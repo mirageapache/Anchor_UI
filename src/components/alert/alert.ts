@@ -283,9 +283,9 @@ export class AuiAlert extends LitElement {
         this.open = false;
         return;
       }
-      // 退場動畫中重新開啟：Modal 不會再分派 aui-after-hide，先回報被中斷的那次關閉的結果
-      if (this.closingReason !== null) this.reportResult(this.closingReason);
-      this.decision = null;
+      // 退場動畫中重新開啟：Modal 會先以 aui-after-hide 結束被中斷的那次關閉（由 handleModalAfterHide 回報），
+      // 其結果須保留到那時；aui-show 被取消時退場照常完成，同樣需要它
+      if (this.closingReason === null) this.decision = null;
       if (this.input) this.input.value = this.inputValue;
       this.modal.open = true;
       await this.modal.updateComplete;
@@ -315,7 +315,8 @@ export class AuiAlert extends LitElement {
   /** Modal 完全關閉後（不論原因）決定結果並分派 aui-confirm / aui-cancel */
   private handleModalAfterHide = (event: Event) => {
     if (event.composedPath()[0] !== this.modal) return;
-    this.open = false;
+    // 退場動畫中重新開啟時 Modal 仍開著：只回報被中斷的那次關閉
+    if (!this.modal.open) this.open = false;
     this.reportResult((event as CustomEvent<ModalHideDetail>).detail.reason);
   };
 

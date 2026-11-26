@@ -556,6 +556,28 @@ describe('AuiAlert (<aui-alert>)', () => {
       expect(results).to.deep.equal(['confirm', 'cancel']);
     });
 
+    it('is cancelled when an enclosing modal closes', async () => {
+      const outer = await fixture<AuiModal>(html`
+        <aui-modal heading="Outer"
+          ><aui-alert mode="confirm" heading="Inner"></aui-alert
+        ></aui-modal>
+      `);
+      const el = outer.querySelector<AuiAlert>('aui-alert')!;
+      const outerShown = oneEvent(outer, 'aui-after-show');
+      outer.open = true;
+      await outerShown;
+      await openAlert(el);
+
+      const result = nextResult(el);
+      // 內層的 aui-after-hide 也會冒泡到外層，因此以 hide() 等待外層關閉完成
+      const outerHidden = outer.hide();
+      expect(await result).to.deep.equal({ type: 'aui-cancel', reason: 'api' });
+      await outerHidden;
+      expect(el.open).to.be.false;
+      expect(isScrollLocked()).to.be.false;
+      expect(getTopModalLayer()).to.be.null;
+    });
+
     it('drops the result of a close request that is withdrawn in the same task', async () => {
       const el = await fixture<AuiAlert>(
         html`<aui-alert mode="confirm" heading="Withdrawn"></aui-alert>`,
