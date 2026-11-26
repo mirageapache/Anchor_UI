@@ -90,6 +90,32 @@ describe('AuiInput (<aui-input>)', () => {
       expect(control.type).to.equal('password');
     });
 
+    it('shows the error state after a blocked submit, until the value is valid or the form resets', async () => {
+      const form = await fixture<HTMLFormElement>(html`
+        <form><aui-input name="must" required></aui-input></form>
+      `);
+      const el = form.querySelector<AuiInput>('aui-input')!;
+      const inner = () => el.shadowRoot!.querySelector<HTMLInputElement>('.control')!;
+      expect(inner().hasAttribute('aria-invalid')).to.be.false;
+
+      expect(form.checkValidity(), 'the untouched required field blocks the form').to.be.false;
+      await el.updateComplete;
+      expect(inner().getAttribute('aria-invalid')).to.equal('true');
+      expect(inner().classList.contains('control--invalid')).to.be.true;
+
+      el.value = 'filled';
+      await el.updateComplete;
+      expect(inner().hasAttribute('aria-invalid')).to.be.false;
+
+      el.value = '';
+      form.checkValidity();
+      await el.updateComplete;
+      expect(inner().getAttribute('aria-invalid')).to.equal('true');
+      form.reset();
+      await el.updateComplete;
+      expect(inner().hasAttribute('aria-invalid')).to.be.false;
+    });
+
     it('marks the control invalid with aria-invalid when invalid is set', async () => {
       const el = await fixture<AuiInput>(html`<aui-input invalid></aui-input>`);
       const control = controlOf(el);
@@ -703,6 +729,51 @@ describe('AuiInput (<aui-input>)', () => {
       await el.updateComplete;
       expect(el.value).to.equal('start');
       expect(new FormData(form).get('remote')).to.equal('start');
+    });
+
+    it('keeps the value when another listener cancels the reset', async () => {
+      const form = await fixture<HTMLFormElement>(html`
+        <form><aui-input name="kept" value="start"></aui-input></form>
+      `);
+      const el = form.querySelector<AuiInput>('aui-input')!;
+      el.value = 'changed';
+      form.addEventListener('reset', (event) => event.preventDefault(), { once: true });
+      form.reset();
+      await el.updateComplete;
+      expect(el.value).to.equal('changed');
+    });
+
+    it('follows a later change of its form owner', async () => {
+      const wrapper = await fixture<HTMLDivElement>(html`
+        <div>
+          <form id="owner-a"></form>
+          <form id="owner-b"></form>
+          <aui-input name="moved" value="start" form="owner-a"></aui-input>
+        </div>
+      `);
+      const [formA, formB] = wrapper.querySelectorAll('form');
+      const el = wrapper.querySelector<AuiInput>('aui-input')!;
+      el.setAttribute('form', 'owner-b');
+      el.value = 'changed';
+      await el.updateComplete;
+
+      formA.reset();
+      await el.updateComplete;
+      expect(el.value, 'the old owner no longer resets it').to.equal('changed');
+      formB.reset();
+      await el.updateComplete;
+      expect(el.value).to.equal('start');
+    });
+
+    it('submits once after being cloned with its hidden input', async () => {
+      const form = await fixture<HTMLFormElement>(html`
+        <form><aui-input name="copy" value="A"></aui-input></form>
+      `);
+      const clone = form.querySelector('aui-input')!.cloneNode(true) as AuiInput;
+      form.append(clone);
+      await clone.updateComplete;
+      expect(clone.querySelectorAll('input[type="hidden"]')).to.have.length(1);
+      expect(new FormData(form).getAll('copy')).to.deep.equal(['A', 'A']);
     });
 
     it('validates through the inner control', async () => {

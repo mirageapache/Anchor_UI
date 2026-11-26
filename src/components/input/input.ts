@@ -51,6 +51,12 @@ export class AuiInput extends LitElement {
   /** 表單參與（ElementInternals 或隱藏 input 退回方案） */
   private readonly formControl = new FormControlController(this, () => this.formResetCallback());
 
+  constructor() {
+    super();
+    // 驗證未通過時瀏覽器在 host 上分派 invalid（不冒泡）
+    this.addEventListener('invalid', this.handleInvalid);
+  }
+
   /** 不支援 ElementInternals 的環境（happy-dom、舊版瀏覽器）為 null */
   private get internals(): ElementInternals | null {
     return this.formControl.internals;
@@ -72,6 +78,10 @@ export class AuiInput extends LitElement {
   /** 由所屬 `<fieldset disabled>` 或自身 disabled 屬性決定的表單停用狀態 */
   @state()
   private formDisabled = false;
+
+  /** 曾被驗證擋下且尚未通過（見 handleInvalid） */
+  @state()
+  private userInvalid = false;
 
   /**
    * 目前的值。以程式設定後，`value` 屬性的變更不再覆寫（與原生 input 相同）
@@ -246,6 +256,7 @@ export class AuiInput extends LitElement {
   /** @internal 表單 reset 時還原為預設值 */
   formResetCallback(): void {
     this.dirty = false;
+    this.userInvalid = false;
     this.applyValue(this.defaultValue);
   }
 
@@ -290,6 +301,7 @@ export class AuiInput extends LitElement {
     const control = this.control;
     if (!control) return;
     control.setCustomValidity(this.customValidityMessage);
+    if (control.validity.valid || !control.willValidate) this.userInvalid = false;
     if (!this.internals) return;
     if (control.validity.valid || !control.willValidate) {
       this.internals.setValidity({});
@@ -297,6 +309,14 @@ export class AuiInput extends LitElement {
       this.internals.setValidity(control.validity, control.validationMessage, control);
     }
   }
+
+  /**
+   * 驗證未通過（表單送出被擋下、checkValidity() / reportValidity()）：以錯誤狀態呈現，直到通過驗證或表單重設。
+   * 內部的控制項沒有表單擁有者，送出失敗時不會符合 `:user-invalid`，使用者沒碰過的必填欄位就沒有任何錯誤標示
+   */
+  private handleInvalid = () => {
+    this.userInvalid = true;
+  };
 
   private handleInput = (event: Event) => {
     this.value = (event.target as HTMLInputElement | HTMLTextAreaElement).value;
@@ -342,10 +362,10 @@ export class AuiInput extends LitElement {
     const isDisabled = this.isDisabled;
     const classes = classMap({
       control: true,
-      'control--invalid': this.invalid,
+      'control--invalid': this.invalid || this.userInvalid,
     });
     const describedBy = this.description ? 'description' : undefined;
-    const ariaInvalid = this.invalid ? 'true' : undefined;
+    const ariaInvalid = this.invalid || this.userInvalid ? 'true' : undefined;
     const placeholder = this.placeholder || undefined;
 
     const control = this.multiline
@@ -367,6 +387,7 @@ export class AuiInput extends LitElement {
             ?required=${this.required}
             @input=${this.handleInput}
             @change=${this.handleChange}
+            @invalid=${this.handleInvalid}
           ></textarea>
         `
       : html`
@@ -388,6 +409,7 @@ export class AuiInput extends LitElement {
             ?required=${this.required}
             @input=${this.handleInput}
             @change=${this.handleChange}
+            @invalid=${this.handleInvalid}
             @keydown=${this.handleKeydown}
           />
         `;

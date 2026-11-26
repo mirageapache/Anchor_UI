@@ -1,6 +1,9 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
 import { findFormOwner } from './form-owner.js';
 
+/** 退回方案的隱藏 input 的標記屬性 */
+const FALLBACK_INPUT = 'data-aui-form-value';
+
 /** 使用 FormControlController 的元件需具備的屬性 */
 export interface FormControlHost extends ReactiveControllerHost, HTMLElement {
   name: string;
@@ -53,9 +56,17 @@ export class FormControlController implements ReactiveController {
   }
 
   hostConnected(): void {
+    this.bindFallbackForm();
+  }
+
+  /** 退回方案：監聽目前表單擁有者的 reset。擁有者可能在連接後改變（`form` 屬性），每次更新時重新確認 */
+  private bindFallbackForm(): void {
     if (this.internals) return;
-    this.fallbackForm = findFormOwner(this.host);
-    this.fallbackForm?.addEventListener('reset', this.handleFallbackReset);
+    const form = this.host.isConnected ? findFormOwner(this.host) : null;
+    if (form === this.fallbackForm) return;
+    this.fallbackForm?.removeEventListener('reset', this.handleFallbackReset);
+    this.fallbackForm = form;
+    form?.addEventListener('reset', this.handleFallbackReset);
   }
 
   hostDisconnected(): void {
@@ -64,11 +75,15 @@ export class FormControlController implements ReactiveController {
   }
 
   hostUpdated(): void {
+    this.bindFallbackForm();
     this.syncFallbackInput();
   }
 
-  private handleFallbackReset = () => {
-    this.onFallbackReset();
+  /** reset 可被其他監聽者取消（preventDefault）：等事件分派完再決定，與 formResetCallback 的時機相同 */
+  private handleFallbackReset = (event: Event) => {
+    queueMicrotask(() => {
+      if (!event.defaultPrevented) this.onFallbackReset();
+    });
   };
 
   /** 退回方案：以 light DOM 的隱藏 input 帶出 name / value */
@@ -80,8 +95,12 @@ export class FormControlController implements ReactiveController {
       this.fallbackInput = null;
       return;
     }
-    const input = (this.fallbackInput ??= document.createElement('input'));
+    // cloneNode(true) 會連同隱藏 input 一起複製：沿用既有的那一個，否則同一個欄位會提交兩次
+    const input = (this.fallbackInput ??=
+      host.querySelector<HTMLInputElement>(`:scope > input[${FALLBACK_INPUT}]`) ??
+      document.createElement('input'));
     input.type = 'hidden';
+    input.setAttribute(FALLBACK_INPUT, '');
     input.name = host.name;
     input.value = this.submitValue;
     input.disabled = host.disabled;
