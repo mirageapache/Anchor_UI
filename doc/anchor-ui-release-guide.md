@@ -73,7 +73,7 @@ develop ──PR──▶ main（CI 通過後合併）
 ### 2. 發布：合併 release PR
 
 1. 檢查 release PR 的版號與 CHANGELOG（PR 的「Files changed」：`package.json`、`.release-please-manifest.json`、`CHANGELOG.md`，皆由 release-please 修改，不需手動改版號）。release PR 會一直開著，之後合併進 `main` 的變更會持續累積進去，每次都以最新的 `main` 重建。
-2. release PR 由 `github-actions[bot]` 開啟，repo 對首次貢獻者的 PR 要求核准才執行 workflow，CI 可能停在等待核准：在 PR 頁面按「Approve workflows to run」。7 項必要檢查通過前無法合併（按下會顯示 `Merging was blocked due to rule violation errors`）。
+2. release PR 由 `github-actions[bot]` 開啟，repo 對首次貢獻者的 PR 要求核准才執行 workflow，CI 可能停在等待核准：在 PR 頁面按「Approve workflows to run」。必要檢查全部通過前無法合併（按下會顯示 `Merging was blocked due to rule violation errors`）。
 3. CI 通過後合併。之後全部自動完成：
    - 在合併 commit 打 tag `v<版號>`，建立草稿 Release。
    - `release.yml` 確認 tag 在 `main` 上、等待該 commit 的必要 CI 檢查（清單取自 `main` 的 Ruleset，最多 20 分鐘）、執行 `pnpm release:pack`（建置 → `verify:package` → `size` → 版號與 tag 一致性 → `scripts/pack.mjs` 打包），附上 tarball 後公開 Release；版號含 `-` 時標記為 Pre-release。
@@ -111,6 +111,7 @@ beta 測試通過、要發布正式版時，不需修改任何設定，只要一
 | `Merge main back into develop` job 失敗                           | 有衝突或 `develop` 在這期間被更新。手動執行 `git switch develop && git pull && git merge origin/main && git push`。                                                                                                                                                                                       |
 | release PR 的 CI 停在等待核准（`action_required`）                | 在 PR 頁面按「Approve workflows to run」。                                                                                                                                                                                                                                                                |
 | release PR 的必要檢查一直是「Expected」（沒有任何 CI）            | 關閉後重新開啟 release PR（Close → Reopen），由你觸發的 `pull_request` 事件會執行 CI。不要用 Actions → CI → Run workflow：手動執行的檢查不算進 PR 的必要檢查。                                                                                                                                            |
+| 發布後，開著的 develop → main PR 必要檢查變成「Expected」         | `Merge main back into develop` 以 `GITHUB_TOKEN` 推送 `develop`，這類推送不會觸發 CI，PR 的最新 commit 因此沒有檢查結果。再推一個 commit，或關閉後重新開啟 PR（Close → Reopen）。                                                                                                                         |
 | release PR 是預覽版號，但想發正式版                               | 補一個 `Release-As` commit（第二節第 3 點）。                                                                                                                                                                                                                                                             |
 | release PR 顯示落後 `main`                                        | 按 PR 的「Update branch」，或重跑 Release Please workflow 重建。                                                                                                                                                                                                                                          |
 | release-please 沒有開 PR，log 顯示權限錯誤                        | 尚未完成第三節的一次性設定。                                                                                                                                                                                                                                                                              |
@@ -150,7 +151,7 @@ tarball 由 `scripts/pack.mjs` 產出：檔案內容與 `npm pack` 相同，但�
 
 - [ ] 版號符合預期（正式版需要 `Release-As`，見第二節第 3 點）。
 - [ ] CHANGELOG 列出的變更完整、描述可讀。
-- [ ] release PR 的 CI（7 項必要檢查）全部通過。
+- [ ] release PR 的 CI（所有必要檢查）全部通過。
 - [ ] 要發布正式版時，`main` 上的程式碼與測試過的預覽版相同（只多了 bug 修正）。
 - [ ] （建議）本機 `pnpm release:pack` 與 `pnpm smoke` 預演通過。
 
