@@ -473,6 +473,26 @@ describe('AuiIconButton (<aui-icon-button>)', () => {
       }
     });
 
+    it('ends the feedback when removed during it, so it is not stuck after being re-inserted', async () => {
+      const wrapper = await fixture<HTMLDivElement>(html`
+        <div><aui-icon-button preset="copy" copy-value="x"></aui-icon-button></div>
+      `);
+      const el = wrapper.querySelector<AuiIconButton>('aui-icon-button')!;
+      const tooltip = el.shadowRoot!.querySelector('aui-tooltip')!;
+      el.triggerFeedback('success');
+      await oneEvent(tooltip, 'aui-after-show');
+      expect(el.status).to.equal('success');
+
+      // 例如清單重排：回饋計時器在移出時被清除
+      el.remove();
+      wrapper.appendChild(el);
+      await el.updateComplete;
+      await tooltip.updateComplete;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(el.status).to.equal('idle');
+      expect(tooltip.open, 'the feedback tooltip is closed').to.be.false;
+    });
+
     it('starts no feedback when removed while the clipboard write is pending', async () => {
       const original = navigator.clipboard.writeText;
       let finish!: () => void;

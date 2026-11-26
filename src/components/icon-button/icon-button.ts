@@ -347,7 +347,9 @@ export class AuiIconButton extends LitElement implements PopupTrigger {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.clearFeedbackTimer();
+    // 回饋期間被移出頁面（清單重排、拖曳排序）：計時器不會再觸發，直接結束回饋，
+    // 否則重新插入後會一直停在 success / error，回饋用的提示也一直開著
+    if (this.feedbackTimer) this.resetFeedback();
   }
 
   /**
