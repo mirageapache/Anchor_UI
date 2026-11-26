@@ -16,7 +16,7 @@
 ```bash
 pnpm build
 pnpm smoke            # 所有框架
-pnpm smoke vue3       # 單一框架（vue3 / angular / angular-ssr）
+pnpm smoke vue3       # 單一框架（vue3 / angular / react / angular-ssr）
 pnpm smoke --keep     # 保留暫存的專案目錄以便檢查
 ```
 
@@ -32,7 +32,7 @@ pnpm smoke --keep     # 保留暫存的專案目錄以便檢查
 
 ### Angular SSR
 
-`angular-ssr/` 在元件檔中載入全量入口（伺服器的 bundle 也會載入元件庫），不檢查 Tree-shaking 與型別宣告（由另外兩個專案負責）。
+`angular-ssr/` 在元件檔中載入全量入口（伺服器的 bundle 也會載入元件庫），不檢查 Tree-shaking 與型別宣告（由另外三個專案負責）。
 建置後由 `scripts/smoke-ssr.mjs` 啟動 SSR 伺服器並檢查：
 
 1. 伺服器輸出的 HTML 由伺服器端渲染（`ng-server-context="ssr"`、hydration 註記），帶有元件標籤與靜態 attribute，伺服器沒有輸出錯誤。

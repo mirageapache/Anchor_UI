@@ -12,14 +12,16 @@
 - `package.json` 的版號代表「**最近一次發布的版本**」，只由 release PR 更新（同時更新 `.release-please-manifest.json`），請勿手動修改。
 - 每個 Phase 先發布預覽版（`-beta`）供導入專案試用，測試通過後再發布正式版：
 
-| 里程碑  | 版號           | 狀態                                                                                 |
-| ------- | -------------- | ------------------------------------------------------------------------------------ |
-| Phase 0 | `v0.0.1`       | —                                                                                    |
-| Phase 1 | `v0.1.0-alpha` | ✅ 已發布（PR #2 補記，tag 指向合併 commit `d4ea1dd`）                               |
-| Phase 2 | `v0.2.0-beta`  | ✅ 已發布（PR #8，tag 指向合併 commit `4e71eb9`）                                    |
-| Phase 3 | `v0.3.0-beta`  | ✅ 已發布（PR #11，tag 指向合併 commit `c8af105`；最後一次手動發布）                 |
-| Phase 3 | `v0.3.0`       | ✅ 已發布（PR #17，第一次由 release-please 自動發布，tag 指向合併 commit `84ed768`） |
-| Phase 4 | `v1.0.0`       | — 以 `Release-As: 1.0.0` 發布（見第二節第 3 點）                                     |
+| 里程碑  | 版號            | 狀態                                                                                 |
+| ------- | --------------- | ------------------------------------------------------------------------------------ |
+| Phase 0 | `v0.0.1`        | —                                                                                    |
+| Phase 1 | `v0.1.0-alpha`  | ✅ 已發布（PR #2 補記，tag 指向合併 commit `d4ea1dd`）                               |
+| Phase 2 | `v0.2.0-beta`   | ✅ 已發布（PR #8，tag 指向合併 commit `4e71eb9`）                                    |
+| Phase 3 | `v0.3.0-beta`   | ✅ 已發布（PR #11，tag 指向合併 commit `c8af105`；最後一次手動發布）                 |
+| Phase 3 | `v0.3.0`        | ✅ 已發布（PR #17，第一次由 release-please 自動發布，tag 指向合併 commit `84ed768`） |
+| Phase 4 | `v1.0.0-beta`   | ✅ 已發布（PR #20，tag 指向合併 commit `f652daf`）                                   |
+| Phase 4 | `v1.0.0-beta.1` | ✅ 已發布（PR #38，tag 指向合併 commit `d622271`）                                   |
+| Phase 4 | `v1.0.0`        | ✅ 已發布（PR #40，以 `Release-As: 1.0.0` 發布，tag 指向合併 commit `2bf4299`）      |
 
 - Git Tag 名稱為 `v` + 版號（例如 `v0.3.0-beta`）。`v0.3.0-beta` 以前是手動建立的 annotated tag，之後由 release-please 自動建立（lightweight tag）。
 - **tag 只能建立在 `main` 上**，且該 commit 的 `package.json` 版號必須與 tag 一致（Release workflow 與 CI 的 `release:verify --all-tags` 都會檢查）。

@@ -30,7 +30,7 @@ Anchor_UI/
 │   ├── anchor-ui-spec.md        # 架構規格規劃
 │   ├── design-system.md         # 樣式系統與 Design Tokens 字典
 │   ├── anchor-ui-components-list.md # 共用元件規格清單
-│   ├── anchor-ui-development-schedule.md # Phase 0 ~ 4 開發排程
+│   ├── anchor-ui-development-schedule.md # Phase 0 ~ 5 開發排程
 │   ├── anchor-ui-release-guide.md # 發布流程（release-please）
 │   ├── anchor-ui-upgrade-guide.md # 升級遷移手冊（給使用端）
 │   └── development.md           # 本文件
