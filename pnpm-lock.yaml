@@ -15,7 +15,7 @@ importers:
         specifier: ^1.8.0
         version: 1.8.0
       '@types/react':
-        specifier: ^19.0.0
+        specifier: '>=18.0.0'
         version: 19.3.0
       lit:
         specifier: ^3.3.3

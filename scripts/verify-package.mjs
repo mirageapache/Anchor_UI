@@ -68,7 +68,7 @@ function checkExports() {
       failures.push(`exports 缺少 "./${name}"（請執行 pnpm sync:package）`);
       continue;
     }
-    for (const key of ['types', 'import']) {
+    for (const key of ['types', 'import', 'default']) {
       if (!entry[key] || !existsSync(join(root, entry[key]))) {
         failures.push(`exports["./${name}"].${key} 指向的檔案不存在：${entry[key]}`);
       }

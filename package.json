@@ -9,103 +9,128 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js"
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
     "./accordion": {
       "types": "./dist/components/accordion/index.d.ts",
-      "import": "./dist/components/accordion/index.js"
+      "import": "./dist/components/accordion/index.js",
+      "default": "./dist/components/accordion/index.js"
     },
     "./alert": {
       "types": "./dist/components/alert/index.d.ts",
-      "import": "./dist/components/alert/index.js"
+      "import": "./dist/components/alert/index.js",
+      "default": "./dist/components/alert/index.js"
     },
     "./breadcrumb": {
       "types": "./dist/components/breadcrumb/index.d.ts",
-      "import": "./dist/components/breadcrumb/index.js"
+      "import": "./dist/components/breadcrumb/index.js",
+      "default": "./dist/components/breadcrumb/index.js"
     },
     "./button": {
       "types": "./dist/components/button/index.d.ts",
-      "import": "./dist/components/button/index.js"
+      "import": "./dist/components/button/index.js",
+      "default": "./dist/components/button/index.js"
     },
     "./card": {
       "types": "./dist/components/card/index.d.ts",
-      "import": "./dist/components/card/index.js"
+      "import": "./dist/components/card/index.js",
+      "default": "./dist/components/card/index.js"
     },
     "./code-view": {
       "types": "./dist/components/code-view/index.d.ts",
-      "import": "./dist/components/code-view/index.js"
+      "import": "./dist/components/code-view/index.js",
+      "default": "./dist/components/code-view/index.js"
     },
     "./drawer": {
       "types": "./dist/components/drawer/index.d.ts",
-      "import": "./dist/components/drawer/index.js"
+      "import": "./dist/components/drawer/index.js",
+      "default": "./dist/components/drawer/index.js"
     },
     "./dropzone": {
       "types": "./dist/components/dropzone/index.d.ts",
-      "import": "./dist/components/dropzone/index.js"
+      "import": "./dist/components/dropzone/index.js",
+      "default": "./dist/components/dropzone/index.js"
     },
     "./favorite-btn": {
       "types": "./dist/components/favorite-btn/index.d.ts",
-      "import": "./dist/components/favorite-btn/index.js"
+      "import": "./dist/components/favorite-btn/index.js",
+      "default": "./dist/components/favorite-btn/index.js"
     },
     "./field": {
       "types": "./dist/components/field/index.d.ts",
-      "import": "./dist/components/field/index.js"
+      "import": "./dist/components/field/index.js",
+      "default": "./dist/components/field/index.js"
     },
     "./footer": {
       "types": "./dist/components/footer/index.d.ts",
-      "import": "./dist/components/footer/index.js"
+      "import": "./dist/components/footer/index.js",
+      "default": "./dist/components/footer/index.js"
     },
     "./header": {
       "types": "./dist/components/header/index.d.ts",
-      "import": "./dist/components/header/index.js"
+      "import": "./dist/components/header/index.js",
+      "default": "./dist/components/header/index.js"
     },
     "./icon-button": {
       "types": "./dist/components/icon-button/index.d.ts",
-      "import": "./dist/components/icon-button/index.js"
+      "import": "./dist/components/icon-button/index.js",
+      "default": "./dist/components/icon-button/index.js"
     },
     "./input": {
       "types": "./dist/components/input/index.d.ts",
-      "import": "./dist/components/input/index.js"
+      "import": "./dist/components/input/index.js",
+      "default": "./dist/components/input/index.js"
     },
     "./kbd": {
       "types": "./dist/components/kbd/index.d.ts",
-      "import": "./dist/components/kbd/index.js"
+      "import": "./dist/components/kbd/index.js",
+      "default": "./dist/components/kbd/index.js"
     },
     "./menu": {
       "types": "./dist/components/menu/index.d.ts",
-      "import": "./dist/components/menu/index.js"
+      "import": "./dist/components/menu/index.js",
+      "default": "./dist/components/menu/index.js"
     },
     "./modal": {
       "types": "./dist/components/modal/index.d.ts",
-      "import": "./dist/components/modal/index.js"
+      "import": "./dist/components/modal/index.js",
+      "default": "./dist/components/modal/index.js"
     },
     "./navbar": {
       "types": "./dist/components/navbar/index.d.ts",
-      "import": "./dist/components/navbar/index.js"
+      "import": "./dist/components/navbar/index.js",
+      "default": "./dist/components/navbar/index.js"
     },
     "./output": {
       "types": "./dist/components/output/index.d.ts",
-      "import": "./dist/components/output/index.js"
+      "import": "./dist/components/output/index.js",
+      "default": "./dist/components/output/index.js"
     },
     "./popover": {
       "types": "./dist/components/popover/index.d.ts",
-      "import": "./dist/components/popover/index.js"
+      "import": "./dist/components/popover/index.js",
+      "default": "./dist/components/popover/index.js"
     },
     "./segmented": {
       "types": "./dist/components/segmented/index.d.ts",
-      "import": "./dist/components/segmented/index.js"
+      "import": "./dist/components/segmented/index.js",
+      "default": "./dist/components/segmented/index.js"
     },
     "./tag": {
       "types": "./dist/components/tag/index.d.ts",
-      "import": "./dist/components/tag/index.js"
+      "import": "./dist/components/tag/index.js",
+      "default": "./dist/components/tag/index.js"
     },
     "./toast": {
       "types": "./dist/components/toast/index.d.ts",
-      "import": "./dist/components/toast/index.js"
+      "import": "./dist/components/toast/index.js",
+      "default": "./dist/components/toast/index.js"
     },
     "./tooltip": {
       "types": "./dist/components/tooltip/index.d.ts",
-      "import": "./dist/components/tooltip/index.js"
+      "import": "./dist/components/tooltip/index.js",
+      "default": "./dist/components/tooltip/index.js"
     },
     "./vue": {
       "types": "./dist/frameworks/vue.d.ts"
@@ -116,10 +141,12 @@
     "./styles.css": "./dist/styles.css",
     "./tokens.css": "./dist/tokens.css",
     "./tokens": "./src/tokens/index.scss",
-    "./reset": "./src/base/_reset.scss"
+    "./reset": "./src/base/_reset.scss",
+    "./package.json": "./package.json"
   },
   "sideEffects": [
     "**/*.css",
+    "**/*.scss",
     "./dist/index.js",
     "./dist/components/accordion/index.js",
     "./dist/components/accordion/accordion.js",
@@ -235,8 +262,8 @@
     "lit": "^3.3.3"
   },
   "peerDependencies": {
-    "@types/react": "^19.0.0",
-    "vue": "^3.5.0"
+    "@types/react": ">=18.0.0",
+    "vue": ">=3.0.0"
   },
   "peerDependenciesMeta": {
     "@types/react": {

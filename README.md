@@ -52,7 +52,7 @@ Toast 與 Alert 另有以程式呼叫的服務：`ToastService`（`@anchor-ui/co
 
 - **需要打包工具**（Vite、Angular CLI、webpack 等）：套件為純 ESM，並以 bare import 引用 `lit`，需由打包工具解析，無法直接用 `<script>` 載入。
 - **TypeScript** 的 `moduleResolution` 需為 `"bundler"`、`"node16"` 或 `"nodenext"`，才能解析 `@anchor-ui/core/button` 這類子路徑入口（Vite 與 Angular 新專案的預設值皆符合）。
-- **ESM-only**：不提供 CommonJS 輸出。在 CommonJS 環境（如部分 Jest / SSR 設定）中，請把 `@anchor-ui/core` 加入打包工具的轉換清單（例如 Vite 的 `ssr.noExternal`）。
+- **ESM-only**：不提供 CommonJS 輸出。在 CommonJS 環境（如部分 Jest / SSR 設定）中，請把 `@anchor-ui/core` 加入打包工具的轉換清單（例如 Vite 的 `ssr.noExternal`、Jest 的 `transformIgnorePatterns`）。
 
 ### 2. 安裝
 
