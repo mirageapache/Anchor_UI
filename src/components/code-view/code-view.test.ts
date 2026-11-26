@@ -181,6 +181,10 @@ describe('AuiCodeView (<aui-code-view>)', () => {
       const button = foldButton(el, 3);
       expect(button.getAttribute('aria-expanded')).to.equal('true');
       expect(button.getAttribute('aria-label')).to.equal('第 3–7 行');
+
+      el.foldLabel = 'Lines {start} to {end}';
+      await el.updateComplete;
+      expect(foldButton(el, 3).getAttribute('aria-label')).to.equal('Lines 3 to 7');
     });
 
     it('collapses and expands a block, showing a placeholder while collapsed', async () => {

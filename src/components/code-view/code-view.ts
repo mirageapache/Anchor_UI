@@ -55,6 +55,12 @@ export class AuiCodeView extends LitElement {
   @property({ type: String })
   label = '程式碼';
 
+  /**
+   * 摺疊鈕的無障礙名稱樣板：`{start}` 與 `{end}` 會換成區塊的起訖行號（從 1 起算）
+   */
+  @property({ type: String, attribute: 'fold-label' })
+  foldLabel = '第 {start}–{end} 行';
+
   /** 已摺疊區塊的起始行（0 起算） */
   @state()
   private collapsed = new Set<number>();
@@ -243,7 +249,9 @@ export class AuiCodeView extends LitElement {
             data-line=${i}
             tabindex=${i === activeFold ? 0 : -1}
             aria-expanded=${String(!isCollapsed)}
-            aria-label=${`第 ${i + 1}–${end + 1} 行`}
+            aria-label=${(this.foldLabel || '第 {start}–{end} 行')
+              .replace('{start}', String(i + 1))
+              .replace('{end}', String(end + 1))}
           >
             ${chevron}
           </button>`;

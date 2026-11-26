@@ -222,6 +222,27 @@ describe('AuiField (<aui-field>)', () => {
   });
 
   describe('clear button', () => {
+    it('takes the button texts from copy-label, copied-label and clear-label', async () => {
+      const field = await fixture<AuiField>(html`
+        <aui-field
+          label="Keyword"
+          copyable
+          clearable
+          copy-label="Copy"
+          copied-label="Copied!"
+          clear-label="Clear"
+          ><aui-input value="x"></aui-input
+        ></aui-field>
+      `);
+      await settle(field);
+      const copy = part<AuiIconButton>(field, 'copy-button')!;
+      const clear = part<AuiIconButton>(field, 'clear-button')!;
+      expect(copy.label).to.equal('Copy Keyword');
+      expect(copy.successTooltip).to.equal('Copied!');
+      expect(clear.label).to.equal('Clear Keyword');
+      expect(clear.tooltip).to.equal('Clear');
+    });
+
     it('clears the input, dispatches input / change and returns focus to the input', async () => {
       const field = await fixture<AuiField>(html`
         <aui-field label="Search" clearable><aui-input value="query"></aui-input></aui-field>

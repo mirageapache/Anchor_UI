@@ -70,6 +70,24 @@ export class AuiField extends LitElement {
   @property({ type: Boolean, reflect: true })
   clearable = false;
 
+  /**
+   * 複製鈕的名稱；會接上欄位的標題（如「複製 輸出」）
+   */
+  @property({ type: String, attribute: 'copy-label' })
+  copyLabel = '複製';
+
+  /**
+   * 複製成功後短暫顯示的提示文字
+   */
+  @property({ type: String, attribute: 'copied-label' })
+  copiedLabel = '已複製！';
+
+  /**
+   * 清除鈕的名稱與提示文字；名稱會接上欄位的標題（如「清除 關鍵字」）
+   */
+  @property({ type: String, attribute: 'clear-label' })
+  clearLabel = '清除';
+
   /** 目前關聯的控制項 */
   @state()
   private control: FieldControl | null = null;
@@ -239,8 +257,8 @@ export class AuiField extends LitElement {
                     part="copy-button"
                     preset="copy"
                     action="custom"
-                    label=${`複製${target}`}
-                    success-tooltip="已複製！"
+                    label=${`${this.copyLabel || '複製'}${target}`}
+                    success-tooltip=${this.copiedLabel || '已複製！'}
                     @click=${this.handleCopy}
                   ></aui-icon-button>
                 `
@@ -252,8 +270,8 @@ export class AuiField extends LitElement {
                   <aui-icon-button
                     part="clear-button"
                     preset="close"
-                    tooltip="清除"
-                    label=${`清除${target}`}
+                    tooltip=${this.clearLabel || '清除'}
+                    label=${`${this.clearLabel || '清除'}${target}`}
                     ?disabled=${this.clearDisabled}
                     @click=${this.handleClear}
                   ></aui-icon-button>
