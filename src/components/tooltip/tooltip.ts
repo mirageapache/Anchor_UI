@@ -54,6 +54,15 @@ export class AuiTooltip extends LitElement {
   private targetElement: HTMLElement | null = null;
   /** popover 是否已開啟（進場動畫的 rAF 前即為 true，與視覺狀態 isVisible 分開追蹤） */
   private isShowing = false;
+  /** 滑鼠在觸發目標或氣泡本體上 */
+  private hovering = false;
+  /** 觸發目標具有鍵盤焦點（:focus-visible） */
+  private focused = false;
+  /**
+   * 這次開啟來自 hover / focus（相對於 show()、open 屬性與 click）。
+   * 這類開啟取決於當下的指標與焦點，元素被移出頁面後不再成立，重新插入時不還原
+   */
+  private openedByInteraction = false;
 
   /** 退場動畫中（aui-hide 已分派、aui-after-hide 尚未分派） */
   private isHiding = false;
@@ -177,6 +186,9 @@ export class AuiTooltip extends LitElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    const wasShowing = this.isShowing;
+    this.hovering = false;
+    this.focused = false;
     document.removeEventListener('keydown', this.handleDocumentKeyDown);
     this.clearTimeouts();
     this.stopAutoUpdate();
@@ -190,6 +202,16 @@ export class AuiTooltip extends LitElement {
     if (this.isHiding) {
       this.isHiding = false;
       this.dispatchEvent(new CustomEvent('aui-after-hide', { bubbles: true, composed: true }));
+    }
+    // 由 hover / focus 開啟的提示：離開頁面後指標與焦點都不在了，待執行的收合計時也已清除，
+    // 若保留 open，重新插入時會再開啟而沒有任何東西會關閉它。直接關閉並補上成對的事件（不可取消）
+    if (this.open && this.openedByInteraction) {
+      this.openedByInteraction = false;
+      this.open = false;
+      if (wasShowing) {
+        this.dispatchEvent(new CustomEvent('aui-hide', { bubbles: true, composed: true }));
+        this.dispatchEvent(new CustomEvent('aui-after-hide', { bubbles: true, composed: true }));
+      }
     }
   }
 
@@ -310,28 +332,33 @@ export class AuiTooltip extends LitElement {
 
   private handleTargetMouseEnter = (): void => {
     if (this.disabled || !this.hasTrigger('hover')) return;
+    this.hovering = true;
     this.clearTimeouts();
     if (this.delay > 0) {
-      this.showTimeoutId = window.setTimeout(() => this.show(), this.delay);
+      this.showTimeoutId = window.setTimeout(() => this.showByInteraction(), this.delay);
     } else {
-      this.show();
+      this.showByInteraction();
     }
   };
 
+  /** hover 與 focus 任一成立就維持顯示（APG）：滑鼠離開時若目標仍有鍵盤焦點，不收合 */
   private handleTargetMouseLeave = (): void => {
-    if (this.disabled || !this.hasTrigger('hover')) return;
+    this.hovering = false;
+    if (this.disabled || !this.hasTrigger('hover') || this.focused) return;
     this.scheduleHide();
   };
 
   private handlePopupMouseEnter = (): void => {
     // 支援 WCAG 1.4.13：當滑鼠移到氣泡本體時維持可視，不自動關閉
     if (this.hasTrigger('hover')) {
+      this.hovering = true;
       this.clearTimeouts();
     }
   };
 
   private handlePopupMouseLeave = (): void => {
-    if (this.hasTrigger('hover')) {
+    this.hovering = false;
+    if (this.hasTrigger('hover') && !this.focused) {
       this.scheduleHide();
     }
   };
@@ -348,14 +375,25 @@ export class AuiTooltip extends LitElement {
     }
   }
 
-  private handleTargetFocusIn = (): void => {
+  /**
+   * 只在鍵盤焦點（:focus-visible）時開啟：以滑鼠操作後由程式移回的焦點
+   * （選單、對話框關閉時把焦點還給觸發按鈕）或滑鼠點擊帶來的焦點不算，否則提示會無預警彈出並停留到失焦。
+   * 判斷對象是實際取得焦點的元素（目標為自訂元素時，是其 Shadow DOM 內的元素）
+   */
+  private handleTargetFocusIn = (event: FocusEvent): void => {
     if (this.disabled || !this.hasTrigger('focus')) return;
+    const origin = event.composedPath()[0];
+    if (!(origin instanceof Element) || !origin.matches(':focus-visible')) return;
+    this.focused = true;
     this.clearTimeouts();
-    this.show();
+    this.showByInteraction();
   };
 
   private handleTargetFocusOut = (): void => {
-    if (this.disabled || !this.hasTrigger('focus')) return;
+    const wasFocused = this.focused;
+    this.focused = false;
+    // 不是由鍵盤焦點開啟的（wasFocused 為 false）不因失焦而收合；滑鼠仍在目標或氣泡上時也維持顯示
+    if (this.disabled || !this.hasTrigger('focus') || !wasFocused || this.hovering) return;
     this.clearTimeouts();
     this.hide();
   };
@@ -402,6 +440,14 @@ export class AuiTooltip extends LitElement {
    */
   async show(): Promise<void> {
     if (this.open || this.disabled) return;
+    this.openedByInteraction = false;
+    this.open = true;
+  }
+
+  /** 由 hover / focus 開啟（見 openedByInteraction） */
+  private showByInteraction(): void {
+    if (this.open || this.disabled) return;
+    this.openedByInteraction = true;
     this.open = true;
   }
 
@@ -432,6 +478,12 @@ export class AuiTooltip extends LitElement {
       return;
     }
 
+    // 退場動畫中重新開啟：先完成被中斷的關閉，aui-hide 與 aui-after-hide 才會成對（與 Popover 相同）
+    if (this.isHiding) {
+      this.transitionId++;
+      this.finishHide();
+    }
+
     const event = new CustomEvent('aui-show', {
       bubbles: true,
       composed: true,
@@ -440,6 +492,7 @@ export class AuiTooltip extends LitElement {
     this.dispatchEvent(event);
 
     if (event.defaultPrevented) {
+      this.openedByInteraction = false;
       this.open = false;
       return;
     }
@@ -489,25 +542,29 @@ export class AuiTooltip extends LitElement {
     this.isShowing = false;
     this.isHiding = true;
     this.isVisible = false;
+    this.openedByInteraction = false;
     document.removeEventListener('keydown', this.handleDocumentKeyDown);
     this.clearAriaDescribedBy();
 
     // 等待退場動畫結束後關閉 popover 並停止監聽（時長取自 CSS，避免與樣式隱性耦合）
     window.setTimeout(() => {
-      // 期間若已重新開啟，不可關閉新的 popover
-      if (transitionId === this.transitionId) {
-        if (typeof this.popupElement.hidePopover === 'function') {
-          try {
-            this.popupElement.hidePopover();
-          } catch {
-            // 忽略例外
-          }
-        }
-        this.stopAutoUpdate();
-        this.isHiding = false;
-        this.dispatchEvent(new CustomEvent('aui-after-hide', { bubbles: true, composed: true }));
-      }
+      // 期間若已重新開啟（或被移出頁面），該次關閉已另行完成
+      if (transitionId === this.transitionId) this.finishHide();
     }, transitionTimeMs(this.popupElement));
+  }
+
+  /** 完成關閉：popover 離開 top layer、停止定位並分派 aui-after-hide */
+  private finishHide(): void {
+    if (typeof this.popupElement.hidePopover === 'function') {
+      try {
+        this.popupElement.hidePopover();
+      } catch {
+        // 忽略例外
+      }
+    }
+    this.stopAutoUpdate();
+    this.isHiding = false;
+    this.dispatchEvent(new CustomEvent('aui-after-hide', { bubbles: true, composed: true }));
   }
 
   /**

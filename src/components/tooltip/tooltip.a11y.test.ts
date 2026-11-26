@@ -340,11 +340,11 @@ describe('AuiTooltip Accessibility (<aui-tooltip>)', () => {
 
       const triggerBtn = el.querySelector('#focus-target') as HTMLButtonElement;
 
-      triggerBtn.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      triggerBtn.focus();
       await oneEvent(el, 'aui-after-show');
       expect(el.open).to.be.true;
 
-      triggerBtn.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+      triggerBtn.blur();
       await oneEvent(el, 'aui-hide');
       expect(el.open).to.be.false;
     });

@@ -181,11 +181,11 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
       </aui-tooltip>
     `);
     const btn = el.querySelector('#focus-btn') as HTMLButtonElement;
-    btn.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    btn.focus();
     await oneEvent(el, 'aui-after-show');
     expect(el.open).to.be.true;
 
-    btn.dispatchEvent(new FocusEvent('focusout', { bubbles: true }));
+    btn.blur();
     await oneEvent(el, 'aui-hide');
     expect(el.open).to.be.false;
   });
@@ -436,7 +436,81 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
     });
   });
 
+  describe('hover and focus together', () => {
+    async function setup() {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Tip" .delay=${0} .hideDelay=${0}>
+          <button>Target</button>
+        </aui-tooltip>
+      `);
+      return { el, btn: el.querySelector('button')! };
+    }
+
+    it('stays open while the target keeps keyboard focus after the pointer leaves', async () => {
+      const { el, btn } = await setup();
+      btn.focus();
+      await oneEvent(el, 'aui-after-show');
+      btn.dispatchEvent(new MouseEvent('mouseenter'));
+      btn.dispatchEvent(new MouseEvent('mouseleave'));
+      await el.updateComplete;
+      expect(el.open, 'still focused').to.be.true;
+
+      btn.blur();
+      await el.updateComplete;
+      expect(el.open).to.be.false;
+    });
+
+    it('stays open while the pointer is over the target after focus leaves', async () => {
+      const { el, btn } = await setup();
+      btn.dispatchEvent(new MouseEvent('mouseenter'));
+      await oneEvent(el, 'aui-after-show');
+      btn.focus();
+      btn.blur();
+      await el.updateComplete;
+      expect(el.open, 'still hovered').to.be.true;
+
+      btn.dispatchEvent(new MouseEvent('mouseleave'));
+      await el.updateComplete;
+      expect(el.open).to.be.false;
+    });
+
+    it('does not open for focus that is not :focus-visible (e.g. returned after mouse use)', async () => {
+      const { el, btn } = await setup();
+      // 目標沒有真的取得鍵盤焦點：與滑鼠點擊、滑鼠操作後由程式移回的焦點相同，:focus-visible 不成立
+      expect(btn.matches(':focus-visible')).to.be.false;
+      btn.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      await el.updateComplete;
+      expect(el.open).to.be.false;
+    });
+  });
+
   describe('when moved within the DOM (disconnect → reconnect)', () => {
+    it('closes a hover-opened tooltip on removal instead of re-opening it when re-inserted', async () => {
+      const wrapper = await fixture<HTMLDivElement>(html`
+        <div>
+          <aui-tooltip content="Tip" .delay=${0}><button>Target</button></aui-tooltip>
+        </div>
+      `);
+      const el = wrapper.querySelector('aui-tooltip') as AuiTooltip;
+      const btn = el.querySelector('button')!;
+      btn.dispatchEvent(new MouseEvent('mouseenter'));
+      await oneEvent(el, 'aui-after-show');
+
+      const events: string[] = [];
+      for (const name of ['aui-show', 'aui-hide', 'aui-after-hide']) {
+        el.addEventListener(name, () => events.push(name));
+      }
+      // 例如清單重排：節點被移出再插入，滑鼠已不在上面
+      el.remove();
+      expect(events).to.deep.equal(['aui-hide', 'aui-after-hide']);
+      wrapper.appendChild(el);
+      await el.updateComplete;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(el.open).to.be.false;
+      expect(events, 'not re-opened').to.deep.equal(['aui-hide', 'aui-after-hide']);
+      expect(btn.hasAttribute('aria-describedby')).to.be.false;
+    });
+
     it('re-binds trigger listeners after being re-inserted', async () => {
       const wrapper = await fixture<HTMLDivElement>(html`
         <div>
@@ -455,11 +529,11 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
       wrapper.querySelector('#to')!.appendChild(el);
       await el.updateComplete;
 
-      btn.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+      btn.focus();
       await oneEvent(el, 'aui-after-show');
       expect(el.open).to.be.true;
 
-      btn.dispatchEvent(new MouseEvent('mouseleave'));
+      btn.blur();
       await oneEvent(el, 'aui-hide');
       expect(el.open).to.be.false;
     });
@@ -598,6 +672,27 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
       expect(after - before, 'popup moved with the target').to.be.above(300);
       expect(wrapper.querySelector('#second')!.hasAttribute('aria-describedby')).to.be.true;
       expect(wrapper.querySelector('#first')!.hasAttribute('aria-describedby')).to.be.false;
+    });
+
+    it('pairs aui-hide with aui-after-hide when re-opened during the exit transition', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Tip"><button>Target</button></aui-tooltip>
+      `);
+      const shown = oneEvent(el, 'aui-after-show');
+      el.open = true;
+      await shown;
+
+      const events: string[] = [];
+      for (const name of ['aui-show', 'aui-after-show', 'aui-hide', 'aui-after-hide']) {
+        el.addEventListener(name, () => events.push(name));
+      }
+      el.open = false;
+      await el.updateComplete;
+      const reshown = oneEvent(el, 'aui-after-show');
+      el.open = true;
+      await reshown;
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(events).to.deep.equal(['aui-hide', 'aui-after-hide', 'aui-show', 'aui-after-show']);
     });
 
     it('still reports aui-after-hide when removed during the exit transition', async () => {
