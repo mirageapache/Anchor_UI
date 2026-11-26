@@ -1,4 +1,5 @@
 import { expect, fixture, html } from '@open-wc/testing';
+import { emulateMedia } from '@web/test-runner-commands';
 import { getAxNode } from '../../test-utils/ax.js';
 import './index.js';
 import '../field/index.js';
@@ -136,6 +137,30 @@ describe('AuiSegmented Accessibility (<aui-segmented>)', () => {
 
       field.shadowRoot!.querySelector<HTMLElement>('[part="label"]')!.click();
       expect(el.shadowRoot!.activeElement).to.equal(buttons(el)[1]);
+    });
+  });
+
+  describe('forced colors (Windows high contrast)', () => {
+    before(() => emulateMedia({ forcedColors: 'active' }));
+    after(() => emulateMedia({ forcedColors: 'none' }));
+
+    it('marks the checked option with the system highlight colours', async () => {
+      const el = await fixture<AuiSegmented>(
+        html`<aui-segmented label="Mode" .options=${MODES} value="decode"></aui-segmented>`,
+      );
+      const probe = document.createElement('span');
+      probe.style.cssText =
+        'forced-color-adjust: none; color: HighlightText; background: Highlight;';
+      document.body.appendChild(probe);
+      try {
+        const [unchecked, checked] = buttons(el).map((button) => getComputedStyle(button));
+        const system = getComputedStyle(probe);
+        expect(checked.backgroundColor).to.equal(system.backgroundColor);
+        expect(checked.color).to.equal(system.color);
+        expect(unchecked.backgroundColor).to.not.equal(checked.backgroundColor);
+      } finally {
+        probe.remove();
+      }
     });
   });
 });

@@ -127,4 +127,21 @@ describe('AuiMenu Accessibility (<aui-menu>)', () => {
       expect(node.name).to.equal('更多操作');
     });
   });
+
+  describe('forced colors (Windows high contrast)', () => {
+    before(() => emulateMedia({ forcedColors: 'active' }));
+    after(() => emulateMedia({ forcedColors: 'none' }));
+
+    it('outlines the focused item even when focus is not :focus-visible (pointer hover)', async () => {
+      const wrapper = await fixture<HTMLElement>(userMenu());
+      const el = wrapper.querySelector<AuiMenu>('aui-menu')!;
+      await open(el);
+      const item = el.querySelector<HTMLElement>('[value="logout"]')!;
+      expect(getComputedStyle(item).outlineStyle).to.equal('none');
+      // 滑鼠移到項目上時焦點跟著移動
+      item.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, composed: true }));
+      expect(el.querySelector(':focus')).to.equal(item);
+      expect(getComputedStyle(item).outlineStyle).to.equal('solid');
+    });
+  });
 });

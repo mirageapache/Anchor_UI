@@ -41,6 +41,18 @@ export const menuStyles = css`
     opacity: 0.5;
   }
 
+  /*
+   * 強制色彩（Windows 高對比）：背景色被統一成系統色，滑鼠移入而取得焦點的項目
+   * （不符合 :focus-visible）沒有任何標示，改以外框呈現
+   */
+  @media (forced-colors: active) {
+    ::slotted(:not(hr):hover),
+    ::slotted(:not(hr):focus) {
+      outline: 2px solid Highlight;
+      outline-offset: -2px;
+    }
+  }
+
   /* 分隔線 */
   ::slotted(hr) {
     margin: var(--space-xs, 4px) 0;

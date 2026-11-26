@@ -1,5 +1,5 @@
 import { expect, fixture, html } from '@open-wc/testing';
-import { sendKeys } from '@web/test-runner-commands';
+import { emulateMedia, sendKeys } from '@web/test-runner-commands';
 import { getAxNode } from '../../test-utils/ax.js';
 import './index.js';
 import type { AuiInput } from './input.js';
@@ -149,6 +149,21 @@ line"
       } finally {
         noTransition.remove();
       }
+    });
+  });
+
+  describe('forced colors (Windows high contrast)', () => {
+    before(() => emulateMedia({ forcedColors: 'active' }));
+    after(() => emulateMedia({ forcedColors: 'none' }));
+
+    it('shows the focus indicator as an outline, since box-shadow is removed', async () => {
+      const el = await fixture<AuiInput>(html`<aui-input label="Focus"></aui-input>`);
+      const control = controlOf(el);
+      expect(getComputedStyle(control).outlineStyle).to.equal('none');
+      el.focus();
+      const focused = getComputedStyle(control);
+      expect(focused.outlineStyle).to.equal('solid');
+      expect(focused.outlineWidth).to.equal('2px');
     });
   });
 });
