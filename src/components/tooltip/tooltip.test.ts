@@ -437,6 +437,30 @@ describe('AuiTooltip (<aui-tooltip>)', () => {
   });
 
   describe('hover and focus together', () => {
+    it('stays open while the pointer is over the popup itself (WCAG 1.4.13)', async () => {
+      const el = await fixture<AuiTooltip>(html`
+        <aui-tooltip content="Hoverable" .delay=${0} .hideDelay=${30}>
+          <button>Target</button>
+        </aui-tooltip>
+      `);
+      const target = el.querySelector('button')!;
+      const popup = el.shadowRoot!.querySelector<HTMLElement>('[part="popup"]')!;
+      const shown = oneEvent(el, 'aui-after-show');
+      target.dispatchEvent(new MouseEvent('mouseenter'));
+      await shown;
+
+      // 從目標移到氣泡上：待執行的收合被取消
+      target.dispatchEvent(new MouseEvent('mouseleave'));
+      popup.dispatchEvent(new MouseEvent('mouseenter'));
+      await new Promise((resolve) => setTimeout(resolve, 80));
+      expect(el.open, 'still open while hovering the popup').to.be.true;
+
+      const hidden = oneEvent(el, 'aui-after-hide');
+      popup.dispatchEvent(new MouseEvent('mouseleave'));
+      await hidden;
+      expect(el.open).to.be.false;
+    });
+
     async function setup() {
       const el = await fixture<AuiTooltip>(html`
         <aui-tooltip content="Tip" .delay=${0} .hideDelay=${0}>

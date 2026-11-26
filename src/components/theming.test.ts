@@ -172,6 +172,29 @@ const cases: Case[] = [
     property: 'backgroundColor',
     token: '--color-surface',
   },
+  {
+    tag: 'aui-breadcrumb',
+    template: html`<aui-breadcrumb
+      .items=${[{ label: 'Home', href: '/' }, { label: 'Here' }]}
+    ></aui-breadcrumb>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('[aria-current="page"]')!,
+    property: 'color',
+    token: '--color-text-primary',
+  },
+  {
+    tag: 'aui-popover',
+    template: html`<aui-popover><button slot="trigger">Open</button>Body</aui-popover>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('[part="panel"]')!,
+    property: 'backgroundColor',
+    token: '--color-base',
+  },
+  {
+    tag: 'aui-menu',
+    template: html`<aui-menu><button slot="trigger">Open</button><button>Item</button></aui-menu>`,
+    inner: (host) => host.shadowRoot!.querySelector<HTMLElement>('[part="panel"]')!,
+    property: 'backgroundColor',
+    token: '--color-base',
+  },
 ];
 
 /** 以探針元素把 token 值正規化為瀏覽器計算後的色值 */

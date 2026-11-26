@@ -2,6 +2,7 @@ import { expect } from '@open-wc/testing';
 import type { CSSResultGroup } from 'lit';
 import { AuiAccordion } from './accordion/accordion.js';
 import { AuiAlert } from './alert/alert.js';
+import { AuiBreadcrumb } from './breadcrumb/breadcrumb.js';
 import { AuiButton } from './button/button.js';
 import { AuiCard } from './card/card.js';
 import { AuiCodeView } from './code-view/code-view.js';
@@ -14,9 +15,11 @@ import { AuiHeader } from './header/header.js';
 import { AuiIconButton } from './icon-button/icon-button.js';
 import { AuiInput } from './input/input.js';
 import { AuiKbd } from './kbd/kbd.js';
+import { AuiMenu } from './menu/menu.js';
 import { AuiModal } from './modal/modal.js';
 import { AuiNavbar } from './navbar/navbar.js';
 import { AuiOutput } from './output/output.js';
+import { AuiPopover } from './popover/popover.js';
 import { AuiSegmented } from './segmented/segmented.js';
 import { AuiTag } from './tag/tag.js';
 import { AuiToast } from './toast/toast.js';
@@ -131,6 +134,9 @@ describe('Design token fallbacks', () => {
     'aui-favorite-btn': AuiFavoriteBtn,
     'aui-header': AuiHeader,
     'aui-kbd': AuiKbd,
+    'aui-breadcrumb': AuiBreadcrumb,
+    'aui-popover': AuiPopover,
+    'aui-menu': AuiMenu,
   };
 
   for (const [tagName, ctor] of Object.entries(components)) {

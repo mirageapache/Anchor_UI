@@ -286,6 +286,16 @@ describe('AuiMenu (<aui-menu>)', () => {
       expect(archive.getAttribute('aria-disabled')).to.equal('true');
     });
 
+    it('keeps following the disabled attribute after the menu is removed and inserted again', async () => {
+      const { wrapper, el, item } = await setup();
+      el.remove();
+      wrapper.prepend(el);
+      await el.updateComplete;
+      item('new').setAttribute('disabled', '');
+      await new Promise((resolve) => setTimeout(resolve)); // MutationObserver
+      expect(item('new').getAttribute('aria-disabled')).to.equal('true');
+    });
+
     it('keeps an aria-disabled value that is changed after the item was added', async () => {
       const { el, trigger, item } = await setup();
       const duplicate = item('duplicate');
