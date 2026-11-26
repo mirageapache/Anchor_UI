@@ -82,6 +82,52 @@ describe('AuiCodeView (<aui-code-view>)', () => {
     });
   });
 
+  describe('copying', () => {
+    /** 對檢視區分派 copy 事件，回傳元件寫入剪貼簿的文字（未攔截時為 null） */
+    function copy(el: AuiCodeView): string | null {
+      const event = new ClipboardEvent('copy', {
+        clipboardData: new DataTransfer(),
+        bubbles: true,
+        cancelable: true,
+      });
+      base(el).dispatchEvent(event);
+      return event.defaultPrevented ? event.clipboardData!.getData('text/plain') : null;
+    }
+    const content = (el: AuiCodeView) => el.shadowRoot!.querySelector('.code-view__content')!;
+    const codeText = (el: AuiCodeView, line: number) =>
+      [...el.shadowRoot!.querySelectorAll('[part="code"]')[line - 1].childNodes].find(
+        (node) => node.nodeType === Node.TEXT_NODE,
+      )!;
+
+    afterEach(() => getSelection()!.removeAllRanges());
+
+    it('keeps blank lines', async () => {
+      const code = 'a\n\n  b\n\n\nc';
+      const el = await render(code);
+      getSelection()!.selectAllChildren(content(el));
+      expect(copy(el)).to.equal(code);
+    });
+
+    it('includes the lines of folded blocks inside the selection', async () => {
+      const el = await render(JSON_CODE);
+      foldButton(el, 3).click();
+      await el.updateComplete;
+      getSelection()!.selectAllChildren(content(el));
+      expect(copy(el)).to.equal(JSON_CODE);
+    });
+
+    it('copies a partial selection from the original text', async () => {
+      const el = await render('alpha\nbravo\ncharlie');
+      getSelection()!.setBaseAndExtent(codeText(el, 1), 2, codeText(el, 3), 4);
+      expect(copy(el)).to.equal('pha\nbravo\nchar');
+    });
+
+    it('leaves the copy to the browser when nothing inside is selected', async () => {
+      const el = await render('alpha');
+      expect(copy(el)).to.be.null;
+    });
+  });
+
   describe('sticky line numbers', () => {
     it('keeps the gutter in place while scrolling horizontally', async () => {
       const el = await render(`short\n${'x'.repeat(400)}`, 'width: 300px');
