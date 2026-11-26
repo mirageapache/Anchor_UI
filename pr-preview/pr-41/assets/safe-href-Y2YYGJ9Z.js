@@ -1,0 +1,1 @@
+import{n as e}from"./rolldown-runtime-sJBDdmOt.js";function t(e){if(e!=null)try{return n.has(new URL(e,r).protocol)?e:void 0}catch{return}}var n,r;function i(){return(i=e((()=>{n=new Set([`http:`,`https:`,`mailto:`,`tel:`]),r=`http://anchor-ui.invalid/`})))()}export{t as n,i as t};
