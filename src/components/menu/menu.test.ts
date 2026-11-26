@@ -257,6 +257,43 @@ describe('AuiMenu (<aui-menu>)', () => {
       expect(archive.getAttribute('aria-disabled')).to.equal('true');
     });
 
+    it('keeps an aria-disabled value that is changed after the item was added', async () => {
+      const { el, trigger, item } = await setup();
+      const duplicate = item('duplicate');
+      const remove = item('delete');
+      // 例如框架的繫結：加入選單後才停用 / 啟用
+      duplicate.setAttribute('aria-disabled', 'true');
+      remove.setAttribute('aria-disabled', 'false');
+
+      let selected = 0;
+      el.addEventListener('aui-select', () => selected++);
+      // 開啟時會重新同步項目
+      await openWith(el, () => trigger.click());
+      expect(duplicate.getAttribute('aria-disabled')).to.equal('true');
+      expect(remove.getAttribute('aria-disabled')).to.equal('false');
+      duplicate.click();
+      expect(selected, 'the item disabled later is not selectable').to.equal(0);
+      expect(el.open).to.be.true;
+      remove.click();
+      expect(selected, 'the item enabled later is selectable').to.equal(1);
+    });
+
+    it('keeps a later aria-disabled change across a disabled toggle and when the item leaves', async () => {
+      const { wrapper, item } = await setup();
+      const open = item('open');
+      open.setAttribute('aria-disabled', 'true');
+      open.setAttribute('disabled', '');
+      await new Promise((resolve) => setTimeout(resolve));
+      open.removeAttribute('disabled');
+      await new Promise((resolve) => setTimeout(resolve));
+      expect(open.getAttribute('aria-disabled')).to.equal('true');
+
+      wrapper.append(open);
+      await new Promise((resolve) => setTimeout(resolve));
+      expect(open.getAttribute('aria-disabled')).to.equal('true');
+      expect(open.hasAttribute('role')).to.be.false;
+    });
+
     it('keeps a menuitemcheckbox role set by the user', async () => {
       const el = await fixture<AuiMenu>(html`
         <aui-menu>

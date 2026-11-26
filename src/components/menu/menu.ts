@@ -17,6 +17,17 @@ const INTERACTIVE =
 /** 選單會改寫的項目屬性；項目移出選單時還原為原本的值 */
 const MANAGED_ATTRIBUTES = ['role', 'tabindex', 'type', 'aria-disabled'] as const;
 
+/** 選單管理中的項目（值皆為 MANAGED_ATTRIBUTES 的順序） */
+interface ManagedItem {
+  /** 使用端原本的屬性值：項目移出選單時還原 */
+  original: (string | null)[];
+  /** 選單上次同步後的屬性值：用來辨識使用端之後的修改 */
+  written: (string | null)[];
+}
+
+const readManaged = (element: Element) =>
+  MANAGED_ATTRIBUTES.map((name) => element.getAttribute(name));
+
 const isSeparator = (element: Element) =>
   element.localName === 'hr' || element.getAttribute('role') === 'separator';
 
@@ -70,7 +81,7 @@ export class AuiMenu extends AuiPopover {
   private focusLastOnOpen = false;
 
   /** 選單改寫過的項目與其原本的屬性值（MANAGED_ATTRIBUTES 的順序） */
-  private readonly managedItems = new Map<HTMLElement, (string | null)[]>();
+  private readonly managedItems = new Map<HTMLElement, ManagedItem>();
 
   /** 項目的 disabled 屬性改變時同步 aria-disabled（slotchange 不會因屬性改變觸發） */
   private disabledObserver?: MutationObserver;
@@ -122,37 +133,53 @@ export class AuiMenu extends AuiPopover {
 
   /**
    * 為項目加上角色、roving 用的 tabindex 與停用狀態；已移出選單的項目還原為原本的屬性。
-   * 第一次處理某個元素時記下其原本的屬性值，之後的停用狀態以原本的 aria-disabled 加上目前的 disabled 計算
+   * 第一次處理某個元素時記下其原本的屬性值（使用端之後的修改會更新它），
+   * 停用狀態以原本的 aria-disabled 加上目前的 disabled 計算
    */
   private syncItems = (): void => {
     const children = this.panelChildren();
-    for (const [element, original] of this.managedItems) {
-      if (!children.includes(element)) this.restoreItem(element, original);
+    for (const [element, managed] of this.managedItems) {
+      if (!children.includes(element)) this.restoreItem(element, managed);
     }
     for (const element of children) {
-      let original = this.managedItems.get(element);
-      if (!original) {
-        original = MANAGED_ATTRIBUTES.map((name) => element.getAttribute(name));
-        this.managedItems.set(element, original);
+      let managed = this.managedItems.get(element);
+      if (!managed) {
+        managed = { original: readManaged(element), written: readManaged(element) };
+        this.managedItems.set(element, managed);
+      } else {
+        this.adoptUserChanges(element, managed);
       }
-      const [role, , type, ariaDisabled] = original;
+      const [role, , type, ariaDisabled] = managed.original;
       if (isSeparator(element)) {
         element.setAttribute('role', 'separator');
-        continue;
+      } else {
+        element.setAttribute('role', role && ITEM_ROLES.has(role) ? role : 'menuitem');
+        element.tabIndex = -1;
+        if (element.localName === 'button' && type === null) element.setAttribute('type', 'button');
+        const disabled = element.hasAttribute('disabled') ? 'true' : ariaDisabled;
+        if (disabled === null) element.removeAttribute('aria-disabled');
+        else element.setAttribute('aria-disabled', disabled);
       }
-      element.setAttribute('role', role && ITEM_ROLES.has(role) ? role : 'menuitem');
-      element.tabIndex = -1;
-      if (element.localName === 'button' && type === null) element.setAttribute('type', 'button');
-      const disabled = element.hasAttribute('disabled') ? 'true' : ariaDisabled;
-      if (disabled === null) element.removeAttribute('aria-disabled');
-      else element.setAttribute('aria-disabled', disabled);
+      managed.written = readManaged(element);
     }
   };
 
-  private restoreItem(element: HTMLElement, original: (string | null)[]): void {
-    this.managedItems.delete(element);
+  /**
+   * 屬性的值與選單上次寫入的不同，代表使用端（如框架的繫結）之後改過：以新的值作為原本的值，
+   * 否則下一次同步會把它改回第一次看到的值（例如動態設為 aria-disabled="true" 的項目又變成可選取）
+   */
+  private adoptUserChanges(element: HTMLElement, managed: ManagedItem): void {
     MANAGED_ATTRIBUTES.forEach((name, index) => {
-      const value = original[index];
+      const current = element.getAttribute(name);
+      if (current !== managed.written[index]) managed.original[index] = current;
+    });
+  }
+
+  private restoreItem(element: HTMLElement, managed: ManagedItem): void {
+    this.managedItems.delete(element);
+    this.adoptUserChanges(element, managed);
+    MANAGED_ATTRIBUTES.forEach((name, index) => {
+      const value = managed.original[index];
       if (value === null) element.removeAttribute(name);
       else element.setAttribute(name, value);
     });
