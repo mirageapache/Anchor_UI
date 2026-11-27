@@ -3,6 +3,7 @@ import '../button/index.js';
 import { sendKeys } from '@web/test-runner-commands';
 import './index.js';
 import type { AuiInput } from './input.js';
+import { emulateFormFallback, FORM_FALLBACK_ENVIRONMENTS } from '../../test-utils/form-fallback.js';
 
 /** 取得內部原生控制項 */
 const controlOf = (el: AuiInput) =>
@@ -671,121 +672,130 @@ describe('AuiInput (<aui-input>)', () => {
     });
   });
 
-  describe('fallback without ElementInternals (e.g. happy-dom)', () => {
-    const proto = HTMLElement.prototype as { attachInternals?: unknown };
-    let original: unknown;
+  for (const environment of FORM_FALLBACK_ENVIRONMENTS)
+    describe(`fallback ${environment.name}`, () => {
+      let restore: () => void;
 
-    beforeEach(() => {
-      original = proto.attachInternals;
-      proto.attachInternals = undefined;
+      beforeEach(() => {
+        restore = emulateFormFallback(environment);
+      });
+
+      afterEach(() => restore());
+
+      it('does not throw when the value is set before and after connecting', async () => {
+        const el = document.createElement('aui-input') as AuiInput;
+        el.name = 'early';
+        el.value = 'before';
+        const form = await fixture<HTMLFormElement>(html`<form></form>`);
+        form.append(el);
+        el.value = 'after';
+        await el.updateComplete;
+        expect(el.form === form, 'form owner').to.be.true;
+        expect(new FormData(form).get('early')).to.equal('after');
+      });
+
+      it('submits through a hidden light-DOM input and follows value changes', async () => {
+        const form = await fixture<HTMLFormElement>(html`
+          <form><aui-input name="code" value="A1"></aui-input></form>
+        `);
+        const el = form.querySelector<AuiInput>('aui-input')!;
+        const hidden = el.querySelector<HTMLInputElement>('input[type="hidden"]')!;
+        expect(hidden.name).to.equal('code');
+        expect(new FormData(form).get('code')).to.equal('A1');
+
+        // 事件監聽者（不等待渲染）讀到的也是最新值
+        const duringInput: (FormDataEntryValue | null)[] = [];
+        el.addEventListener('input', () => duringInput.push(new FormData(form).get('code')));
+        await typeInto(el, 'B2');
+        expect(duringInput).to.deep.equal(['A1B', 'A1B2']);
+        expect(new FormData(form).get('code')).to.equal('A1B2');
+
+        el.disabled = true;
+        await el.updateComplete;
+        expect(new FormData(form).has('code')).to.be.false;
+
+        el.name = '';
+        await el.updateComplete;
+        expect(el.querySelector('input[type="hidden"]')).to.be.null;
+      });
+
+      it('resolves its form owner and restores the default value on reset', async () => {
+        const wrapper = await fixture<HTMLDivElement>(html`
+          <div>
+            <form id="fallback-input-form"></form>
+            <aui-input name="remote" value="start" form="fallback-input-form"></aui-input>
+          </div>
+        `);
+        const form = wrapper.querySelector('form')!;
+        const el = wrapper.querySelector<AuiInput>('aui-input')!;
+        expect(el.form === form, 'form owner').to.be.true;
+        expect(new FormData(form).get('remote')).to.equal('start');
+
+        el.value = 'changed';
+        await el.updateComplete;
+        expect(new FormData(form).get('remote')).to.equal('changed');
+
+        form.reset();
+        await el.updateComplete;
+        expect(el.value).to.equal('start');
+        expect(new FormData(form).get('remote')).to.equal('start');
+      });
+
+      it('keeps the value when another listener cancels the reset', async () => {
+        const form = await fixture<HTMLFormElement>(html`
+          <form><aui-input name="kept" value="start"></aui-input></form>
+        `);
+        const el = form.querySelector<AuiInput>('aui-input')!;
+        el.value = 'changed';
+        form.addEventListener('reset', (event) => event.preventDefault(), { once: true });
+        form.reset();
+        await el.updateComplete;
+        expect(el.value).to.equal('changed');
+      });
+
+      it('follows a later change of its form owner', async () => {
+        const wrapper = await fixture<HTMLDivElement>(html`
+          <div>
+            <form id="owner-a"></form>
+            <form id="owner-b"></form>
+            <aui-input name="moved" value="start" form="owner-a"></aui-input>
+          </div>
+        `);
+        const [formA, formB] = wrapper.querySelectorAll('form');
+        const el = wrapper.querySelector<AuiInput>('aui-input')!;
+        el.setAttribute('form', 'owner-b');
+        el.value = 'changed';
+        await el.updateComplete;
+
+        formA.reset();
+        await el.updateComplete;
+        expect(el.value, 'the old owner no longer resets it').to.equal('changed');
+        formB.reset();
+        await el.updateComplete;
+        expect(el.value).to.equal('start');
+      });
+
+      it('submits once after being cloned with its hidden input', async () => {
+        const form = await fixture<HTMLFormElement>(html`
+          <form><aui-input name="copy" value="A"></aui-input></form>
+        `);
+        const clone = form.querySelector('aui-input')!.cloneNode(true) as AuiInput;
+        form.append(clone);
+        await clone.updateComplete;
+        expect(clone.querySelectorAll('input[type="hidden"]')).to.have.length(1);
+        expect(new FormData(form).getAll('copy')).to.deep.equal(['A', 'A']);
+      });
+
+      it('validates through the inner control', async () => {
+        const el = await fixture<AuiInput>(html`<aui-input required></aui-input>`);
+        expect(el.willValidate).to.be.true;
+        expect(el.checkValidity()).to.be.false;
+        expect(el.reportValidity()).to.be.false;
+        expect(el.validity?.valueMissing).to.be.true;
+
+        el.value = 'done';
+        await el.updateComplete;
+        expect(el.checkValidity()).to.be.true;
+      });
     });
-
-    afterEach(() => {
-      proto.attachInternals = original;
-    });
-
-    it('submits through a hidden light-DOM input and follows value changes', async () => {
-      const form = await fixture<HTMLFormElement>(html`
-        <form><aui-input name="code" value="A1"></aui-input></form>
-      `);
-      const el = form.querySelector<AuiInput>('aui-input')!;
-      const hidden = el.querySelector<HTMLInputElement>('input[type="hidden"]')!;
-      expect(hidden.name).to.equal('code');
-      expect(new FormData(form).get('code')).to.equal('A1');
-
-      // 事件監聽者（不等待渲染）讀到的也是最新值
-      const duringInput: (FormDataEntryValue | null)[] = [];
-      el.addEventListener('input', () => duringInput.push(new FormData(form).get('code')));
-      await typeInto(el, 'B2');
-      expect(duringInput).to.deep.equal(['A1B', 'A1B2']);
-      expect(new FormData(form).get('code')).to.equal('A1B2');
-
-      el.disabled = true;
-      await el.updateComplete;
-      expect(new FormData(form).has('code')).to.be.false;
-
-      el.name = '';
-      await el.updateComplete;
-      expect(el.querySelector('input[type="hidden"]')).to.be.null;
-    });
-
-    it('resolves its form owner and restores the default value on reset', async () => {
-      const wrapper = await fixture<HTMLDivElement>(html`
-        <div>
-          <form id="fallback-input-form"></form>
-          <aui-input name="remote" value="start" form="fallback-input-form"></aui-input>
-        </div>
-      `);
-      const form = wrapper.querySelector('form')!;
-      const el = wrapper.querySelector<AuiInput>('aui-input')!;
-      expect(el.form).to.equal(form);
-      expect(new FormData(form).get('remote')).to.equal('start');
-
-      el.value = 'changed';
-      await el.updateComplete;
-      expect(new FormData(form).get('remote')).to.equal('changed');
-
-      form.reset();
-      await el.updateComplete;
-      expect(el.value).to.equal('start');
-      expect(new FormData(form).get('remote')).to.equal('start');
-    });
-
-    it('keeps the value when another listener cancels the reset', async () => {
-      const form = await fixture<HTMLFormElement>(html`
-        <form><aui-input name="kept" value="start"></aui-input></form>
-      `);
-      const el = form.querySelector<AuiInput>('aui-input')!;
-      el.value = 'changed';
-      form.addEventListener('reset', (event) => event.preventDefault(), { once: true });
-      form.reset();
-      await el.updateComplete;
-      expect(el.value).to.equal('changed');
-    });
-
-    it('follows a later change of its form owner', async () => {
-      const wrapper = await fixture<HTMLDivElement>(html`
-        <div>
-          <form id="owner-a"></form>
-          <form id="owner-b"></form>
-          <aui-input name="moved" value="start" form="owner-a"></aui-input>
-        </div>
-      `);
-      const [formA, formB] = wrapper.querySelectorAll('form');
-      const el = wrapper.querySelector<AuiInput>('aui-input')!;
-      el.setAttribute('form', 'owner-b');
-      el.value = 'changed';
-      await el.updateComplete;
-
-      formA.reset();
-      await el.updateComplete;
-      expect(el.value, 'the old owner no longer resets it').to.equal('changed');
-      formB.reset();
-      await el.updateComplete;
-      expect(el.value).to.equal('start');
-    });
-
-    it('submits once after being cloned with its hidden input', async () => {
-      const form = await fixture<HTMLFormElement>(html`
-        <form><aui-input name="copy" value="A"></aui-input></form>
-      `);
-      const clone = form.querySelector('aui-input')!.cloneNode(true) as AuiInput;
-      form.append(clone);
-      await clone.updateComplete;
-      expect(clone.querySelectorAll('input[type="hidden"]')).to.have.length(1);
-      expect(new FormData(form).getAll('copy')).to.deep.equal(['A', 'A']);
-    });
-
-    it('validates through the inner control', async () => {
-      const el = await fixture<AuiInput>(html`<aui-input required></aui-input>`);
-      expect(el.willValidate).to.be.true;
-      expect(el.checkValidity()).to.be.false;
-      expect(el.reportValidity()).to.be.false;
-      expect(el.validity?.valueMissing).to.be.true;
-
-      el.value = 'done';
-      await el.updateComplete;
-      expect(el.checkValidity()).to.be.true;
-    });
-  });
 });

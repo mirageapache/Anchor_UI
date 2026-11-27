@@ -3,6 +3,7 @@ import { sendKeys } from '@web/test-runner-commands';
 import './index.js';
 import type { AuiSegmented } from './segmented.js';
 import type { SegmentedOption } from './segmented.types.js';
+import { emulateFormFallback, FORM_FALLBACK_ENVIRONMENTS } from '../../test-utils/form-fallback.js';
 
 const MODES: SegmentedOption[] = [
   { value: 'encode', label: 'Encode' },
@@ -538,56 +539,65 @@ describe('AuiSegmented (<aui-segmented>)', () => {
     });
   });
 
-  describe('fallback without ElementInternals (e.g. happy-dom)', () => {
-    const proto = HTMLElement.prototype as { attachInternals?: unknown };
-    let original: unknown;
+  for (const environment of FORM_FALLBACK_ENVIRONMENTS)
+    describe(`fallback ${environment.name}`, () => {
+      let restore: () => void;
 
-    beforeEach(() => {
-      original = proto.attachInternals;
-      proto.attachInternals = undefined;
+      beforeEach(() => {
+        restore = emulateFormFallback(environment);
+      });
+
+      afterEach(() => restore());
+
+      it('does not throw when options and value are set before connecting', async () => {
+        const el = document.createElement('aui-segmented') as AuiSegmented;
+        el.name = 'early';
+        el.options = MODES;
+        el.value = 'decode';
+        const form = await fixture<HTMLFormElement>(html`<form></form>`);
+        form.append(el);
+        await el.updateComplete;
+        expect(el.form === form, 'form owner').to.be.true;
+        expect(new FormData(form).get('early')).to.equal('decode');
+      });
+
+      it('submits through a hidden input, follows selection and resets', async () => {
+        const form = await fixture<HTMLFormElement>(html`
+          <form><aui-segmented name="mode" .options=${MODES} value="encode"></aui-segmented></form>
+        `);
+        const el = form.querySelector<AuiSegmented>('aui-segmented')!;
+        expect(new FormData(form).get('mode')).to.equal('encode');
+
+        buttons(el)[1].click();
+        await el.updateComplete;
+        expect(new FormData(form).get('mode')).to.equal('decode');
+
+        form.reset();
+        await el.updateComplete;
+        expect(el.value).to.equal('encode');
+        expect(new FormData(form).get('mode')).to.equal('encode');
+
+        el.value = '';
+        await el.updateComplete;
+        expect(el.querySelector('input[type="hidden"]')).to.be.null;
+      });
+
+      it('reports validity without ElementInternals', async () => {
+        const el = await fixture<AuiSegmented>(
+          html`<aui-segmented .options=${MODES} required></aui-segmented>`,
+        );
+        expect(el.validity).to.be.undefined;
+        expect(el.willValidate).to.be.true;
+        expect(el.checkValidity()).to.be.false;
+        expect(el.reportValidity()).to.be.false;
+        expect(el.validationMessage).to.not.equal('');
+
+        el.value = 'auto';
+        expect(el.checkValidity()).to.be.true;
+
+        el.disabled = true;
+        await el.updateComplete;
+        expect(el.willValidate).to.be.false;
+      });
     });
-
-    afterEach(() => {
-      proto.attachInternals = original;
-    });
-
-    it('submits through a hidden input, follows selection and resets', async () => {
-      const form = await fixture<HTMLFormElement>(html`
-        <form><aui-segmented name="mode" .options=${MODES} value="encode"></aui-segmented></form>
-      `);
-      const el = form.querySelector<AuiSegmented>('aui-segmented')!;
-      expect(new FormData(form).get('mode')).to.equal('encode');
-
-      buttons(el)[1].click();
-      await el.updateComplete;
-      expect(new FormData(form).get('mode')).to.equal('decode');
-
-      form.reset();
-      await el.updateComplete;
-      expect(el.value).to.equal('encode');
-      expect(new FormData(form).get('mode')).to.equal('encode');
-
-      el.value = '';
-      await el.updateComplete;
-      expect(el.querySelector('input[type="hidden"]')).to.be.null;
-    });
-
-    it('reports validity without ElementInternals', async () => {
-      const el = await fixture<AuiSegmented>(
-        html`<aui-segmented .options=${MODES} required></aui-segmented>`,
-      );
-      expect(el.validity).to.be.undefined;
-      expect(el.willValidate).to.be.true;
-      expect(el.checkValidity()).to.be.false;
-      expect(el.reportValidity()).to.be.false;
-      expect(el.validationMessage).to.not.equal('');
-
-      el.value = 'auto';
-      expect(el.checkValidity()).to.be.true;
-
-      el.disabled = true;
-      await el.updateComplete;
-      expect(el.willValidate).to.be.false;
-    });
-  });
 });

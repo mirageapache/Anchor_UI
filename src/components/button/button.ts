@@ -3,7 +3,7 @@ import { property, state } from 'lit/decorators.js';
 import { classMap } from 'lit/directives/class-map.js';
 import { ifDefined } from 'lit/directives/if-defined.js';
 import { buttonStyles } from './button.styles.js';
-import { findFormOwner } from '../../internal/form-owner.js';
+import { attachFormInternals, findFormOwner } from '../../internal/form-owner.js';
 import { afterDispatch } from '../../internal/implicit-submit.js';
 import { interceptInactiveClick } from '../../internal/inactive-click.js';
 import {
@@ -51,7 +51,7 @@ export class AuiButton extends LitElement implements PopupTrigger {
    */
   static formAssociated = true;
 
-  /** 不支援 ElementInternals 的環境（happy-dom、舊版瀏覽器）為 null，改以 DOM 查找表單 */
+  /** 不支援 ElementInternals 表單參與的環境（happy-dom、jsdom、舊版瀏覽器）為 null，改以 DOM 查找表單 */
   private readonly internals: ElementInternals | null;
 
   /**
@@ -113,7 +113,7 @@ export class AuiButton extends LitElement implements PopupTrigger {
 
   constructor() {
     super();
-    this.internals = typeof this.attachInternals === 'function' ? this.attachInternals() : null;
+    this.internals = attachFormInternals(this);
     // 捕獲階段攔截點擊：當處於 disabled 或 loading 時徹底中斷冒泡與監聽
     this.addEventListener('click', this.handleHostClick, { capture: true });
   }

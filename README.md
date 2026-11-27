@@ -263,6 +263,7 @@ import '@anchor-ui/core/dropzone';
 - 也可以直接放在原生 `<form>` 中：值會隨表單提交，`required` 等驗證、`form.reset()` 與 `<fieldset disabled>` 皆有效，單行輸入框按 Enter 會送出表單。
 - Angular 的驗證器（如 `required`）、touched 狀態與 `control.disable()` 皆可運作；其他事件請直接綁定原生 `(change)` 或 `aui-` 前綴的自訂事件。
 - 與原生 `<input>` 相同，同一個元素不可同時設定 `value` 屬性與 `v-model`。
+- 在 happy-dom、jsdom 等測試環境中，表單元件會改以 light DOM 的隱藏 `<input>` 提交值（happy-dom 沒有 `attachInternals`；jsdom 的 `ElementInternals` 只有 `role` 等無障礙屬性，沒有 `setFormValue`），不需另外設定。提交、`form.reset()` 與 `<aui-button type="submit">` / `"reset"` 都能運作，但表單的驗證（`form.checkValidity()`、送出前的檢查）不包含元件：`required` 等驗證請以元件本身的 `checkValidity()` / `validity` 測試，送出被擋下的行為請在真實瀏覽器驗證。
 - 以 Vitest + happy-dom 測試 Angular 時，zone.js 無法正確包裝 happy-dom 的 `MutationObserver`，需在 zone.js 之前載入修正（參考 [`examples/angular/src/test-setup-happy-dom.ts`](examples/angular/src/test-setup-happy-dom.ts)）。happy-dom 也不會把 Shadow DOM 內的事件 retarget 到元件本身，輸入法組字這類依賴 `event.target` 的行為請在真實瀏覽器驗證。
 
 ### 8. 切換主題
