@@ -1,1 +1,0 @@
-import{n as e}from"./rolldown-runtime-sJBDdmOt.js";function t(){let e=document.activeElement;for(;e?.shadowRoot?.activeElement;)e=e.shadowRoot.activeElement;return e}function n(){let e=t();return()=>{e&&e!==document.body&&e.isConnected&&e.focus?.()}}function r(){return(r=e((()=>{})))()}export{r as n,n as r,t};
