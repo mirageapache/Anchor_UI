@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.1.0-beta.1](https://github.com/mirageapache/Anchor_UI/compare/v1.1.0-beta...v1.1.0-beta.1) (2026-11-27)
+
+
+### 新功能
+
+* **tokens:** 新增連結色 --color-link 與 --color-link-hover ([5bf607a](https://github.com/mirageapache/Anchor_UI/commit/5bf607a015ebad9c16a6429e2eaa35b4cdb56181))
+
+
+### 錯誤修正
+
+* **form:** 在只有部分 ElementInternals 的環境（jsdom）改走退回方案 ([07e3b7e](https://github.com/mirageapache/Anchor_UI/commit/07e3b7e7dac2f8402b8955d77cd278e6e191ab26))
+
 ## [1.1.0-beta](https://github.com/mirageapache/Anchor_UI/compare/v1.0.0...v1.1.0-beta) (2026-11-26)
 
 
