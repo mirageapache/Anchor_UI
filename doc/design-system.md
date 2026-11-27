@@ -177,7 +177,7 @@
   --color-accent-border: var(--color-warning-border);
 
   /* Link (Amber): 連結文字。不要用 --color-accent-text（#92400e 和內文灰字亮度幾乎相同） */
-  --color-link: #b45309; // Amber 700: 白底 5.02:1、--color-bg 4.80:1、--color-surface 4.58:1
+  --color-link: #a75e00; // #c77000 同色相加深（比 Amber 700 偏黃）: 白底 4.95:1、--color-bg 4.73:1、--color-surface 4.52:1
   --color-link-hover: #92400e; // Amber 800: 白底 7.09:1、--color-surface 6.47:1
 }
 
