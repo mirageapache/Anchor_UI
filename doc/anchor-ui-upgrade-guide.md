@@ -48,6 +48,54 @@
 
 ## 三、各版本注意事項
 
+### 下一版（尚未發布）
+
+> 發布時改為實際版號。
+
+新增功能，沒有不相容的變更：
+
+- **新 Design Token：連結色 `--color-link` / `--color-link-hover`**：淺色主題為 `#a75e00` / `#92400e`，深色主題為 `#fbbf24` / `#fde68a`。
+  連結文字請改用這兩個 token，不要用 `--color-accent-text`（它是琥珀淡底上的文字色，和內文灰字的亮度幾乎相同）。
+  內文段落中的連結須加底線，規則見 [design-system.md 的「連結色使用規則」](design-system.md#連結色使用規則)。
+  先前自行定義同名變數的專案可以刪除自己的定義；保留的話會覆寫元件庫的值。
+- **表單元件可在 jsdom 中使用**：jsdom 的 `ElementInternals` 只有無障礙屬性，先前 `<aui-input>`、`<aui-segmented>`
+  設定值時會拋出 `setFormValue is not a function`，`<aui-button type="submit">` / `"reset"` 也沒有作用。
+  現在會自動改走與 happy-dom 相同的退回方案（以隱藏 `<input>` 提交）。
+  - 先前為此在測試中加上 `delete HTMLElement.prototype.attachInternals` 的專案可以移除這段。
+  - 退回方案的限制：表單本身的驗證（`form.checkValidity()`、送出前的檢查）不包含元件，
+    `required` 等驗證請以元件的 `checkValidity()` / `validity` 測試。
+
+### `1.1.0-beta`（Phase 5）
+
+新增功能，沒有不相容的變更。從 `1.0.0` 升級不需要改動，但請檢查下方「行為修正」是否影響你的專案。
+
+- **新元件**：`<aui-popover>`（點擊開啟的彈出面板）、`<aui-menu>`（下拉選單）、`<aui-breadcrumb>`（麵包屑導覽），
+  按需載入的入口為 `@anchor-ui/core/popover`、`/menu`、`/breadcrumb`。`<aui-header>` 新增 `breadcrumb` slot。
+- **既有元件擴充**：`<aui-accordion variant="plain">`（無外框，適合側欄選單）；`<aui-card>` 新增 `icon` slot。
+- **框架的範本型別**：以型別專用的子路徑 `@anchor-ui/core/vue`、`@anchor-ui/core/react` 提供屬性與事件的型別檢查及自動完成，
+  在專案的型別宣告檔加上 `/// <reference types="@anchor-ui/core/vue" />`（或 `/react`）即可，設定見 README。
+  `vue` 與 `@types/react` 列為選用的 peerDependencies，沒有使用的專案不需要安裝。
+- **可覆寫的內建文字**：`<aui-field>` 的 `copy-label` / `copied-label` / `clear-label`、`<aui-output>` 的 `status-label`、
+  `<aui-code-view>` 的 `fold-label`（可用 `{start}`、`{end}` 代入行號），供多語系頁面使用。
+- **伺服器端渲染（SSR）**：在 Node 中 import 任何入口都不會出錯（Angular SSR 已驗證）。
+  伺服器端呼叫 `ToastService` 不做任何事；`AlertService` 回傳的 Promise 以「只能在瀏覽器端使用」的錯誤 reject
+  （先前兩者都拋出 `document is not defined`）。
+- **`package.json` 的 `exports` 補上 `default` 條件**：不送出 `import` 條件的解析器（例如 CommonJS 模式的 Jest）也能找到模組。
+
+行為修正（下列情況請檢查）：
+
+- **`<aui-input>` 驗證被擋下後顯示錯誤狀態**：送出被擋下或呼叫 `checkValidity()` 失敗後，顯示紅框並設定 `aria-invalid`，
+  直到值通過驗證或表單重設。`type="password"` 與 `autocomplete="off"` 的值不再由瀏覽器在返回上一頁時還原。
+- **`<aui-alert>` 的 Enter 只在對話框本身的內容中確認**：從 default slot 放入的內容按 Enter 不會確認；
+  `destructive` 時只有在提示輸入框中按 Enter 才確認。關閉過程中呼叫 `confirm()` / `cancel()` 不再改寫結果。
+- **外層 `<aui-modal>` / `<aui-drawer>` 關閉時，一併關閉其中開啟的對話框**：內層會收到不可取消的 `aui-hide` / `aui-after-hide`。
+  退場動畫中重新開啟時，會先補上被中斷那次關閉的 `aui-after-hide`，`aui-show` / `aui-after-hide` 仍成對出現。
+- **`<aui-tooltip>`**：沒有內容（`content` 為空且沒有 `content` slot）時不開啟；`for` 指向的元素可以晚於 Tooltip 出現。
+  `focus` 觸發只在鍵盤聚焦（`:focus-visible`）時開啟，滑鼠點擊造成的聚焦不再開啟提示。
+- **`<aui-field>` 的清除鈕**：輸入框被外層 `<fieldset disabled>` 停用時一併停用。
+- **`<aui-code-view>` 的複製**：選取範圍內被收合的行會一併複製，空行也會保留。
+- **`<aui-dropzone>` 的拒絕訊息**只列出前五個檔名，其餘以「…（+N）」表示。
+
 ### `1.0.0`
 
 第一個正式版，程式碼與 `1.0.0-beta.1` 相同，沒有新的變更。

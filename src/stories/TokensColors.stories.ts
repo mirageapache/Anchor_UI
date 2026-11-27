@@ -89,6 +89,11 @@ const surfaceSwatches: SwatchItem[] = [
   { name: 'Ghost Border', variable: '--color-ghost-border' },
 ];
 
+const linkSwatches: SwatchItem[] = [
+  { name: 'Link', variable: '--color-link' },
+  { name: 'Link Hover', variable: '--color-link-hover' },
+];
+
 export const Palette: Story = {
   render: () => html`
     <div
@@ -220,6 +225,50 @@ export const Palette: Story = {
             `,
           )}
         </div>
+      </section>
+
+      <!-- 連結文字 -->
+      <section style="margin-bottom: var(--space-xl);">
+        <h2
+          style="font-size: var(--text-xl); margin-bottom: var(--space-md); font-weight: var(--weight-semibold);"
+        >
+          Link (連結文字)
+        </h2>
+        <div
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-md);"
+        >
+          ${linkSwatches.map(
+            (s) => html`
+              <div
+                style="border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; background: var(--color-surface);"
+              >
+                <div style="height: 64px; background: var(${s.variable});"></div>
+                <div style="padding: var(--space-sm); font-size: var(--text-xs);">
+                  <div style="font-weight: var(--weight-medium);">${s.name}</div>
+                  <div
+                    style="font-family: var(--font-mono); color: var(--color-text-muted); font-size: var(--text-2xs); margin-top: 2px;"
+                  >
+                    ${s.variable}
+                  </div>
+                </div>
+              </div>
+            `,
+          )}
+        </div>
+        <p
+          style="color: var(--color-text-secondary); font-size: var(--text-sm); line-height: var(--leading-relaxed, 1.625);"
+        >
+          內文段落中的連結須加底線（WCAG 1.4.1）：
+          <a
+            href="#link-sample"
+            style="color: var(--color-link); text-decoration: underline; text-underline-offset: 2px;"
+            >一般狀態的連結</a
+          >，滑鼠移上時為
+          <span
+            style="color: var(--color-link-hover); text-decoration: underline; text-underline-offset: 2px;"
+            >hover 狀態的連結</span
+          >。不要用 <code>--color-accent-text</code>，它和內文灰字的亮度幾乎相同。
+        </p>
       </section>
     </div>
   `,

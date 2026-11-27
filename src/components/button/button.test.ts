@@ -2,6 +2,7 @@ import { aTimeout, expect, fixture, html } from '@open-wc/testing';
 import { sendKeys } from '@web/test-runner-commands';
 import './index.js';
 import type { AuiButton } from './button.js';
+import { emulateFormFallback, FORM_FALLBACK_ENVIRONMENTS } from '../../test-utils/form-fallback.js';
 
 describe('AuiButton (<aui-button>)', () => {
   it('renders with default attributes and shadow DOM structure', async () => {
@@ -411,37 +412,36 @@ describe('AuiButton (<aui-button>)', () => {
     expect(submitted).to.be.true;
   });
 
-  it('falls back to DOM lookup where ElementInternals is unavailable (e.g. happy-dom)', async () => {
-    const proto = HTMLElement.prototype as { attachInternals?: unknown };
-    const original = proto.attachInternals;
-    proto.attachInternals = undefined;
-    try {
-      let submitted = 0;
-      const wrapper = await fixture<HTMLDivElement>(html`
-        <div
-          @submit=${(e: Event) => {
-            e.preventDefault();
-            submitted++;
-          }}
-        >
-          <form><aui-button type="submit">Inside</aui-button></form>
-          <form id="fallback-remote-form"></form>
-          <aui-button type="submit" form="fallback-remote-form">Outside</aui-button>
-        </div>
-      `);
-      const [inside, outside] = [...wrapper.querySelectorAll<AuiButton>('aui-button')];
-      const forms = wrapper.querySelectorAll('form');
-      expect(inside.form).to.equal(forms[0]);
-      expect(outside.form).to.equal(forms[1]);
+  for (const environment of FORM_FALLBACK_ENVIRONMENTS)
+    it(`falls back to DOM lookup ${environment.name}`, async () => {
+      const restore = emulateFormFallback(environment);
+      try {
+        let submitted = 0;
+        const wrapper = await fixture<HTMLDivElement>(html`
+          <div
+            @submit=${(e: Event) => {
+              e.preventDefault();
+              submitted++;
+            }}
+          >
+            <form><aui-button type="submit">Inside</aui-button></form>
+            <form id="fallback-remote-form"></form>
+            <aui-button type="submit" form="fallback-remote-form">Outside</aui-button>
+          </div>
+        `);
+        const [inside, outside] = [...wrapper.querySelectorAll<AuiButton>('aui-button')];
+        const forms = wrapper.querySelectorAll('form');
+        expect(inside.form === forms[0], 'inside: form owner').to.be.true;
+        expect(outside.form === forms[1], 'outside: form owner').to.be.true;
 
-      inside.click();
-      outside.click();
-      await aTimeout(0);
-      expect(submitted).to.equal(2);
-    } finally {
-      proto.attachInternals = original;
-    }
-  });
+        inside.click();
+        outside.click();
+        await aTimeout(0);
+        expect(submitted).to.equal(2);
+      } finally {
+        restore();
+      }
+    });
 
   it('respects the form validity when submitting (requestSubmit semantics)', async () => {
     let submitted = false;

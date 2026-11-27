@@ -1,5 +1,5 @@
 import type { ReactiveController, ReactiveControllerHost } from 'lit';
-import { findFormOwner } from './form-owner.js';
+import { attachFormInternals, findFormOwner } from './form-owner.js';
 
 /** 退回方案的隱藏 input 的標記屬性 */
 const FALLBACK_INPUT = 'data-aui-form-value';
@@ -14,13 +14,13 @@ export interface FormControlHost extends ReactiveControllerHost, HTMLElement {
  * 表單控制項的共用參與邏輯（form-associated custom element）：
  *
  * - 支援 ElementInternals 時，以 `setFormValue` 提交值，表單擁有者與驗證由 `internals` 提供。
- * - 不支援時（happy-dom、舊版瀏覽器）退回以 light DOM 的隱藏 input 提交，
+ * - 不支援時（happy-dom、jsdom、舊版瀏覽器）退回以 light DOM 的隱藏 input 提交，
  *   並監聽所屬表單的 `reset` 事件代替 `formResetCallback`。
  *
  * 須於元件建構式中建立（`attachInternals` 只能在建構時呼叫）。
  */
 export class FormControlController implements ReactiveController {
-  /** 不支援 ElementInternals 的環境為 null */
+  /** 不支援 ElementInternals 表單參與的環境為 null（見 attachFormInternals） */
   readonly internals: ElementInternals | null;
 
   private submitValue: string | null = null;
@@ -32,7 +32,7 @@ export class FormControlController implements ReactiveController {
     /** 退回方案中，所屬表單 reset 時呼叫（支援 ElementInternals 時由 formResetCallback 處理） */
     private readonly onFallbackReset: () => void,
   ) {
-    this.internals = typeof host.attachInternals === 'function' ? host.attachInternals() : null;
+    this.internals = attachFormInternals(host);
     host.addController(this);
   }
 

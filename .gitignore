@@ -22,6 +22,7 @@ pnpm-debug.log*
 
 # Storybook
 .storybook-cache/
+debug-storybook.log
 
 #env
 .env

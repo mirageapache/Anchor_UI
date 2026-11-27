@@ -105,6 +105,11 @@
   --color-accent-dim: var(--color-warning-dim);
   --color-accent-border: var(--color-warning-border);
 
+  /* Link (Amber): 連結文字。不要用 --color-accent-text（#92400e 和內文灰字亮度幾乎相同） */
+  // 直接寫色碼而非 warning 的別名：連結須與內文區分，不應隨 warning 色調整而改變
+  --color-link: #a75e00; // #c77000 同色相加深（比 Amber 700 偏黃）: 白底 4.95:1、--color-bg 4.73:1、--color-surface 4.52:1
+  --color-link-hover: #92400e; // Amber 800: 白底 7.09:1、--color-surface 6.47:1
+
   /* 7. Brand (Blue/Navy): 品牌主色作為第 7 種語意色 (H-02) */
   /* 供 Tag/Badge 等元件以統一 API 存取，與其他 6 種語意色結構相同。 */
   --color-brand-main: var(--color-brand-600);
@@ -222,6 +227,10 @@
   --color-accent-text: var(--color-warning-text);
   --color-accent-dim: var(--color-warning-dim);
   --color-accent-border: var(--color-warning-border);
+
+  /* Link (Amber) */
+  --color-link: #fbbf24; // Amber 400: --color-bg 10.69:1、--color-base 8.76:1、--color-surface-plus 6.20:1
+  --color-link-hover: #fde68a; // Amber 200: --color-bg 14.33:1（暗色 hover 調亮）
 
   /* 7. Brand (Blue/Navy): 深色模式對應 (H-02) */
   --color-brand-main: var(--color-brand-600);

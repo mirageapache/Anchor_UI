@@ -175,6 +175,10 @@
   --color-accent-text: var(--color-warning-text);
   --color-accent-dim: var(--color-warning-dim);
   --color-accent-border: var(--color-warning-border);
+
+  /* Link (Amber): 連結文字。不要用 --color-accent-text（#92400e 和內文灰字亮度幾乎相同） */
+  --color-link: #a75e00; // #c77000 同色相加深（比 Amber 700 偏黃）: 白底 4.95:1、--color-bg 4.73:1、--color-surface 4.52:1
+  --color-link-hover: #92400e; // Amber 800: 白底 7.09:1、--color-surface 6.47:1
 }
 
 /* ─── 深色模式 (Dark Mode: [data-theme="dark"]) ─── */
@@ -281,6 +285,30 @@
   --color-accent-text: var(--color-warning-text);
   --color-accent-dim: var(--color-warning-dim);
   --color-accent-border: var(--color-warning-border);
+
+  /* Link (Amber) */
+  --color-link: #fbbf24; // Amber 400: --color-bg 10.69:1、--color-base 8.76:1、--color-surface-plus 6.20:1
+  --color-link-hover: #fde68a; // Amber 200: --color-bg 14.33:1（暗色 hover 調亮）
+}
+```
+
+#### 連結色使用規則
+
+- 連結文字用 `--color-link`，hover 用 `--color-link-hover`。
+  - 不要用 `--color-accent-text`／`--color-warning-text`：它們是「琥珀淡底上的文字」，淺色主題的 `#92400e` 與內文常用的 `--color-text-secondary`（`#475569`）亮度幾乎相同（1.07:1），放在段落裡看不出是連結。
+  - 不要用 `--color-accent`：白底只有 2.15:1，不符合 WCAG AA。
+  - `--color-link` 直接寫色碼，不是 warning 的別名：連結必須和內文區分得出來，不應隨 warning 色調整而改變。
+- **內文段落裡的連結必須加底線**（WCAG 1.4.1：不能只靠顏色傳達資訊）。連結要對背景達 4.5:1，又要對旁邊的 `--color-text-secondary` 達 3:1，在這組背景與內文色下兩個條件無法同時成立（淺色主題中，對白底 4.5:1 的顏色與 `--color-text-secondary` 最多只有約 2.8:1），所以必須加上顏色以外的提示。
+- 導覽型連結（Navbar、Footer、Breadcrumb）本身就看得出能點，可以不加底線、平時用次要文字色，hover 時再變色並加底線。
+
+```css
+.prose a {
+  color: var(--color-link);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.prose a:hover {
+  color: var(--color-link-hover);
 }
 ```
 
