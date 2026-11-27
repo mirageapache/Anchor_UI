@@ -357,13 +357,20 @@
 
 #### 驗收條件 (Acceptance Criteria)
 
-- [ ] 在 Node 中 import 每個入口都不出錯，由 CI 持續檢查。
-- [ ] Angular SSR 冒煙測試在 CI 通過：伺服器端渲染的 HTML 含元件標籤，瀏覽器端 hydration 沒有錯誤且元件正常運作；`Framework Smoke Test (angular-ssr)` 為 `main` 的必要檢查。
-- [ ] 在 Vue 與 React 範例中，`variant` 等屬性寫錯值、事件處理器的 `detail` 型別不符時，`vue-tsc` / `tsc` 會報錯；正確寫法通過且有自動完成。
-- [ ] Popover 與 Dropdown Menu 的鍵盤操作與焦點管理符合 WAI-ARIA APG（以 `getAxNode` 與鍵盤測試驗證），axe 檢測通過；Storybook 有導覽列使用者選單與通知清單的情境。
-- [ ] Breadcrumb 在無障礙樹中為 navigation landmark，目前頁面帶 `aria-current="page"`。
-- [ ] React 19 範例的屬性、陣列、`aui-` 事件與表單綁定測試在 CI 通過，`Framework Smoke Test (react)` 為 `main` 的必要檢查。
-- [ ] 新元件符合元件新增檢查（`exports` / `sideEffects`、體積基準、相依白名單、視覺回歸雙主題基準圖），`pnpm verify:package` 與 `pnpm size` 通過。
+- [x] 在 Node 中 import 每個入口都不出錯，由 CI 持續檢查。
+      （2026-11-26 以 `v1.1.0-beta` Release 的 tarball（SHA-256 與 Release 記錄一致）及與 tag 相同內容的 `develop` 確認：以 npm 安裝 tarball 後，25 個 JS 入口在各自的 Node 24 程序中 import 皆成功、元件皆已註冊，沒有新增瀏覽器全域變數。`pnpm verify:ssr` 在 CI 的 build job（必要檢查 `Build & Package Verification`）執行；tag commit `650c3dc` 的 CI 11 個 job 與發布流程皆通過。）
+- [x] Angular SSR 冒煙測試在 CI 通過：伺服器端渲染的 HTML 含元件標籤，瀏覽器端 hydration 沒有錯誤且元件正常運作；`Framework Smoke Test (angular-ssr)` 為 `main` 的必要檢查。
+      （2026-11-26 確認：以 Release tarball 執行 `pnpm smoke angular-ssr` 通過，涵蓋伺服器輸出的 HTML、hydration 沿用伺服器輸出的節點、property / `ngModel` / 事件綁定與 console 無錯誤。`main` Ruleset 的 9 項必要檢查包含 `Framework Smoke Test (angular-ssr)`。）
+- [x] 在 Vue 與 React 範例中，`variant` 等屬性寫錯值、事件處理器的 `detail` 型別不符時，`vue-tsc` / `tsc` 會報錯；正確寫法通過且有自動完成。
+      （2026-11-26 確認：`pnpm typecheck:examples` 通過，其中 Vue 11 個、React 9 個錯誤寫法以 `@vue-expect-error` / `@ts-expect-error` 標記，型別失效時檢查即失敗；以 Release tarball 執行 `pnpm smoke vue3` / `react`（`skipLibCheck: false`）通過。React 的自動完成以 TypeScript Language Service 查詢確認：`variant` 列出 5 個值、`<aui-menu>` 列出 `onaui-select` 等 5 個事件、`e.detail.` 列出 `item` / `value`；Vue 的自動完成與 `vue-tsc` 共用同一份 `GlobalComponents` 型別。）
+- [x] Popover 與 Dropdown Menu 的鍵盤操作與焦點管理符合 WAI-ARIA APG（以 `getAxNode` 與鍵盤測試驗證），axe 檢測通過；Storybook 有導覽列使用者選單與通知清單的情境。
+      （2026-11-26 確認：Popover、Menu、Breadcrumb 的單元與 a11y 測試共 97 項通過，包含以 `sendKeys` 送出真實按鍵的鍵盤操作、`getAxNode` 檢查角色與 expanded / hasPopup / controls，以及 axe 雙主題檢測。Storybook 的 `NavbarUserMenu`、`NavbarNotifications`、`UserPanel` 互動測試通過。）
+- [x] Breadcrumb 在無障礙樹中為 navigation landmark，目前頁面帶 `aria-current="page"`。
+      （2026-11-26 確認：a11y 測試以 `getAxNode` 確認 navigation landmark（名稱取自 `label`）、有序清單與連結。Chromium 的 CDP 無障礙樹不提供 `aria-current`，改檢查目前頁面帶有 `aria-current="page"` 屬性。）
+- [x] React 19 範例的屬性、陣列、`aui-` 事件與表單綁定測試在 CI 通過，`Framework Smoke Test (react)` 為 `main` 的必要檢查。
+      （2026-11-26 確認：`pnpm test:react` 11 項在本機與 CI 的 `Unit, a11y, Coverage & Framework integration` job 通過；以 Release tarball 執行 `pnpm smoke react` 通過；`Framework Smoke Test (react)` 已列入 `main` Ruleset。）
+- [x] 新元件符合元件新增檢查（`exports` / `sideEffects`、體積基準、相依白名單、視覺回歸雙主題基準圖），`pnpm verify:package` 與 `pnpm size` 通過。
+      （2026-11-26 確認：Popover、Menu、Breadcrumb 皆有 `exports` / `sideEffects`、體積基準（9951 / 11532 / 1669 B）與雙主題視覺基準圖，`menu → popover` 已列入相依白名單；`pnpm verify:package` 與 `pnpm size`（25 項）通過。）
 
 ---
 
