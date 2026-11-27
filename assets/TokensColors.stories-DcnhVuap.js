@@ -1,4 +1,4 @@
-import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./lit-DvaG8Cmk.js";var r,i,a,o,s,c;function l(){return(l=e((()=>{n(),r={title:`Design Tokens/Colors`,tags:[`!autodocs`],parameters:{docs:{description:{component:`Anchor UI 色彩字典展示。支援執行期切換深淺雙主題 (Light / Dark)，自動適配 WCAG AA/AAA 高對比要求。`}}}},i=[{name:`Brand 50`,variable:`--color-brand-50`},{name:`Brand 100`,variable:`--color-brand-100`},{name:`Brand 500`,variable:`--color-brand-500`},{name:`Brand 600 (Core)`,variable:`--color-brand-600`},{name:`Brand 700`,variable:`--color-brand-700`},{name:`Brand 800`,variable:`--color-brand-800`}],a=[{name:`Success (Emerald)`,variable:`--color-success`,textVar:`--color-success-text`,dimVar:`--color-success-dim`,borderVar:`--color-success-border`},{name:`Warning (Amber / Accent)`,variable:`--color-warning`,textVar:`--color-warning-text`,dimVar:`--color-warning-dim`,borderVar:`--color-warning-border`},{name:`Danger (Red)`,variable:`--color-danger`,textVar:`--color-danger-text`,dimVar:`--color-danger-dim`,borderVar:`--color-danger-border`},{name:`Info (Sky Blue)`,variable:`--color-info`,textVar:`--color-info-text`,dimVar:`--color-info-dim`,borderVar:`--color-info-border`},{name:`Purple (Violet)`,variable:`--color-purple`,textVar:`--color-purple-text`,dimVar:`--color-purple-dim`,borderVar:`--color-purple-border`},{name:`Neutral (Slate)`,variable:`--color-neutral`,textVar:`--color-neutral-text`,dimVar:`--color-neutral-dim`,borderVar:`--color-neutral-border`}],o=[{name:`Base`,variable:`--color-base`},{name:`Background (Page)`,variable:`--color-bg`},{name:`Surface (Sidebar/Track)`,variable:`--color-surface`},{name:`Surface Plus (Card)`,variable:`--color-surface-plus`},{name:`Border`,variable:`--color-border`},{name:`Ghost Border`,variable:`--color-ghost-border`}],s={render:()=>t`
+import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./lit-DvaG8Cmk.js";var r,i,a,o,s,c,l;function u(){return(u=e((()=>{n(),r={title:`Design Tokens/Colors`,tags:[`!autodocs`],parameters:{docs:{description:{component:`Anchor UI 色彩字典展示。支援執行期切換深淺雙主題 (Light / Dark)，自動適配 WCAG AA/AAA 高對比要求。`}}}},i=[{name:`Brand 50`,variable:`--color-brand-50`},{name:`Brand 100`,variable:`--color-brand-100`},{name:`Brand 500`,variable:`--color-brand-500`},{name:`Brand 600 (Core)`,variable:`--color-brand-600`},{name:`Brand 700`,variable:`--color-brand-700`},{name:`Brand 800`,variable:`--color-brand-800`}],a=[{name:`Success (Emerald)`,variable:`--color-success`,textVar:`--color-success-text`,dimVar:`--color-success-dim`,borderVar:`--color-success-border`},{name:`Warning (Amber / Accent)`,variable:`--color-warning`,textVar:`--color-warning-text`,dimVar:`--color-warning-dim`,borderVar:`--color-warning-border`},{name:`Danger (Red)`,variable:`--color-danger`,textVar:`--color-danger-text`,dimVar:`--color-danger-dim`,borderVar:`--color-danger-border`},{name:`Info (Sky Blue)`,variable:`--color-info`,textVar:`--color-info-text`,dimVar:`--color-info-dim`,borderVar:`--color-info-border`},{name:`Purple (Violet)`,variable:`--color-purple`,textVar:`--color-purple-text`,dimVar:`--color-purple-dim`,borderVar:`--color-purple-border`},{name:`Neutral (Slate)`,variable:`--color-neutral`,textVar:`--color-neutral-text`,dimVar:`--color-neutral-dim`,borderVar:`--color-neutral-border`}],o=[{name:`Base`,variable:`--color-base`},{name:`Background (Page)`,variable:`--color-bg`},{name:`Surface (Sidebar/Track)`,variable:`--color-surface`},{name:`Surface Plus (Card)`,variable:`--color-surface-plus`},{name:`Border`,variable:`--color-border`},{name:`Ghost Border`,variable:`--color-ghost-border`}],s=[{name:`Link`,variable:`--color-link`},{name:`Link Hover`,variable:`--color-link-hover`}],c={render:()=>t`
     <div
       style="font-family: var(--font-ui); color: var(--color-text-primary); max-width: 1000px; padding: var(--space-lg);"
     >
@@ -119,8 +119,50 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./l
             `)}
         </div>
       </section>
+
+      <!-- 連結文字 -->
+      <section style="margin-bottom: var(--space-xl);">
+        <h2
+          style="font-size: var(--text-xl); margin-bottom: var(--space-md); font-weight: var(--weight-semibold);"
+        >
+          Link (連結文字)
+        </h2>
+        <div
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-md);"
+        >
+          ${s.map(e=>t`
+              <div
+                style="border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; background: var(--color-surface);"
+              >
+                <div style="height: 64px; background: var(${e.variable});"></div>
+                <div style="padding: var(--space-sm); font-size: var(--text-xs);">
+                  <div style="font-weight: var(--weight-medium);">${e.name}</div>
+                  <div
+                    style="font-family: var(--font-mono); color: var(--color-text-muted); font-size: var(--text-2xs); margin-top: 2px;"
+                  >
+                    ${e.variable}
+                  </div>
+                </div>
+              </div>
+            `)}
+        </div>
+        <p
+          style="color: var(--color-text-secondary); font-size: var(--text-sm); line-height: var(--leading-relaxed, 1.625);"
+        >
+          內文段落中的連結須加底線（WCAG 1.4.1）：
+          <a
+            href="#link-sample"
+            style="color: var(--color-link); text-decoration: underline; text-underline-offset: 2px;"
+            >一般狀態的連結</a
+          >，滑鼠移上時為
+          <span
+            style="color: var(--color-link-hover); text-decoration: underline; text-underline-offset: 2px;"
+            >hover 狀態的連結</span
+          >。不要用 <code>--color-accent-text</code>，它和內文灰字的亮度幾乎相同。
+        </p>
+      </section>
     </div>
-  `},c=[`Palette`],s.parameters={...s.parameters,docs:{...s.parameters?.docs,source:{originalSource:`{
+  `},l=[`Palette`],c.parameters={...c.parameters,docs:{...c.parameters?.docs,source:{originalSource:`{
   render: () => html\`
     <div
       style="font-family: var(--font-ui); color: var(--color-text-primary); max-width: 1000px; padding: var(--space-lg);"
@@ -242,6 +284,48 @@ import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./l
             \`)}
         </div>
       </section>
+
+      <!-- 連結文字 -->
+      <section style="margin-bottom: var(--space-xl);">
+        <h2
+          style="font-size: var(--text-xl); margin-bottom: var(--space-md); font-weight: var(--weight-semibold);"
+        >
+          Link (連結文字)
+        </h2>
+        <div
+          style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: var(--space-md); margin-bottom: var(--space-md);"
+        >
+          \${linkSwatches.map(s => html\`
+              <div
+                style="border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; background: var(--color-surface);"
+              >
+                <div style="height: 64px; background: var(\${s.variable});"></div>
+                <div style="padding: var(--space-sm); font-size: var(--text-xs);">
+                  <div style="font-weight: var(--weight-medium);">\${s.name}</div>
+                  <div
+                    style="font-family: var(--font-mono); color: var(--color-text-muted); font-size: var(--text-2xs); margin-top: 2px;"
+                  >
+                    \${s.variable}
+                  </div>
+                </div>
+              </div>
+            \`)}
+        </div>
+        <p
+          style="color: var(--color-text-secondary); font-size: var(--text-sm); line-height: var(--leading-relaxed, 1.625);"
+        >
+          內文段落中的連結須加底線（WCAG 1.4.1）：
+          <a
+            href="#link-sample"
+            style="color: var(--color-link); text-decoration: underline; text-underline-offset: 2px;"
+            >一般狀態的連結</a
+          >，滑鼠移上時為
+          <span
+            style="color: var(--color-link-hover); text-decoration: underline; text-underline-offset: 2px;"
+            >hover 狀態的連結</span
+          >。不要用 <code>--color-accent-text</code>，它和內文灰字的亮度幾乎相同。
+        </p>
+      </section>
     </div>
   \`
-}`,...s.parameters?.docs?.source}}}})))()}l();export{s as Palette,c as __namedExportsOrder,r as default};
+}`,...c.parameters?.docs?.source}}}})))()}u();export{c as Palette,l as __namedExportsOrder,r as default};

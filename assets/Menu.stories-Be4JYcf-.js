@@ -1,4 +1,4 @@
-import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{h as t,s as n,t as r}from"./lit-DvaG8Cmk.js";import{a as i,o as a}from"./play-utils-DUto8Om5.js";import{t as o}from"./button-CnMX2etb.js";import{t as s}from"./icon-button-CYg_hecX.js";import{i as c,n as l,r as u,t as d}from"./popover-DzFLnxeL.js";import{t as f}from"./navbar-Dklzivsw.js";var p;function m(){return(m=e((()=>{r(),p=t`
+import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{h as t,s as n,t as r}from"./lit-DvaG8Cmk.js";import{a as i,o as a}from"./play-utils-DUto8Om5.js";import{t as o}from"./button-CQ6kAZlu.js";import{t as s}from"./icon-button-CYg_hecX.js";import{i as c,n as l,r as u,t as d}from"./popover-DzFLnxeL.js";import{t as f}from"./navbar-Dklzivsw.js";var p;function m(){return(m=e((()=>{r(),p=t`
   .popover__panel {
     padding: var(--space-xs, 4px);
   }

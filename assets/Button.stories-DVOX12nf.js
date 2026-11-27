@@ -1,4 +1,4 @@
-import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./lit-DvaG8Cmk.js";import{t as r}from"./button-CnMX2etb.js";var i,a,o,s,c,l,u,d;function f(){return(f=e((()=>{n(),r(),i={title:`Components/Button`,component:`aui-button`,parameters:{docs:{description:{component:`
+import{n as e}from"./rolldown-runtime-sJBDdmOt.js";import{s as t,t as n}from"./lit-DvaG8Cmk.js";import{t as r}from"./button-CQ6kAZlu.js";var i,a,o,s,c,l,u,d;function f(){return(f=e((()=>{n(),r(),i={title:`Components/Button`,component:`aui-button`,parameters:{docs:{description:{component:`
 **Anchor UI — Button 通用按鈕 (\`<aui-button>\`)**
 
 系統中最核心的互動原子元件，支援 4 種語意層級變體、3 種尺寸階層、符合 40px 最低觸控規範，

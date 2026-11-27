@@ -31,7 +31,7 @@ export declare class AuiButton extends LitElement implements PopupTrigger {
      * 支援 `form="id"` 屬性指向外部表單（closest('form') 無法做到）
      */
     static formAssociated: boolean;
-    /** 不支援 ElementInternals 的環境（happy-dom、舊版瀏覽器）為 null，改以 DOM 查找表單 */
+    /** 不支援 ElementInternals 表單參與的環境（happy-dom、jsdom、舊版瀏覽器）為 null，改以 DOM 查找表單 */
     private readonly internals;
     /**
      * 語意層級變體
